@@ -6,6 +6,8 @@
 | Self-Refine | generate → feedback → refine → stop | previous outputs and feedback history | optional GPT-4V/TikZ notebook, task-specific evaluators | refined text/code/answers/logs | `projects/self-refine/` |
 | Reflexion | attempt → feedback → reflection → memory → retry | episodic reflection memory | environments, search, executors, tests | improved task success/code/answers | `projects/reflexion/` |
 | Meta-Prompting | meta model → expert call → expert output → append feedback → final answer | message history | Expert Python code execution, expert/summarizer calls | final answers, expert transcripts, evaluations | `projects/meta-prompting/` |
+| LATS | selection → expansion → evaluation → rollout → backprop → reflection | MCTS tree nodes, trajectory memory, value estimates | search env (HotPotQA, WebShop), code executors | best trajectories, answers, code solutions | `projects/lats/` |
+| APE | generate candidates → deduplicate → evaluate (likelihood/bandits) → rank → demo | prompt candidate pool, evaluation scores | LLM generation/evaluation, bandit UCB | ranked prompts, EvaluationResult, demo_fn | `projects/ape/` |
 
 ## Reading strategy
 

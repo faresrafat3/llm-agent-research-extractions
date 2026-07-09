@@ -3,6 +3,8 @@ flowchart TD
   ROOT --> SR[Self-Refine]
   ROOT --> RX[Reflexion]
   ROOT --> MP[Meta-Prompting]
+  ROOT --> LATS[Language Agent Tree Search]
+  ROOT --> APE[APE / Automatic Prompt Engineer]
 
   subgraph AIP[AI Scientist v2 Extraction]
     AIS --> AI_SUM[research_summary.md]
@@ -50,6 +52,31 @@ flowchart TD
     MP_PHASES --> MP_TASKS[Game of 24, Checkmate, BBH, MGSM, P3, Sonnet, Word Sorting]
   end
 
+
+  subgraph LATSP[LATS Extraction]
+    LATS --> LATS_SUM[research_summary.md]
+    LATS --> LATS_PROMPTS[Prompt/source files]
+    LATS --> LATS_DATA[Raw data samples]
+    LATS --> LATS_LOGIC[Python logic/flow inventory]
+    LATS --> LATS_GRAPH[English + Arabic Mermaid graphs]
+    LATS --> LATS_DEEP[MCTS/LATS task matrix]
+    LATS --> LATS_AUDIT[Completeness + quality review]
+    LATS_PROMPTS --> LATS_PHASES[Selection → Expansion → Evaluation → Rollout → Backprop → Reflection]
+    LATS_PHASES --> LATS_TASKS[HotPotQA, WebShop, Programming]
+  end
+
+  subgraph APEP[APE Extraction]
+    APE --> APE_SUM[research_summary.md]
+    APE --> APE_PROMPTS[Prompt generation templates]
+    APE --> APE_DATA[Raw data samples]
+    APE --> APE_LOGIC[Python logic/flow inventory]
+    APE --> APE_GRAPH[English + Arabic Mermaid graphs]
+    APE --> APE_DEEP[APE task matrix]
+    APE --> APE_AUDIT[Completeness + quality review]
+    APE_PROMPTS --> APE_PHASES[Generate → Deduplicate → Evaluate → Rank → Demo]
+    APE_PHASES --> APE_TASKS[Instruction Induction, TruthfulQA, Big-Bench II]
+  end
+
   ROOT --> ARCH[archives ZIP deliverables]
   ROOT --> INDEX[PROJECT_INDEX.md]
   ROOT --> STANDARD[QUALITY_STANDARD_AR.md]
@@ -58,4 +85,7 @@ flowchart TD
   SR_AUDIT --> FINAL
   RX_AUDIT --> FINAL
   MP_AUDIT --> FINAL
+  LATS_AUDIT --> FINAL
+  APE_AUDIT --> FINAL
   FINAL --> PUBLIC[All repositories public on GitHub]
+

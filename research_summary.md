@@ -1,20 +1,24 @@
 # Consolidated Research Summary — LLM Agent Research Extractions
 
-This repository consolidates prompt, logic, flow, and graph extraction packages for four LLM agent/self-improvement systems:
+This repository consolidates prompt, logic, flow, and graph extraction packages for six LLM agent/self-improvement systems:
 
 1. AI Scientist v2 — autonomous scientific discovery via staged agentic tree search.
 2. Self-Refine — iterative generation, self-feedback, and refinement.
 3. Reflexion — verbal reinforcement learning with episodic reflection memory.
 4. Meta-Prompting — task-agnostic conductor/expert scaffolding with optional Python execution.
+5. LATS — Language Agent Tree Search unifying reasoning, acting, and planning via MCTS.
+6. APE — Automatic Prompt Engineer, treating prompts as programs optimized via LLM generation + likelihood/bandit evaluation.
 
 ## Common theme
 
-All four systems use language models not merely as direct answer generators, but as structured components in larger control loops:
+All six systems use language models not merely as direct answer generators, but as structured components in larger control loops:
 
 - AI Scientist v2 uses LLMs/VLMs as researchers, coders, experiment managers, plotters, citation gatherers, writers, and reviewers.
 - Self-Refine uses the same LLM as generator, feedback provider, and refiner.
 - Reflexion uses verbal reflections as memory to improve future trials without weight updates.
 - Meta-Prompting uses one LM as a conductor that delegates subtasks to expert instances and integrates their outputs.
+- LATS uses LLMs as agents, value functions, and optimizers inside a Monte Carlo Tree Search.
+- APE uses LLMs to propose natural-language instructions, then searches over candidates via likelihood scoring or UCB bandits.
 
 ## Repository purpose
 

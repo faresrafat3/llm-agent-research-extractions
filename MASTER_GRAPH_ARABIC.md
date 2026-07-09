@@ -7,6 +7,7 @@ flowchart TD
   ROOT --> RX[Reflexion]
   ROOT --> MP[Meta-Prompting]
   ROOT --> LATS[Language Agent Tree Search]
+  ROOT --> APE[APE / Automatic Prompt Engineer]
 
   subgraph AIP[حزمة AI Scientist v2]
     AIS --> AI_SUM[ملخص بحثي]
@@ -67,6 +68,18 @@ flowchart TD
     LATS_PHASES --> LATS_TASKS[HotPotQA وWebShop والبرمجة]
   end
 
+  subgraph APEP[حزمة APE]
+    APE --> APE_SUM[ملخص الورقة]
+    APE --> APE_PROMPTS[قوالب توليد البرومبت]
+    APE --> APE_DATA[عينات البيانات]
+    APE --> APE_LOGIC[تحليل Python logic/flow]
+    APE --> APE_GRAPH[Mermaid عربي وإنجليزي]
+    APE --> APE_DEEP[مصفوفة مهام APE]
+    APE --> APE_AUDIT[فحص شمولية وجودة]
+    APE_PROMPTS --> APE_PHASES[توليد → إزالة تكرار → تقييم → ترتيب → Demo]
+    APE_PHASES --> APE_TASKS[Instruction Induction وTruthfulQA وBig-Bench II]
+  end
+
   ROOT --> ARCH[أرشيفات ZIP]
   ROOT --> INDEX[فهرس المشاريع]
   ROOT --> STANDARD[معيار الجودة]
@@ -76,6 +89,7 @@ flowchart TD
   RX_AUDIT --> FINAL
   MP_AUDIT --> FINAL
   LATS_AUDIT --> FINAL
+  APE_AUDIT --> FINAL
   FINAL --> PUBLIC[كل الريبوهات Public على GitHub]
 
 ```

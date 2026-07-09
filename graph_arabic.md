@@ -6,6 +6,8 @@ flowchart TD
   ROOT --> SR[Self-Refine]
   ROOT --> RX[Reflexion]
   ROOT --> MP[Meta-Prompting]
+  ROOT --> LATS[Language Agent Tree Search]
+  ROOT --> APE[APE / Automatic Prompt Engineer]
 
   subgraph AIP[حزمة AI Scientist v2]
     AIS --> AI_SUM[ملخص بحثي]
@@ -53,6 +55,31 @@ flowchart TD
     MP_PHASES --> MP_TASKS[Game of 24 وCheckmate وBBH وMGSM وP3 وSonnet وWord Sorting]
   end
 
+
+  subgraph LATSP[حزمة LATS]
+    LATS --> LATS_SUM[ملخص الورقة]
+    LATS --> LATS_PROMPTS[مصادر prompts]
+    LATS --> LATS_DATA[عينات البيانات]
+    LATS --> LATS_LOGIC[تحليل Python logic/flow]
+    LATS --> LATS_GRAPH[Mermaid عربي وإنجليزي]
+    LATS --> LATS_DEEP[مصفوفة MCTS/LATS]
+    LATS --> LATS_AUDIT[فحص شمولية وجودة]
+    LATS_PROMPTS --> LATS_PHASES[اختيار → توسيع → تقييم → Rollout → Backprop → Reflection]
+    LATS_PHASES --> LATS_TASKS[HotPotQA وWebShop والبرمجة]
+  end
+
+  subgraph APEP[حزمة APE]
+    APE --> APE_SUM[ملخص الورقة]
+    APE --> APE_PROMPTS[قوالب توليد البرومبت]
+    APE --> APE_DATA[عينات البيانات]
+    APE --> APE_LOGIC[تحليل Python logic/flow]
+    APE --> APE_GRAPH[Mermaid عربي وإنجليزي]
+    APE --> APE_DEEP[مصفوفة مهام APE]
+    APE --> APE_AUDIT[فحص شمولية وجودة]
+    APE_PROMPTS --> APE_PHASES[توليد → إزالة تكرار → تقييم → ترتيب → Demo]
+    APE_PHASES --> APE_TASKS[Instruction Induction وTruthfulQA وBig-Bench II]
+  end
+
   ROOT --> ARCH[أرشيفات ZIP]
   ROOT --> INDEX[فهرس المشاريع]
   ROOT --> STANDARD[معيار الجودة]
@@ -61,6 +88,8 @@ flowchart TD
   SR_AUDIT --> FINAL
   RX_AUDIT --> FINAL
   MP_AUDIT --> FINAL
+  LATS_AUDIT --> FINAL
+  APE_AUDIT --> FINAL
   FINAL --> PUBLIC[كل الريبوهات Public على GitHub]
 
 ```

@@ -1,12 +1,13 @@
 # LLM Agent Research Systems — High-Quality Prompt, Logic, Flow, and Graph Extractions
 
-This repository is a consolidated research/audit archive for three important LLM agent and self-improvement systems:
+This repository is a consolidated research/audit archive for six important LLM agent and self-improvement systems:
 
 1. AI Scientist v2
 2. Self-Refine
 3. Reflexion
 4. Meta-Prompting
 5. LATS / Language Agent Tree Search
+6. APE / Automatic Prompt Engineer
 
 Every project is structured to the same quality standard as much as the original repository structure allows:
 
@@ -29,6 +30,7 @@ Every project is structured to the same quality standard as much as the original
 | Reflexion | `projects/reflexion/` | https://github.com/faresrafat3/reflexion-full-extraction |
 | Meta-Prompting | `projects/meta-prompting/` | https://github.com/faresrafat3/meta-prompting-full-extraction |
 | LATS | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction |
+| APE | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction |
 
 ## Recommended reading order
 
@@ -95,6 +97,18 @@ Every project is structured to the same quality standard as much as the original
 8. `projects/lats/final_completeness_check_ar.md`
 9. `projects/lats/QUALITY_REVIEW_AR.md`
 
+### APE
+
+1. `projects/ape/README.md`
+2. `projects/ape/research_summary.md`
+3. `projects/ape/deep_dive_task_matrix.md`
+4. `projects/ape/prompts_complete.md`
+5. `projects/ape/python_logic_flow_complete.md`
+6. `projects/ape/graph_english.md`
+7. `projects/ape/graph_arabic.md`
+8. `projects/ape/final_completeness_check_ar.md`
+9. `projects/ape/QUALITY_REVIEW_AR.md`
+
 ## Master graphs
 
 - `MASTER_GRAPH_ENGLISH.md`
@@ -122,7 +136,7 @@ archives/
 
 ## Root-level consolidated files
 
-- `research_summary.md` — consolidated summary across all four systems.
+- `research_summary.md` — consolidated summary across all six systems.
 - `deep_dive_task_matrix.md` — comparative matrix.
 - `prompts_complete.md` — index pointing to project prompt extractions.
 - `python_logic_flow_complete.md` — index pointing to project logic reports.

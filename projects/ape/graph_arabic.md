@@ -1,0 +1,23 @@
+# APE — الرسم البياني العربي
+
+```mermaid
+flowchart TD
+  A[بدء APE find_prompts] --> B[تحميل eval_template و demos_template وبيانات التوليد]
+  B --> C{هل prompt_gen_template فارغ؟}
+  C -->|نعم| D[تحويل eval_template إلى GenerationTemplate]
+  C -->|لا| E[استخدام القالب المعطى]
+  D --> F[توليد المرشحات]
+  E --> F
+  F --> G[حلقة subsample: num_subsamples]
+  G --> H[بناء استعلام التوليد بملء [INPUT][OUTPUT][full_DEMO]]
+  H --> I[LLM generate_text]
+  I --> J[إزالة التكرار set()]
+  J --> K[تقييم المرشحات]
+  K --> L{طريقة التقييم؟}
+  L -->|likelihood| M[حلقة حساب الاحتمال prompt × samples]
+  L -->|bandits| N[حلقة UCB bandit]
+  M --> O[ترتيب المرشحات]
+  N --> O
+  O --> P[إرجاع EvaluationResult + demo_fn]
+  P --> Q[انتهاء]
+```

@@ -2,12 +2,14 @@
 
 ## النطاق
 
-هذا الريبو يجمع أربع حزم استخراج:
+هذا الريبو يجمع ست حزم استخراج:
 
 - AI Scientist v2
 - Self-Refine
 - Reflexion
 - Meta-Prompting
+- LATS
+- APE
 
 ## حالة الملفات القياسية
 

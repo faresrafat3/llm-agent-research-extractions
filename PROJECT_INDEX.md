@@ -7,6 +7,7 @@
 | Reflexion | `noahshinn/reflexion` | `projects/reflexion/` | https://github.com/faresrafat3/reflexion-full-extraction | prompts/configs, raw files, logic flow, graphs, deep dive |
 | Meta-Prompting | `suzgunmirac/meta-prompting` | `projects/meta-prompting/` | https://github.com/faresrafat3/meta-prompting-full-extraction | prompts/configs, raw data samples, logic flow, graphs, deep dive |
 | LATS | `lapisrocks/LanguageAgentTreeSearch` | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction | prompts, raw data samples, MCTS/LATS logic, graphs, deep dive |
+| APE | `keirp/automatic_prompt_engineer` | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction | prompt generation templates, likelihood/bandit evaluation, logic flow, graphs, deep dive |
 
 ## Exact key file paths
 
@@ -62,3 +63,16 @@
 - Completeness: `projects/lats/final_completeness_check_ar.md`
 
 - Final audit: `projects/lats/final_audit_review_ar.md`
+
+### APE
+
+- Prompts: `projects/ape/prompts_complete.md`
+- Raw prompt files: `projects/ape/raw_prompt_files/`
+- Raw data samples: `projects/ape/raw_data_samples/`
+- Logic: `projects/ape/python_logic_flow_complete.md`
+- Graph EN: `projects/ape/graph_english.md`
+- Graph AR: `projects/ape/graph_arabic.md`
+- Deep dive: `projects/ape/deep_dive_task_matrix.md`
+- Completeness: `projects/ape/final_completeness_check_ar.md`
+
+- Final audit: `projects/ape/final_audit_review_ar.md`

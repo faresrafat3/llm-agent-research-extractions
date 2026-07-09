@@ -2,11 +2,14 @@
 
 ## الهدف
 
-هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع الثلاثة وصلت لنفس معيار الجودة قدر الإمكان:
+هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع الستة وصلت لنفس معيار الجودة قدر الإمكان:
 
 1. AI Scientist v2
 2. Self-Refine
 3. Reflexion
+4. Meta-Prompting
+5. LATS
+6. APE
 
 ## حالة الريبوهات
 
@@ -18,6 +21,7 @@
 - `https://github.com/faresrafat3/llm-agent-research-extractions`
 - `https://github.com/faresrafat3/meta-prompting-full-extraction`
 - `https://github.com/faresrafat3/lats-full-extraction`
+- `https://github.com/faresrafat3/ape-full-extraction`
 
 ## معيار الجودة المستخدم
 
@@ -145,3 +149,36 @@
 تمت إضافة Language Agent Tree Search إلى الريبو الموحد والريبوهات المستقلة بنفس معيار الجودة: README، research summary، prompts، raw prompt files، raw data samples، logic extraction، graphs عربي/إنجليزي، deep dive، completeness، وquality review.
 
 تمت إضافة `projects/lats/final_audit_review_ar.md` لضمان أن LATS له نفس مراجعة المراحل والقرارات والمدخلات/المخرجات مثل باقي المشاريع.
+
+
+## APE
+
+تمت إضافة Automatic Prompt Engineer إلى الريبو الموحد والريبوهات المستقلة بنفس معيار الجودة: README، research summary، prompts، raw prompt files، raw data samples، logic extraction، graphs عربي/إنجليزي، deep dive، completeness، وquality review.
+
+المسار:
+
+`projects/ape/`
+
+موجود:
+
+- `README.md`
+- `research_summary.md`
+- `deep_dive_task_matrix.md`
+- `prompts_complete.md` (3478 سطر)
+- `python_logic_flow_complete.md` (4178 سطر)
+- `python_logic_inventory.json`
+- `graph_english.md` / `graph_english.mmd`
+- `graph_arabic.md` / `graph_arabic.mmd`
+- `final_completeness_check_ar.md`
+- `final_audit_review_ar.md`
+- `QUALITY_REVIEW_AR.md`
+- `raw_prompt_files/` (10 ملفات)
+- `raw_data_samples/` (74 ملف)
+
+ملاحظات:
+
+- تم استخراج كل قوالب التوليد: GenerationTemplate / EvalTemplate / DemosTemplate.
+- تم توثيق كل loops: generate_prompts subsample loop، likelihood evaluation loop، bandits UCB rounds.
+- تم توثيق كل decision points: prompt_gen_template is None، eval_method likelihood vs bandits، few_shot_data is None.
+- تم التحقق من Mermaid EN/AR وتطابق المنطق.
+- حجم ZIP: 3.2 MB مطابق للمعيار.
