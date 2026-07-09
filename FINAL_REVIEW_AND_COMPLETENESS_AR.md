@@ -2,7 +2,7 @@
 
 ## الهدف
 
-هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع الستة وصلت لنفس معيار الجودة قدر الإمكان:
+هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع السبعة وصلت لنفس معيار الجودة قدر الإمكان:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -10,6 +10,7 @@
 4. Meta-Prompting
 5. LATS
 6. APE
+7. Prompt Report
 
 ## حالة الريبوهات
 
@@ -22,6 +23,7 @@
 - `https://github.com/faresrafat3/meta-prompting-full-extraction`
 - `https://github.com/faresrafat3/lats-full-extraction`
 - `https://github.com/faresrafat3/ape-full-extraction`
+- `https://github.com/faresrafat3/prompt-report-full-extraction`
 
 ## معيار الجودة المستخدم
 
@@ -182,3 +184,37 @@
 - تم توثيق كل decision points: prompt_gen_template is None، eval_method likelihood vs bandits، few_shot_data is None.
 - تم التحقق من Mermaid EN/AR وتطابق المنطق.
 - حجم ZIP: 3.2 MB مطابق للمعيار.
+
+
+## Prompt Report
+
+تمت إضافة The Prompt Report إلى الريبو الموحد والريبوهات المستقلة بنفس معيار الجودة: README، research_summary، prompts، raw_prompt_files، logic extraction، graphs عربي/إنجليزي، deep dive، completeness، وquality review.
+
+المسار:
+
+`projects/prompt-report/`
+
+موجود:
+
+- `README.md`
+- `research_summary.md`
+- `deep_dive_task_matrix.md`
+- `prompts_complete.md` (3134 سطر)
+- `python_logic_flow_complete.md` (9725 سطر)
+- `python_logic_inventory.json`
+- `graph_english.md` / `graph_english.mmd`
+- `graph_arabic.md` / `graph_arabic.mmd`
+- `final_completeness_check_ar.md`
+- `final_audit_review_ar.md`
+- `QUALITY_REVIEW_AR.md`
+- `raw_prompt_files/` (prompt_report.pdf + taxonomy_58_techniques.md)
+- `raw_data_samples/techniques_inventory.json`
+
+ملاحظات:
+
+- تم استخراج 58 تقنية LLM نصية موزعة على 6 عائلات: ICL / Thought Generation / Decomposition / Ensembling / Self-Criticism / Answer Engineering.
+- تم استخراج 40 تقنية وسائط أخرى: multilingual / multimodal / agents / evaluation / safety.
+- تم استخراج 33 مصطلح vocabulary موحد.
+- تم بناء Mermaid taxonomy كامل EN/AR يغطي كل العائلات مع decision flow: Task → Budget → Reasoning? → Decomposition? → Verify? → Tools? → Output control → Evaluate.
+- تم توثيق كل inputs/outputs/loops/decision points/conditions لكل تقنية.
+- حجم ZIP: 2.3 MB.

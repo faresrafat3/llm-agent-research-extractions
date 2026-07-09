@@ -21,3 +21,6 @@
 
 
 تم إضافة APE / Automatic Prompt Engineer لنفس معيار الجودة الموحد.
+
+
+تم إضافة The Prompt Report لنفس معيار الجودة الموحد — 58 تقنية نصية + 40 multimodal + 33 vocabulary terms، مع graphs عربي/إنجليزي، deep dive، completeness، وquality review.

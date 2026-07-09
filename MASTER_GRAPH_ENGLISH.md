@@ -8,6 +8,7 @@ flowchart TD
   ROOT --> MP[Meta-Prompting]
   ROOT --> LATS[Language Agent Tree Search]
   ROOT --> APE[APE / Automatic Prompt Engineer]
+  ROOT --> PR[Prompt Report]
 
   subgraph AIP[AI Scientist v2 Extraction]
     AIS --> AI_SUM[research_summary.md]
@@ -80,6 +81,18 @@ flowchart TD
     APE_PHASES --> APE_TASKS[Instruction Induction, TruthfulQA, Big-Bench II]
   end
 
+  subgraph PRP[Prompt Report Extraction]
+    PR --> PR_SUM[research_summary.md]
+    PR --> PR_PROMPTS[58 LLM techniques + 40 multimodal]
+    PR --> PR_VOCAB[33 vocabulary terms]
+    PR --> PR_LOGIC[Technique logic/flow inventory]
+    PR --> PR_GRAPH[English + Arabic Mermaid taxonomy]
+    PR --> PR_DEEP[Prompt Report task matrix]
+    PR --> PR_AUDIT[Completeness + quality review]
+    PR_PROMPTS --> PR_PHASES[ICL → Thought Gen → Decomposition → Ensembling → Self-Criticism → Answer Engineering]
+    PR_PHASES --> PR_TASKS[Zero-Shot, Few-Shot, CoT, ToT, Self-Consistency, Self-Refine, ReAct, APE, OPRO, Multilingual, Multimodal]
+  end
+
   ROOT --> ARCH[archives ZIP deliverables]
   ROOT --> INDEX[PROJECT_INDEX.md]
   ROOT --> STANDARD[QUALITY_STANDARD_AR.md]
@@ -90,6 +103,7 @@ flowchart TD
   MP_AUDIT --> FINAL
   LATS_AUDIT --> FINAL
   APE_AUDIT --> FINAL
+  PR_AUDIT --> FINAL
   FINAL --> PUBLIC[All repositories public on GitHub]
 
 ```

@@ -1,0 +1,98 @@
+# The Prompt Report — English Taxonomy Graph
+
+```mermaid
+flowchart TD
+  PR[The Prompt Report
+arXiv:2406.06608] --> VOCAB[33 Vocabulary Terms]
+  PR --> TAX[58 LLM Text Techniques]
+  PR --> MM[40 Multimodal/Multilingual/Agent Techniques]
+
+  TAX --> ZSHOT[Zero-Shot Family]
+  ZSHOT --> EMO[Emotion Prompting]
+  ZSHOT --> ROLE[Role Prompting]
+  ZSHOT --> STYLE[Style Prompting]
+  ZSHOT --> S2A[System 2 Attention]
+  ZSHOT --> SIMTOM[SimToM]
+  ZSHOT --> RAR[Rephrase and Respond]
+  ZSHOT --> RE2[Re-reading]
+  ZSHOT --> SASK[Self-Ask]
+
+  TAX --> FSHOT[Few-Shot / ICL]
+  FSHOT --> EXSEL[Exemplar Selection: KNN / Vote-K]
+  FSHOT --> EXORD[Exemplar Ordering]
+  FSHOT --> EXGEN[SG-ICL]
+  FSHOT --> INSTSEL[Instruction Selection / APE]
+
+  TAX --> THOUGHT[Thought Generation]
+  THOUGHT --> COT[Chain-of-Thought]
+  COT --> ZCOT[Zero-Shot CoT]
+  ZCOT --> ANALOG[Analogical]
+  ZCOT --> STEPBACK[Step-Back]
+  ZCOT --> THOT[Thread-of-Thought]
+  ZCOT --> TABCOT[Tab-CoT]
+  COT --> FCOT[Few-Shot CoT]
+  FCOT --> AUTOCOT[Auto-CoT]
+  FCOT --> ACTIVEP[Active-Prompt]
+  FCOT --> COMPLEX[Complexity-Based]
+  FCOT --> CONTRAST[Contrastive CoT]
+  FCOT --> MOT[Memory-of-Thought]
+  FCOT --> UROUTED[Uncertainty-Routed]
+
+  TAX --> DECOMP[Decomposition]
+  DECOMP --> L2M[Least-to-Most]
+  DECOMP --> PLAN[Plan-and-Solve]
+  DECOMP --> POT[Program-of-Thought]
+  DECOMP --> TOT[Tree-of-Thought]
+  DECOMP --> ROT[Recursion-of-Thought]
+  DECOMP --> SKELETON[Skeleton-of-Thought]
+  DECOMP --> FAITHFUL[Faithful CoT]
+  DECOMP --> META[Metacognitive]
+
+  TAX --> ENSEMBLE[Ensembling]
+  ENSEMBLE --> SC[Self-Consistency]
+  ENSEMBLE --> USC[Universal Self-Consistency]
+  ENSEMBLE --> DIVERSE[DiVeRSe]
+  ENSEMBLE --> COSP[COSP]
+  ENSEMBLE --> MORE[MoRE]
+  ENSEMBLE --> USP[USP]
+  ENSEMBLE --> PARAPHRASE[Prompt Paraphrasing]
+
+  TAX --> CRITIC[Self-Criticism]
+  CRITIC --> SR[Self-Refine]
+  CRITIC --> SVERIF[Self-Verification]
+  CRITIC --> COVE[Chain-of-Verification]
+  CRITIC --> SCAL[Self-Calibration]
+  CRITIC --> REVERSE[ReverseCoT]
+  CRITIC --> CUMUL[Cumulative Reasoning]
+  CRITIC --> REFL[Reflexion]
+  CRITIC --> REACT[ReAct]
+
+  TAX --> ANSENG[Answer / Prompt Engineering]
+  ANSENG --> APE[APE]
+  ANSENG --> OPRO[OPRO]
+  ANSENG --> METAP[Meta-Prompting]
+  ANSENG --> VERB[Verbalizer / Extractor / Answer Shape]
+
+  MM --> ML[Multilingual: Translate-then-Reason / Cross-lingual CoT]
+  MM --> MMD[Multimodal: MM-CoT / Chain-of-Images / Negative Prompt / Segmentation]
+  MM --> AGENT[Agents: ReAct / Toolformer / Code Agents / MRKL]
+  MM --> EVAL[Evaluation: LLM-as-a-Judge / G-Eval / Constitutional Critique]
+  MM --> SAFE[Safety / Security: Prompt Injection Defenses / Alignment]
+
+  %% Decision flow
+  ZSHOT --> DEC1{Reasoning needed?}
+  FSHOT --> DEC1
+  DEC1 -->|Yes| THOUGHT
+  DEC1 -->|No| ANSENG
+  THOUGHT --> DEC2{Complex?}
+  DEC2 -->|Yes| DECOMP
+  DEC2 -->|No| ENSEMBLE
+  DECOMP --> DEC3{Verify?}
+  ENSEMBLE --> DEC3
+  DEC3 -->|Yes| CRITIC
+  DEC3 -->|No| ANSENG
+  CRITIC --> AGENT
+  AGENT --> EVAL
+  EVAL --> SAFE
+  SAFE --> OUT[Best Practice Output]
+```

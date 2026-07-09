@@ -8,6 +8,7 @@ This root-level file is an index. Full prompt extractions live inside project fo
 - Meta-Prompting: `projects/meta-prompting/prompts_complete.md`
 - LATS: `projects/lats/prompts_complete.md`
 - APE: `projects/ape/prompts_complete.md`
+- Prompt Report: `projects/prompt-report/prompts_complete.md`
 
 Raw prompt/config files are available where applicable:
 
@@ -16,3 +17,4 @@ Raw prompt/config files are available where applicable:
 - `projects/meta-prompting/raw_prompt_files/`
 - `projects/lats/raw_prompt_files/`
 - `projects/ape/raw_prompt_files/`
+- `projects/prompt-report/raw_prompt_files/`

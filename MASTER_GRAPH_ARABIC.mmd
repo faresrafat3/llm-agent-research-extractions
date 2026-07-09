@@ -5,6 +5,7 @@ flowchart TD
   ROOT --> MP[Meta-Prompting]
   ROOT --> LATS[Language Agent Tree Search]
   ROOT --> APE[APE / Automatic Prompt Engineer]
+  ROOT --> PR[Prompt Report]
 
   subgraph AIP[حزمة AI Scientist v2]
     AIS --> AI_SUM[ملخص بحثي]
@@ -77,6 +78,19 @@ flowchart TD
     APE_PHASES --> APE_TASKS[Instruction Induction وTruthfulQA وBig-Bench II]
   end
 
+
+  subgraph PRP[حزمة Prompt Report]
+    PR --> PR_SUM[ملخص الورقة]
+    PR --> PR_PROMPTS[58 تقنية LLM + 40 متعدد الوسائط]
+    PR --> PR_VOCAB[33 مصطلح مفردات]
+    PR --> PR_LOGIC[تحليل technique logic/flow]
+    PR --> PR_GRAPH[Mermaid عربي وإنجليزي]
+    PR --> PR_DEEP[مصفوفة مهام Prompt Report]
+    PR --> PR_AUDIT[فحص شمولية وجودة]
+    PR_PROMPTS --> PR_PHASES[ICL → توليد تفكير → تفكيك → تجميع → نقد ذاتي → هندسة الإجابة]
+    PR_PHASES --> PR_TASKS[Zero-Shot و Few-Shot و CoT و ToT و Self-Consistency و Self-Refine و ReAct و APE و OPRO]
+  end
+
   ROOT --> ARCH[أرشيفات ZIP]
   ROOT --> INDEX[فهرس المشاريع]
   ROOT --> STANDARD[معيار الجودة]
@@ -87,5 +101,6 @@ flowchart TD
   MP_AUDIT --> FINAL
   LATS_AUDIT --> FINAL
   APE_AUDIT --> FINAL
+  PR_AUDIT --> FINAL
   FINAL --> PUBLIC[كل الريبوهات Public على GitHub]
 

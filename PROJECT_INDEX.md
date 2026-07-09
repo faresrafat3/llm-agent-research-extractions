@@ -8,6 +8,7 @@
 | Meta-Prompting | `suzgunmirac/meta-prompting` | `projects/meta-prompting/` | https://github.com/faresrafat3/meta-prompting-full-extraction | prompts/configs, raw data samples, logic flow, graphs, deep dive |
 | LATS | `lapisrocks/LanguageAgentTreeSearch` | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction | prompts, raw data samples, MCTS/LATS logic, graphs, deep dive |
 | APE | `keirp/automatic_prompt_engineer` | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction | prompt generation templates, likelihood/bandit evaluation, logic flow, graphs, deep dive |
+| Prompt Report | `arxiv:2406.06608` | `projects/prompt-report/` | https://github.com/faresrafat3/prompt-report-full-extraction | 58 LLM techniques + 40 multimodal, 33 vocab terms, taxonomy graphs EN/AR, deep dive |
 
 ## Exact key file paths
 
@@ -76,3 +77,16 @@
 - Completeness: `projects/ape/final_completeness_check_ar.md`
 
 - Final audit: `projects/ape/final_audit_review_ar.md`
+
+### Prompt Report
+
+- Prompts: `projects/prompt-report/prompts_complete.md`
+- Raw prompt files: `projects/prompt-report/raw_prompt_files/` (includes paper PDF + taxonomy)
+- Raw data samples: `projects/prompt-report/raw_data_samples/`
+- Logic: `projects/prompt-report/python_logic_flow_complete.md`
+- Graph EN: `projects/prompt-report/graph_english.md`
+- Graph AR: `projects/prompt-report/graph_arabic.md`
+- Deep dive: `projects/prompt-report/deep_dive_task_matrix.md`
+- Completeness: `projects/prompt-report/final_completeness_check_ar.md`
+
+- Final audit: `projects/prompt-report/final_audit_review_ar.md`

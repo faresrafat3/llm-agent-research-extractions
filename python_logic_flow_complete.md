@@ -8,6 +8,7 @@ This root-level file is an index. Full Python logic/flow extractions live inside
 - Meta-Prompting: `projects/meta-prompting/python_logic_flow_complete.md`
 - LATS: `projects/lats/python_logic_flow_complete.md`
 - APE: `projects/ape/python_logic_flow_complete.md`
+- Prompt Report: `projects/prompt-report/python_logic_flow_complete.md`
 
 Machine-readable inventories:
 
@@ -17,3 +18,4 @@ Machine-readable inventories:
 - Meta-Prompting: `projects/meta-prompting/python_logic_inventory.json`
 - LATS: `projects/lats/python_logic_inventory.json`
 - APE: `projects/ape/python_logic_inventory.json`
+- Prompt Report: `projects/prompt-report/python_logic_inventory.json`

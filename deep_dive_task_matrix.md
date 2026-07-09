@@ -8,6 +8,7 @@
 | Meta-Prompting | meta model → expert call → expert output → append feedback → final answer | message history | Expert Python code execution, expert/summarizer calls | final answers, expert transcripts, evaluations | `projects/meta-prompting/` |
 | LATS | selection → expansion → evaluation → rollout → backprop → reflection | MCTS tree nodes, trajectory memory, value estimates | search env (HotPotQA, WebShop), code executors | best trajectories, answers, code solutions | `projects/lats/` |
 | APE | generate candidates → deduplicate → evaluate (likelihood/bandits) → rank → demo | prompt candidate pool, evaluation scores | LLM generation/evaluation, bandit UCB | ranked prompts, EvaluationResult, demo_fn | `projects/ape/` |
+| Prompt Report | task analysis → technique selection → prompt construction → LLM inference → answer extraction → verify/ensemble → evaluate | technique taxonomy (58+40), vocabulary (33 terms), case study logs | LLM, tools, agents, evaluators (LLM-as-Judge) | technique selection roadmap, benchmark results (MMLU), best-practice guidelines | `projects/prompt-report/` |
 
 ## Reading strategy
 
