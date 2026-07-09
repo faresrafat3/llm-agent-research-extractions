@@ -1,0 +1,317 @@
+# مخطط تدفق AI Scientist v2 — عربي — تحديث مراجع مقابل الكود
+
+```mermaid
+flowchart TD
+  %% AI Scientist v2 — رسم مراجع مقابل الكود الفعلي بالعربية
+
+  A[البداية: launch_scientist_bfts.py] --> ARG[قراءة معاملات سطر الأوامر]
+  ARG --> GPU[اكتشاف كروت GPU المتاحة]
+  GPU --> LIDEAS[تحميل ملف الأفكار JSON من --load_ideas]
+  LIDEAS --> IDX[اختيار الفكرة بواسطة --idea_idx]
+  IDX --> MKDIR[إنشاء مجلد تجربة بتوقيت واسم الفكرة]
+  MKDIR --> LC{هل --load_code مفعّل؟}
+  LC -->|نعم| LCP{هل ملف .py المطابق موجود؟}
+  LCP -->|نعم| CODE[قراءة كود البداية]
+  LCP -->|لا| NOWARN1[تحذير: ملف الكود غير موجود]
+  LC -->|لا| NOCODE[code=None]
+  CODE --> MD[كتابة idea.md عبر idea_to_markdown]
+  NOWARN1 --> MD
+  NOCODE --> MD
+  MD --> DR{هل --add_dataset_ref مفعّل؟}
+  DR -->|نعم| DRP{هل hf_dataset_reference.py موجود؟}
+  DRP -->|نعم| DRCODE[قراءة كود مرجع البيانات]
+  DRP -->|لا| NOWARN2[تحذير وجعل dataset_ref_code=None]
+  DR -->|لا| NODR[dataset_ref_code=None]
+  DRCODE --> MERGE{دمج added_code}
+  NOWARN2 --> MERGE
+  NODR --> MERGE
+  MERGE -->|مرجع بيانات + كود| ADD1[added_code = dataset_ref + code]
+  MERGE -->|مرجع بيانات فقط| ADD2[added_code = dataset_ref]
+  MERGE -->|كود فقط| ADD3[added_code = code]
+  MERGE -->|لا شيء| ADD4[added_code=None]
+  ADD1 --> ADDJSON{هل added_code موجود؟}
+  ADD2 --> ADDJSON
+  ADD3 --> ADDJSON
+  ADD4 --> ADDJSON
+  ADDJSON -->|نعم| IDEA_CODE[إضافة Code إلى JSON الفكرة]
+  ADDJSON -->|لا| SAVEIDEA[حفظ idea.json الخام]
+  IDEA_CODE --> SAVEIDEA
+  SAVEIDEA --> CFG[تعديل bfts_config وإنشاء config خاص بالفكرة]
+
+  subgraph IDEATION[سكريبت توليد الأفكار الاختياري]
+    I0[ملف وصف الورشة أو الموضوع] --> I1[system_prompt مع tool_descriptions و tool_names_str]
+    I1 --> ILOOP1{حلقة gen_idx حتى max_num_generations}
+    ILOOP1 --> I2[idea_generation_prompt مع workshop_description و prev_ideas_string]
+    I2 --> ILOOP2{حلقة reflection_round حتى num_reflections}
+    ILOOP2 -->|round 0| I2
+    ILOOP2 -->|round > 0| I3[idea_reflection_prompt مع current_round و last_tool_results]
+    I2 --> IACTION{تحليل ACTION و ARGUMENTS}
+    I3 --> IACTION
+    IACTION -->|SearchSemanticScholar| IS2[تشغيل SemanticScholarSearchTool.use_tool]
+    IS2 --> I3
+    IACTION -->|FinalizeIdea| IFIN[تحليل JSON الفكرة وإضافتها للأرشيف]
+    IACTION -->|خطأ أو JSON غير صالح| IBREAK[إنهاء محاولة الفكرة الحالية]
+    IFIN --> ILOOP1
+    IBREAK --> ILOOP1
+    ILOOP1 --> ISAVE[حفظ ملف الأفكار JSON]
+  end
+
+  CFG --> EXP[تشغيل perform_experiments_bfts]
+  EXP --> LOADCFG[تحميل config و task_desc]
+  LOADCFG --> PREP[تجهيز workspace للتجربة]
+  PREP --> AM[تهيئة AgentManager والتحقق من مفاتيح الفكرة وإنشاء المرحلة 1]
+
+  subgraph MANAGER[الحلقات المتداخلة في AgentManager.run]
+    AM --> M0{while current_stage}
+    M0 --> M1[تعيين current_substage = current_stage]
+    M1 --> M2{while current_substage}
+    M2 --> PA[إنشاء ParallelAgent للمرحلة الفرعية]
+    PA --> M3{while True لحلقة العقد}
+    M3 --> STEP[agent.step ينفذ خطوة BFTS متوازية]
+    STEP --> CALLBACK[step_callback يحفظ الملخصات والـ run]
+    CALLBACK --> MSC{فحص اكتمال المرحلة الرئيسية}
+    MSC -->|مكتملة| BEST{هل يوجد best node؟}
+    BEST -->|نعم| MSE[تقييم متعدد البذور على أفضل عقدة]
+    MSE --> SAP[تجميع رسومات بذور المرحلة]
+    SAP --> MMAINEND[إنهاء المرحلة الفرعية والانتقال للرئيسية التالية]
+    BEST -->|لا| MFAIL[إيقاف التجربة current_stage=None]
+    MSC -->|غير مكتملة| SSC{فحص اكتمال المرحلة الفرعية}
+    SSC -->|مكتملة| NS[إنشاء substage تالية من برومبت الأهداف]
+    NS -->|تم الإنشاء| RECORDSS[تسجيل StageTransition والمتابعة]
+    NS -->|لا يوجد| MMAINEND
+    SSC -->|غير مكتملة| M3
+    RECORDSS --> M2
+    MMAINEND --> CKPT[حفظ checkpoint]
+    CKPT --> NMS{إنشاء المرحلة الرئيسية التالية}
+    NMS -->|متاحة من 1 إلى 4| RECORDMS[تسجيل انتقال المرحلة الرئيسية]
+    RECORDMS --> M0
+    NMS -->|انتهت المرحلة 4 أو لا يوجد| MEND[اكتمال كل المراحل]
+    MFAIL --> MEND
+  end
+
+  subgraph SELECT[اختيار العقد في ParallelAgent._select_parallel_nodes]
+    STEP --> SEL0[تهيئة nodes_to_process و processed_trees]
+    SEL0 --> SEL1{while عدد العقد أقل من num_workers}
+    SEL1 --> DRAFT{draft_nodes أقل من num_drafts؟}
+    DRAFT -->|نعم| ADDDRAFT[إضافة None أي draft جديد]
+    ADDDRAFT --> SEL1
+    DRAFT -->|لا| VIABLE[بناء viable_trees واستبعاد الأشجار ذات الأوراق buggy كلها]
+    VIABLE --> DBGPROB{random أقل من debug_prob؟}
+    DBGPROB -->|نعم| DBGELIG[إيجاد buggy leaf nodes بعمق debug_depth مسموح]
+    DBGELIG --> DBGFOUND{توجد عقد debug والشجرة لم تعالج؟}
+    DBGFOUND -->|نعم| ADDDBG[إضافة عقدة debug]
+    ADDDBG --> SEL1
+    DBGFOUND -->|لا| STAGESEL{بادئة اسم المرحلة؟}
+    DBGPROB -->|لا| STAGESEL
+    STAGESEL -->|4_| ADDABL[إضافة best_stage3_node للأبليشن]
+    STAGESEL -->|2_| ADDHYP[إضافة best_stage1_node للهايبر بارامتر]
+    STAGESEL -->|1_ أو 3_| GOOD{هل توجد good_nodes؟}
+    GOOD -->|لا| ADDDRAFT
+    GOOD -->|نعم| BESTNODE[اختيار journal.get_best_node]
+    BESTNODE --> TREEDONE{هل الشجرة عولجت بالفعل؟}
+    TREEDONE -->|لا| ADDIMP[إضافة best node للتحسين]
+    TREEDONE -->|نعم| NEXTBEST[تجربة العقد الجيدة التالية]
+    NEXTBEST --> ADDIMP
+    ADDABL --> SEL1
+    ADDHYP --> SEL1
+    ADDIMP --> SEL1
+    SEL1 -->|اكتمل العدد| SUBMIT[إرسال العقد للعمال]
+  end
+
+  subgraph WORKER[ParallelAgent.step و _process_node_wrapper]
+    SUBMIT --> GPUACQ{هل GPU manager موجود؟}
+    GPUACQ -->|نعم| GPUOK{هل acquire_gpu نجح؟}
+    GPUOK -->|نعم| WG[العامل يستخدم GPU]
+    GPUOK -->|لا| WCPU[تحذير والعمل على CPU]
+    GPUACQ -->|لا| WCPU
+    WG --> NODETYPE{نوع node_data والمرحلة}
+    WCPU --> NODETYPE
+    NODETYPE -->|None| DRAFTPROMPT[برومبت draft]
+    NODETYPE -->|parent buggy| DEBUGPROMPT[برومبت debug]
+    NODETYPE -->|stage 2 non-buggy| HYPIDEA[برومبت فكرة hyperparameter مع retry حتى 5]
+    HYPIDEA --> HYPARSE{هل تم تحليل الاسم والوصف؟}
+    HYPARSE -->|لا بعد كل المحاولات| HYFALL[فكرة hyperparameter احتياطية]
+    HYPARSE -->|نعم| HYIMPL[برومبت تنفيذ hyperparameter]
+    HYFALL --> HYIMPL
+    NODETYPE -->|stage 4 non-buggy| ABIDEA[برومبت فكرة ablation مع retry حتى 5]
+    ABIDEA --> ABPARSE{هل تم تحليل اسم ووصف ablation؟}
+    ABPARSE -->|لا بعد كل المحاولات| ABFALL[فكرة ablation احتياطية]
+    ABPARSE -->|نعم| ABIMPL[برومبت تنفيذ ablation]
+    ABFALL --> ABIMPL
+    NODETYPE -->|normal non-buggy| IMPPROMPT[برومبت improve]
+    DRAFTPROMPT --> PCQ[plan_and_code_query مع retry حتى 3]
+    DEBUGPROMPT --> PCQ
+    HYIMPL --> PCQ
+    ABIMPL --> PCQ
+    IMPPROMPT --> PCQ
+    PCQ --> CODEPARSE{هل تم استخراج plan و code block؟}
+    CODEPARSE -->|لا وباقي retries| PARSEFB[إضافة Parsing Feedback للبرومبت]
+    PARSEFB --> PCQ
+    CODEPARSE -->|فشل نهائي| BADCOMP[إرجاع completion فاشل ككود]
+    CODEPARSE -->|نعم| RUN[تنفيذ كود التجربة عبر Interpreter]
+    BADCOMP --> RUN
+    RUN --> EVAL[برومبت parse_exec_result مع review_func_spec]
+    EVAL --> BUG{هل is_bug أو exception؟}
+    BUG -->|نعم| MARKBUG[تعليم العقدة buggy]
+    BUG -->|لا| MPGEN[برومبت توليد كود تحليل metrics]
+    MPGEN --> MPRUN[تشغيل كود تحليل metrics]
+    MPRUN --> METPROMPT[metrics_prompt مع metric_parse_spec]
+    METPROMPT --> VALIDMET{هل metrics صالحة؟}
+    VALIDMET -->|لا| WORST[تعيين WorstMetricValue وتعليم buggy]
+    VALIDMET -->|نعم| SETMET[تعيين node.metric]
+    SETMET --> PLOTBR{هل seed_eval؟}
+    PLOTBR -->|نعم| USEPARENT[إعادة استخدام plot_code من parent]
+    PLOTBR -->|stage3 ومعه سابق| USES2[استخدام best_stage2_plot_code كمرجع]
+    PLOTBR -->|stage4 ومعه سابق| USES3[استخدام best_stage3_plot_code كمرجع]
+    PLOTBR -->|طبيعي| PLOTPROMPT[برومبت كود الرسم]
+    USEPARENT --> PLOTRUN
+    USES2 --> PLOTPROMPT
+    USES3 --> PLOTPROMPT
+    PLOTPROMPT --> PLOTRUN[تشغيل كود الرسم]
+    PLOTRUN --> PLOTFAIL{فشل الرسم و retry_count أقل من 3؟}
+    PLOTFAIL -->|نعم| PLOTPROMPT
+    PLOTFAIL -->|لا| MOVEOUT[نقل ملفات npy و png إلى experiment_results]
+    MOVEOUT --> PLOTS{هل توجد رسومات؟}
+    PLOTS -->|نعم| VLM[اختيار الرسومات إن كانت كثيرة وتشغيل VLM feedback]
+    PLOTS -->|لا| NOPLOTS[تخطي تحليل VLM]
+    VLM --> NODEDONE[إرجاع node dict للوالد]
+    NOPLOTS --> NODEDONE
+    WORST --> NODEDONE
+    MARKBUG --> NODEDONE
+    NODEDONE --> FUTURE{هل future حصل له timeout أو error؟}
+    FUTURE -->|timeout/error| FERR[تسجيل الخطأ أو رفعه]
+    FUTURE -->|سليم| JOURNAL[إضافة result node إلى Journal]
+    JOURNAL --> RELEASE[تحرير GPU في finally]
+    FERR --> RELEASE
+  end
+
+  MEND --> REPORT{هل generate_report مفعّل؟}
+  REPORT -->|نعم| SUM[overall_summarize لكل مراحل التجربة]
+  REPORT -->|لا| COPYRES[نسخ experiment_results إلى idea_dir]
+  SUM --> COPYRES
+  COPYRES --> PLOTAGG[تشغيل aggregate_plots]
+
+  subgraph MULTISEED[التقييم متعدد البذور والتجميع]
+    MSE --> MSLOOP{حلقة seed حتى num_seeds}
+    MSLOOP --> SEEDCODE[حقن seed في random و numpy و torch داخل الكود]
+    SEEDCODE --> SEEDWORK[_process_node_wrapper مع seed_eval=True]
+    SEEDWORK --> MSFUT{هل future سليم؟}
+    MSFUT -->|نعم| MSAPP[إضافة seed node]
+    MSFUT -->|timeout/error| MSERR[تسجيل خطأ seed]
+    MSAPP --> MSLOOP
+    MSLOOP --> AGGPROMPT[برومبت تجميع رسومات seed]
+    AGGPROMPT --> AGGCODE[تشغيل كود رسومات التجميع]
+    AGGCODE --> AGGNODE[إنشاء seed aggregation node]
+  end
+
+  subgraph PLOTAGGSG[تجميع الرسومات النهائية]
+    PLOTAGG --> PASYS[رسالة نظام تجميع الرسومات]
+    PASYS --> PAUSER[برومبت aggregator مع idea_text و summaries]
+    PAUSER --> PACODE{هل رجع code block بايثون؟}
+    PACODE -->|لا| PASTOP[إيقاف تجميع الرسومات]
+    PACODE -->|نعم| PARUN[تشغيل auto_plot_aggregator.py]
+    PARUN --> PAOUT[حفظ stdout/stderr حتى لو فشل]
+    PAOUT --> PAREF{حلقة reflection حتى n_reflections}
+    PAREF --> PAREFPROMPT[برومبت reflection مع figure_count و aggregator_out]
+    PAREFPROMPT --> PADONE{هل قال I am done ومعه figures؟}
+    PADONE -->|نعم| FIGS[مجلد figures النهائي]
+    PADONE -->|كود جديد مختلف| PARUN
+    PADONE -->|كود مطابق أو لا يوجد كود| PAREF
+    PAREF -->|انتهت| FIGS
+  end
+
+  FIGS --> RMRES[حذف نسخة experiment_results المؤقتة]
+  RMRES --> TOK1[حفظ token tracker]
+  TOK1 --> SKIPW{هل --skip_writeup؟}
+  SKIPW -->|نعم| TOK2[حفظ token tracker مرة أخرى]
+  SKIPW -->|لا| CITE_START[تشغيل gather_citations]
+
+  subgraph CITE[حلقة جمع الاستشهادات]
+    CITE_START --> CCACHE{هل توجد citations في cache؟}
+    CCACHE -->|نعم| CACHED[استخدام citations المحفوظة]
+    CCACHE -->|لا| CROUND{حلقة round_idx حتى num_cite_rounds}
+    CROUND --> C1[برومبت اختيار citation ناقص و Query]
+    C1 --> CNONE{No more citations needed؟}
+    CNONE -->|نعم| CACHED
+    CNONE -->|لا| S2SEARCH[بحث Semantic Scholar]
+    S2SEARCH --> CPAPERS{هل توجد أوراق؟}
+    CPAPERS -->|لا| CROUND
+    CPAPERS -->|نعم| C2[برومبت اختيار أرقام الأوراق]
+    C2 --> CADD{Do not add any أو Selected فارغة؟}
+    CADD -->|نعم| CROUND
+    CADD -->|لا| BIB[إضافة BibTeX بعد التنظيف مع الوصف]
+    BIB --> CROUND
+    CROUND -->|انتهت| CACHED
+  end
+
+  CACHED --> WRETRY{حلقة attempt حتى writeup_retries}
+  WRETRY --> WTYPE{نوع الكتابة writeup_type}
+  WTYPE -->|normal| WN[perform_writeup بحد 8 صفحات]
+  WTYPE -->|icbinb| WI[perform_icbinb_writeup بحد 4 صفحات]
+  WN --> WOK{هل writeup_success؟}
+  WI --> WOK
+  WOK -->|نعم| TOK2
+  WOK -->|لا وباقي retries| WRETRY
+  WOK -->|لا وانتهت retries| WFAIL[طباعة فشل الكتابة]
+  WFAIL --> TOK2
+
+  subgraph WRITEUP[تفاصيل كتابة الورقة]
+    WN --> WLOAD[تحميل الفكرة والملخصات وكود التجميع والرسومات وقالب LaTeX]
+    WI --> WLOAD
+    WLOAD --> WPSYS[رسالة نظام الكتابة]
+    WPSYS --> WPUSER[برومبت كتابة الورقة]
+    WPUSER --> WLATEX[LLM يرجع template.tex كامل]
+    WLATEX --> COMPILE[تجميع LaTeX]
+    COMPILE --> WREF{حلقة reflection حتى n_writeup_reflections}
+    WREF --> CHK[chktex و figures غير المستخدمة/غير الصحيحة ومعلومات الصفحات]
+    CHK --> ICBINB{هل نسخة ICBINB؟}
+    ICBINB -->|نعم| IMGREV[مراجعة VLM للكابشن والنص وفحص duplicate figures]
+    IMGREV --> WREFP[برومبت reflection للكتابة]
+    ICBINB -->|لا| WREFP
+    WREFP --> WDONE{I am done أو لا latex block أو لا تغيير؟}
+    WDONE -->|نعم| WFINAL[PDF نهائي]
+    WDONE -->|لا، LaTeX معدل| COMPILE
+    WREF -->|انتهت| VSEL{هل يوجد reflection نهائي للـ ICBINB؟}
+    VSEL -->|نعم| VSELREV[مراجعة اختيار الرسومات للصفحات]
+    VSELREV --> VREF[img_reflection_prompt]
+    VREF --> FLP[final_reflection_prompt لضبط حد الصفحات]
+    FLP --> WFINAL
+    VSEL -->|لا| WFINAL
+  end
+
+  TOK2 --> SKIPR{هل --skip_review أو --skip_writeup؟}
+  SKIPR -->|نعم| CLEAN[تنظيف العمليات]
+  SKIPR -->|لا| PDFSEL[اختيار PDF للمراجعة]
+  PDFSEL --> PDFD{هل توجد reflection PDFs؟}
+  PDFD -->|final exists| PDFF[استخدام final reflection PDF]
+  PDFD -->|numbered exists| PDFN[استخدام أعلى رقم reflection]
+  PDFD -->|fallback| PDFFB[استخدام أول reflection PDF]
+  PDFF --> PDFEX{هل مسار PDF موجود؟}
+  PDFN --> PDFEX
+  PDFFB --> PDFEX
+  PDFEX -->|لا| CLEAN
+  PDFEX -->|نعم| LOADPDF[تحميل نص الورقة]
+  LOADPDF --> PR[تشغيل perform_review]
+
+  subgraph REVIEW[المراجعة النصية والبصرية]
+    PR --> PRBASE[نموذج NeurIPS مع few-shot اختياري ونص الورقة]
+    PRBASE --> PRENS{هل num_reviews_ensemble أكبر من 1؟}
+    PRENS -->|نعم| BATCH[دفعة مراجعات LLM]
+    BATCH --> META[meta_reviewer_system_prompt وتجميع المراجعات]
+    PRENS -->|لا| ONE[مراجعة واحدة من LLM]
+    ONE --> PRREF{هل num_reflections أكبر من 1؟}
+    META --> PRREF
+    PRREF -->|نعم| PRLOOP[حلقة reviewer_reflection_prompt حتى I am done أو النهاية]
+    PRREF -->|لا| RJSON[Review JSON]
+    PRLOOP --> RJSON
+    RJSON --> VCAP[مراجعة VLM للصورة والكابشن ومراجع النص]
+    VCAP --> SAVE_REVIEW[حفظ review_text.txt و review_img_cap_ref.json]
+  end
+
+  SAVE_REVIEW --> CLEAN
+  CLEAN --> CHILDREN[حلقة على child processes وإرسال SIGTERM]
+  CHILDREN --> ALIVE[حلقة على العمليات الحية وقتلها]
+  ALIVE --> ORPHAN[حلقة process_iter على كلمات python torch mp bfts experiment]
+  ORPHAN --> EXIT[sys.exit(0)]
+
+```

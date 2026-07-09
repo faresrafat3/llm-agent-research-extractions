@@ -1,0 +1,3881 @@
+[
+  {
+    "file": "evaluate_outputs.py",
+    "lines": 274,
+    "module_doc": null,
+    "imports": [
+      "import json",
+      "import re",
+      "from glob import glob",
+      "from tap import Tap",
+      "from joblib import Parallel, delayed",
+      "from utils.execute_code import execute_code_with_timeout",
+      "from utils.sonnet_eval import sonnet_errors"
+    ],
+    "module_assignments": [],
+    "classes": [
+      {
+        "name": "Arguments",
+        "line": 236,
+        "bases": [
+          "Tap"
+        ],
+        "doc": "The arguments to pass to the program.",
+        "methods": []
+      }
+    ],
+    "functions": [
+      {
+        "name": "extract_answer",
+        "qualname": "extract_answer",
+        "line": 15,
+        "signature": "extract_answer(txt, first_split, second_split)",
+        "doc": "Given a string, extract the answer between the first and second split.\n\nArgs:\n    txt (str): The string to extract the answer from.\n    first_split (str): The first split.\n    second_split (str): The second split.\n\nReturns:\n    str: The final answer.",
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 32,
+            "value": "second_split"
+          },
+          {
+            "line": 34,
+            "value": "None"
+          }
+        ],
+        "raises": [],
+        "tries": [
+          {
+            "line": 29,
+            "handlers": [
+              "Exception"
+            ],
+            "finalbody_len": 0
+          }
+        ],
+        "assignments": [
+          {
+            "line": 30,
+            "code": "first_split = txt.split(first_split)[-1]"
+          },
+          {
+            "line": 31,
+            "code": "second_split = first_split.split(second_split)[0]"
+          }
+        ],
+        "calls_unique": [
+          "txt.split",
+          "first_split.split"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "clean_output_for_arithmetic",
+        "qualname": "clean_output_for_arithmetic",
+        "line": 37,
+        "signature": "clean_output_for_arithmetic(output)",
+        "doc": "Clean the output for arithmetic problems.\n\nArgs:\n    output (str): The output to clean.\n\nReturns:\n    str: The cleaned output.",
+        "loops": [],
+        "conditions": [
+          {
+            "line": 47,
+            "test": "'=' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 49,
+            "test": "' is' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 51,
+            "test": "' equals' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 53,
+            "test": "' evaluates to' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 55,
+            "test": "' is equal to' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 57,
+            "value": "output"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 48,
+            "code": "output = output.split(\"=\")[1].strip()"
+          },
+          {
+            "line": 50,
+            "code": "output = output.split(\" is\")[1].strip()"
+          },
+          {
+            "line": 52,
+            "code": "output = output.split(\" equals\")[1].strip()"
+          },
+          {
+            "line": 54,
+            "code": "output = output.split(\" evaluates to\")[1].strip()"
+          },
+          {
+            "line": 56,
+            "code": "output = output.split(\" is equal to\")[1].strip()"
+          }
+        ],
+        "calls_unique": [
+          "output.split[...].strip",
+          "output.split"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "clean_output_for_GameOf24",
+        "qualname": "clean_output_for_GameOf24",
+        "line": 60,
+        "signature": "clean_output_for_GameOf24(output)",
+        "doc": "Clean the output for GameOf24 problems.",
+        "loops": [],
+        "conditions": [
+          {
+            "line": 64,
+            "test": "'=' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 66,
+            "test": "'is' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 68,
+            "test": "'equals' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 70,
+            "test": "'evaluates to' in output",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 72,
+            "value": "output"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 65,
+            "code": "output = output.split(\"=\")[0].strip()"
+          },
+          {
+            "line": 67,
+            "code": "output = output.split(\"is\")[1].strip()"
+          },
+          {
+            "line": 69,
+            "code": "output = output.split(\"equals\")[0].strip()"
+          },
+          {
+            "line": 71,
+            "code": "output = output.split(\"evaluates to\")[0].strip()"
+          }
+        ],
+        "calls_unique": [
+          "output.split[...].strip",
+          "output.split"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_GameOf24",
+        "qualname": "eval_for_GameOf24",
+        "line": 75,
+        "signature": "eval_for_GameOf24(input, output)",
+        "doc": "Given an input and output, check if the output is correct and follows the rules of the game.",
+        "loops": [
+          {
+            "line": 89,
+            "type": "for",
+            "target": "symbol",
+            "iter": "replacements",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 83,
+            "test": "not abs(value - 24) < 0.001",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 99,
+            "test": "input_digits != output_digits",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 101,
+            "value": "True"
+          },
+          {
+            "line": 84,
+            "value": "False"
+          },
+          {
+            "line": 100,
+            "value": "False"
+          },
+          {
+            "line": 103,
+            "value": "False"
+          }
+        ],
+        "raises": [],
+        "tries": [
+          {
+            "line": 80,
+            "handlers": [
+              "Exception"
+            ],
+            "finalbody_len": 0
+          }
+        ],
+        "assignments": [
+          {
+            "line": 79,
+            "code": "clean_output = clean_output_for_GameOf24(output)"
+          },
+          {
+            "line": 82,
+            "code": "value = eval(clean_output)"
+          },
+          {
+            "line": 86,
+            "code": "input_digits = input.split(\" \")"
+          },
+          {
+            "line": 88,
+            "code": "replacements = [\"+\", \"-\", \"*\", \"/\", \"÷\", \"(\", \")\"]"
+          },
+          {
+            "line": 92,
+            "code": "clean_output = re.sub(\" +\", \" \", clean_output)"
+          },
+          {
+            "line": 93,
+            "code": "clean_output = clean_output.strip()"
+          },
+          {
+            "line": 94,
+            "code": "output_digits = clean_output.split(\" \")"
+          },
+          {
+            "line": 90,
+            "code": "clean_output = clean_output.replace(symbol, \" \")"
+          }
+        ],
+        "calls_unique": [
+          "clean_output_for_GameOf24",
+          "eval",
+          "input.split",
+          "re.sub",
+          "clean_output.strip",
+          "clean_output.split",
+          "input_digits.sort",
+          "output_digits.sort",
+          "clean_output.replace",
+          "abs"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "remove_punctuation",
+        "qualname": "remove_punctuation",
+        "line": 106,
+        "signature": "remove_punctuation(output)",
+        "doc": null,
+        "loops": [
+          {
+            "line": 108,
+            "type": "for",
+            "target": "marker",
+            "iter": "markers",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 110,
+            "value": "output"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 107,
+            "code": "markers = [\",\", \";\", \":\", \".\", '\"']"
+          },
+          {
+            "line": 109,
+            "code": "output = output.replace(marker, \"\")"
+          }
+        ],
+        "calls_unique": [
+          "output.replace"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "convert_newline_to_space",
+        "qualname": "convert_newline_to_space",
+        "line": 113,
+        "signature": "convert_newline_to_space(output)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 115,
+            "value": "output"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 114,
+            "code": "output = output.replace(\"\\n\", \" \")"
+          }
+        ],
+        "calls_unique": [
+          "output.replace"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_exact_matching_with_no_punctuation",
+        "qualname": "eval_for_exact_matching_with_no_punctuation",
+        "line": 118,
+        "signature": "eval_for_exact_matching_with_no_punctuation(input, output, target)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 123,
+            "test": "target == output",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 125,
+            "value": "False"
+          },
+          {
+            "line": 124,
+            "value": "True"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 121,
+            "code": "output = remove_punctuation(output)"
+          },
+          {
+            "line": 122,
+            "code": "output = convert_newline_to_space(output)"
+          }
+        ],
+        "calls_unique": [
+          "remove_punctuation",
+          "convert_newline_to_space"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_softmatch",
+        "qualname": "eval_for_softmatch",
+        "line": 128,
+        "signature": "eval_for_softmatch(input, output, target)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 130,
+            "test": "target in output",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 132,
+            "value": "False"
+          },
+          {
+            "line": 131,
+            "value": "True"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 129,
+            "code": "output = remove_punctuation(output)"
+          }
+        ],
+        "calls_unique": [
+          "remove_punctuation"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_CheckmateInOne",
+        "qualname": "eval_for_CheckmateInOne",
+        "line": 135,
+        "signature": "eval_for_CheckmateInOne(input, output, target)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 140,
+            "test": "last_move == ''",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 145,
+            "test": "not next_move_idx in output",
+            "body_len": 1,
+            "orelse_len": 2
+          },
+          {
+            "line": 146,
+            "test": "target in output",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 150,
+            "test": "target in output",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 152,
+            "value": "False"
+          },
+          {
+            "line": 147,
+            "value": "True"
+          },
+          {
+            "line": 151,
+            "value": "True"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 137,
+            "code": "last_move = input.split(\".\")[-1].strip()"
+          },
+          {
+            "line": 138,
+            "code": "move_idx = input.split(\".\")[-2].split(\" \")[-1].strip()"
+          },
+          {
+            "line": 144,
+            "code": "next_move_idx = str(int(move_idx) + 1)"
+          },
+          {
+            "line": 141,
+            "code": "last_move = \"White\""
+          },
+          {
+            "line": 143,
+            "code": "last_move = \"Black\""
+          },
+          {
+            "line": 149,
+            "code": "output = output.split(next_move_idx)[0].strip()"
+          }
+        ],
+        "calls_unique": [
+          "input.split[...].strip",
+          "input.split[...].split[...].strip",
+          "str",
+          "output.split[...].strip",
+          "int",
+          "input.split",
+          "input.split[...].split",
+          "output.split"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_Sonnet",
+        "qualname": "eval_for_Sonnet",
+        "line": 155,
+        "signature": "eval_for_Sonnet(output, rhyme_scheme)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 158,
+            "test": "not errors",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 160,
+            "value": "False"
+          },
+          {
+            "line": 159,
+            "value": "True"
+          },
+          {
+            "line": 162,
+            "value": "False"
+          }
+        ],
+        "raises": [],
+        "tries": [
+          {
+            "line": 156,
+            "handlers": [
+              "Exception"
+            ],
+            "finalbody_len": 0
+          }
+        ],
+        "assignments": [
+          {
+            "line": 157,
+            "code": "errors = sonnet_errors(output, rhyme_scheme)"
+          }
+        ],
+        "calls_unique": [
+          "sonnet_errors"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_multiple_choice",
+        "qualname": "eval_for_multiple_choice",
+        "line": 165,
+        "signature": "eval_for_multiple_choice(input, output, target)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 166,
+            "test": "target in output[:len(target)]",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 178,
+            "value": "False"
+          },
+          {
+            "line": 167,
+            "value": "True"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [],
+        "calls_unique": [
+          "len"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "eval_for_pyton_programming_puzzles",
+        "qualname": "eval_for_pyton_programming_puzzles",
+        "line": 181,
+        "signature": "eval_for_pyton_programming_puzzles(input, output, target)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 182,
+            "test": "'```python' in output",
+            "body_len": 2,
+            "orelse_len": 0
+          },
+          {
+            "line": 186,
+            "test": "'def sat' in output",
+            "body_len": 2,
+            "orelse_len": 1
+          },
+          {
+            "line": 195,
+            "test": "\"NameError: name 'answer' is not defined\" in eval_bool",
+            "body_len": 3,
+            "orelse_len": 0
+          },
+          {
+            "line": 199,
+            "test": "'True' in eval_bool",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 187,
+            "test": "'from typing' not in output",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 201,
+            "value": "False"
+          },
+          {
+            "line": 200,
+            "value": "True"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 193,
+            "code": "code = code.replace(\"List[\", \"list[\")"
+          },
+          {
+            "line": 194,
+            "code": "eval_bool = execute_code_with_timeout(code, timeout=3)"
+          },
+          {
+            "line": 183,
+            "code": "output = output.split(\"```python\")[-1].strip()"
+          },
+          {
+            "line": 184,
+            "code": "output = output.split(\"```\")[0].strip()"
+          },
+          {
+            "line": 189,
+            "code": "code = f\"{output}\\nanswer = solution()\\nprint(sat(answer))\""
+          },
+          {
+            "line": 191,
+            "code": "code = f\"from typing import *\\n{input}\\n{output}\\nanswer = solution()\\nprint(sat(answer))\""
+          },
+          {
+            "line": 188,
+            "code": "output = f\"from typing import *\\n{output}\""
+          }
+        ],
+        "calls_unique": [
+          "code.replace",
+          "execute_code_with_timeout",
+          "output.split[...].strip",
+          "print",
+          "output.split"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "run_eval",
+        "qualname": "run_eval",
+        "line": 204,
+        "signature": "run_eval(datum, task)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 211,
+            "test": "'GameOf24' in task",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 213,
+            "test": "any([x in task for x in ['word_sorting', 'multistep_arithmetic_two']])",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 215,
+            "test": "any([x in task for x in ['CheckmateInOne']])",
+            "body_len": 2,
+            "orelse_len": 1
+          },
+          {
+            "line": 218,
+            "test": "any([x in task for x in ['Sonnets-Standard']])",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 220,
+            "test": "any([x in task for x in ['geometric_shapes', 'ruin_names']])",
+            "body_len": 2,
+            "orelse_len": 1
+          },
+          {
+            "line": 223,
+            "test": "any([x in task for x in ['MGSM']])",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 225,
+            "test": "any([x in task for x in ['P3', 'P3_Test']])",
+            "body_len": 4,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 212,
+            "value": "eval_for_GameOf24(input, output)"
+          },
+          {
+            "line": 214,
+            "value": "eval_for_exact_matching_with_no_punctuation(input, output, target)"
+          },
+          {
+            "line": 217,
+            "value": "decision"
+          },
+          {
+            "line": 219,
+            "value": "eval_for_Sonnet(output, 'ABAB CDCD EFEF GG')"
+          },
+          {
+            "line": 222,
+            "value": "decision"
+          },
+          {
+            "line": 224,
+            "value": "eval_for_softmatch(input, output, target)"
+          },
+          {
+            "line": 231,
+            "value": "decision"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 205,
+            "code": "input = datum[\"input\"]"
+          },
+          {
+            "line": 206,
+            "code": "output = datum[\"output\"].lower()"
+          },
+          {
+            "line": 208,
+            "code": "output = extract_answer(output).strip()"
+          },
+          {
+            "line": 209,
+            "code": "target = datum[\"target\"].lower()"
+          },
+          {
+            "line": 216,
+            "code": "decision = eval_for_CheckmateInOne(input, output, target)"
+          },
+          {
+            "line": 221,
+            "code": "decision = eval_for_multiple_choice(input, output, target)"
+          },
+          {
+            "line": 226,
+            "code": "output = datum[\"output\"]"
+          },
+          {
+            "line": 227,
+            "code": "output = extract_answer( txt=output, first_split='>> FINAL ANSWER:\\n\"\"\"', second_split='\"\"\"' )"
+          },
+          {
+            "line": 230,
+            "code": "decision = eval_for_pyton_programming_puzzles(input, output, target)"
+          }
+        ],
+        "calls_unique": [
+          "datum[...].lower",
+          "extract_answer.strip",
+          "print",
+          "eval_for_GameOf24",
+          "any",
+          "extract_answer",
+          "eval_for_exact_matching_with_no_punctuation",
+          "eval_for_CheckmateInOne",
+          "eval_for_Sonnet",
+          "eval_for_multiple_choice",
+          "eval_for_softmatch",
+          "eval_for_pyton_programming_puzzles"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "main",
+        "qualname": "main",
+        "line": 245,
+        "signature": "main(args)",
+        "doc": null,
+        "loops": [
+          {
+            "line": 250,
+            "type": "for",
+            "target": "file",
+            "iter": "files",
+            "body_len": 8,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 251,
+            "test": "'data' in file",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 256,
+            "test": "len(data) == 0",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 246,
+            "code": "directory = args.directory"
+          },
+          {
+            "line": 247,
+            "code": "task = args.task"
+          },
+          {
+            "line": 248,
+            "code": "files = glob(f\"{directory}/*{task}*.jsonl\")"
+          },
+          {
+            "line": 260,
+            "code": "results = Parallel(n_jobs=-1, verbose=0, prefer=\"threads\")( delayed(run_eval)(datum=datum, task=task) for datum in data )"
+          },
+          {
+            "line": 265,
+            "code": "correct = sum(results)"
+          },
+          {
+            "line": 266,
+            "code": "size = len(results)"
+          },
+          {
+            "line": 267,
+            "code": "accuracy = correct / size"
+          },
+          {
+            "line": 254,
+            "code": "data = [json.loads(line) for line in f.readlines()]"
+          }
+        ],
+        "calls_unique": [
+          "glob",
+          "files.sort",
+          "Parallel",
+          "sum",
+          "len",
+          "print",
+          "open",
+          "json.loads",
+          "delayed",
+          "f.readlines"
+        ],
+        "llm_calls": [],
+        "io_calls": [
+          {
+            "line": 248,
+            "call": "glob"
+          },
+          {
+            "line": 253,
+            "call": "open"
+          },
+          {
+            "line": 254,
+            "call": "json.loads"
+          },
+          {
+            "line": 254,
+            "call": "f.readlines"
+          }
+        ]
+      }
+    ],
+    "top_level": [
+      {
+        "line": 271,
+        "type": "If",
+        "code": "if __name__ == \"__main__\": args = Arguments().parse_args() main(args)"
+      }
+    ],
+    "prompt_like_assignments": [
+      {
+        "line": 189,
+        "name": "code",
+        "code": "code = f\"{output}\\nanswer = solution()\\nprint(sat(answer))\""
+      },
+      {
+        "line": 191,
+        "name": "code",
+        "code": "code = f\"from typing import *\\n{input}\\n{output}\\nanswer = solution()\\nprint(sat(answer))\""
+      },
+      {
+        "line": 227,
+        "name": "output",
+        "code": "output = extract_answer(\n            txt=output, first_split='>> FINAL ANSWER:\\n\"\"\"', second_split='\"\"\"'\n        )"
+      }
+    ]
+  },
+  {
+    "file": "run_experiments.py",
+    "lines": 394,
+    "module_doc": null,
+    "imports": [
+      "import sys",
+      "from typing import Optional",
+      "import os",
+      "import json",
+      "from tap import Tap",
+      "from joblib import Parallel, delayed",
+      "from utils.language_model import OpenAI_LanguageModel",
+      "from utils.meta_scaffolding import MetaPromptingScaffolding"
+    ],
+    "module_assignments": [
+      {
+        "line": 19,
+        "code": "DESCRIPTION_DICT = { \"word_sorting\": \"Sort a list of words alphabetically, placing them in a single line of text separated by spaces.\", \"multistep_arithmetic_two\": \"Solve multi-step arithmetic problems.\", \"geometric_shapes\": \"Name geometric shapes from their SVG paths.\", \"test\": \"Please complete the task correctly.\", \"GameOf24\": \"Let's play a game called 24. You'll be given four integers, and y..."
+      },
+      {
+        "line": 41,
+        "code": "template_gen_expert_identity = \"\"\"For each instruction, write a high-quality description about the most capable and suitable agent to answer the instruction. In second person perspective. [Instruction]: Make a list of 5 possible effects of deforestation. [Agent Description]: You are an environmental scientist with a specialization in the study of ecosystems and their interactions with human act..."
+      }
+    ],
+    "classes": [
+      {
+        "name": "Arguments",
+        "line": 53,
+        "bases": [
+          "Tap"
+        ],
+        "doc": null,
+        "methods": []
+      }
+    ],
+    "functions": [
+      {
+        "name": "run_model",
+        "qualname": "run_model",
+        "line": 113,
+        "signature": "run_model(meta_model, datum, prefix_messages, task_description, meta_model_settings, question_prefix, question_suffix, expert_prompting)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 133,
+            "test": "expert_prompting",
+            "body_len": 4,
+            "orelse_len": 1
+          }
+        ],
+        "returns": [
+          {
+            "line": 189,
+            "value": "{'input': input, 'target': target, 'message_log': message_log, 'output': output}"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 126,
+            "code": "input = datum[\"input\"]"
+          },
+          {
+            "line": 127,
+            "code": "target = datum[\"target\"]"
+          },
+          {
+            "line": 130,
+            "code": "messages = prefix_messages.copy()"
+          },
+          {
+            "line": 172,
+            "code": "message_log = meta_model.meta_model_generate( prompt_or_messages=messages, max_tokens=meta_model_settings[\"parameters\"][\"max_tokens\"], temperature=meta_model_settings[\"parameters\"][\"temperature\"], top_p=meta_model_settings[\"parameters\"][\"top_p\"], num_return_sequences=meta_model_settings[\"parameters\"][\"num_return_sequences\"], counter=0, original_question=f\"{task_description}\\n\\n{input}\", )"
+          },
+          {
+            "line": 182,
+            "code": "output = message_log[-1][\"content\"]"
+          },
+          {
+            "line": 134,
+            "code": "expert_messages = [ { \"role\": \"user\", \"content\": f\"{template_gen_expert_identity}\\n\\n[Instruction]:{input}\\n[Agent Description]:\", } ]"
+          },
+          {
+            "line": 142,
+            "code": "expert_identity = meta_model.generate( prompt_or_messages=expert_messages, max_tokens=meta_model_settings[\"parameters\"][\"max_tokens\"], num_return_sequences=meta_model_settings[\"parameters\"][ \"num_return_sequences\" ], temperature=meta_model_settings[\"parameters\"][\"temperature\"], top_p=meta_model_settings[\"parameters\"][\"top_p\"], )"
+          },
+          {
+            "line": 153,
+            "code": "template_expert_prompting = f\"{expert_identity}\\n\\nNow given the above identity background, please answer the following question:\\n\\nQuestion: {task_description}\\n\\n{input}\""
+          }
+        ],
+        "calls_unique": [
+          "print",
+          "prefix_messages.copy",
+          "meta_model.meta_model_generate",
+          "meta_model.generate",
+          "messages.append"
+        ],
+        "llm_calls": [
+          {
+            "line": 172,
+            "call": "meta_model.meta_model_generate"
+          },
+          {
+            "line": 142,
+            "call": "meta_model.generate"
+          }
+        ],
+        "io_calls": []
+      },
+      {
+        "name": "main",
+        "qualname": "main",
+        "line": 197,
+        "signature": "main(args)",
+        "doc": null,
+        "loops": [
+          {
+            "line": 359,
+            "type": "for",
+            "target": "i",
+            "iter": "range(0, min(len(data), args.max_num), BATCHES)",
+            "body_len": 3,
+            "orelse_len": 0
+          },
+          {
+            "line": 380,
+            "type": "for",
+            "target": "output",
+            "iter": "outputs",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 215,
+            "test": "not args.output_path is None",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 221,
+            "test": "args.output_directory is None",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 225,
+            "test": "args.input_path is None",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 227,
+            "test": "args.output_path is None",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 230,
+            "test": "args.fresh_eyes",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 233,
+            "test": "args.question_prefix_or_path.endswith('.txt')",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 237,
+            "test": "args.question_suffix_or_path.endswith('.txt')",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 204,
+            "code": "meta_model_message_list = meta_prompt_config_dict[\"meta-model\"][\"message-list\"]"
+          },
+          {
+            "line": 212,
+            "code": "task_description = DESCRIPTION_DICT[args.task_name]"
+          },
+          {
+            "line": 245,
+            "code": "meta_model_settings = meta_prompt_config_dict[\"meta-model\"]"
+          },
+          {
+            "line": 246,
+            "code": "generator_settings = meta_prompt_config_dict[\"generator\"]"
+          },
+          {
+            "line": 247,
+            "code": "verifier_settings = meta_prompt_config_dict[\"verifier\"]"
+          },
+          {
+            "line": 248,
+            "code": "summarizer_settings = meta_prompt_config_dict[\"summarizer\"]"
+          },
+          {
+            "line": 251,
+            "code": "meta_model_settings[\"parameters\"][\"temperature\"] = ( args.temperature if args.temperature is not None else meta_model_settings[\"parameters\"][\"temperature\"] )"
+          },
+          {
+            "line": 256,
+            "code": "meta_model_settings[\"parameters\"][\"top_p\"] = ( args.top_p if args.top_p is not None else meta_model_settings[\"parameters\"][\"top_p\"] )"
+          },
+          {
+            "line": 261,
+            "code": "meta_model_settings[\"parameters\"][\"max_tokens\"] = ( args.max_tokens if args.max_tokens is not None else meta_model_settings[\"parameters\"][\"max_tokens\"] )"
+          },
+          {
+            "line": 266,
+            "code": "meta_model_settings[\"parameters\"][\"num_return_sequences\"] = ( args.num_return_sequences if args.num_return_sequences is not None else meta_model_settings[\"parameters\"][\"num_return_sequences\"] )"
+          },
+          {
+            "line": 271,
+            "code": "generator_settings[\"parameters\"][\"temperature\"] = ( args.temperature if args.temperature is not None else generator_settings[\"parameters\"][\"temperature\"] )"
+          },
+          {
+            "line": 276,
+            "code": "generator_settings[\"parameters\"][\"top_p\"] = ( args.top_p if args.top_p is not None else generator_settings[\"parameters\"][\"top_p\"] )"
+          },
+          {
+            "line": 281,
+            "code": "generator_settings[\"parameters\"][\"max_tokens\"] = ( args.max_tokens if args.max_tokens is not None else generator_settings[\"parameters\"][\"max_tokens\"] )"
+          },
+          {
+            "line": 286,
+            "code": "generator_settings[\"parameters\"][\"num_return_sequences\"] = ( args.num_return_sequences if args.num_return_sequences is not None else generator_settings[\"parameters\"][\"num_return_sequences\"] )"
+          },
+          {
+            "line": 291,
+            "code": "verifier_settings[\"parameters\"][\"temperature\"] = ( args.temperature if args.temperature is not None else verifier_settings[\"parameters\"][\"temperature\"] )"
+          },
+          {
+            "line": 296,
+            "code": "verifier_settings[\"parameters\"][\"top_p\"] = ( args.top_p if args.top_p is not None else verifier_settings[\"parameters\"][\"top_p\"] )"
+          },
+          {
+            "line": 301,
+            "code": "verifier_settings[\"parameters\"][\"max_tokens\"] = ( args.max_tokens if args.max_tokens is not None else verifier_settings[\"parameters\"][\"max_tokens\"] )"
+          },
+          {
+            "line": 306,
+            "code": "verifier_settings[\"parameters\"][\"num_return_sequences\"] = ( args.num_return_sequences if args.num_return_sequences is not None else verifier_settings[\"parameters\"][\"num_return_sequences\"] )"
+          },
+          {
+            "line": 313,
+            "code": "error_message = meta_prompt_config_dict[\"meta-model\"][\"error-message\"]"
+          },
+          {
+            "line": 314,
+            "code": "final_answer_indicator = meta_prompt_config_dict[\"meta-model\"][ \"final-answer-indicator\" ]"
+          },
+          {
+            "line": 323,
+            "code": "model = OpenAI_LanguageModel( model_name=args.model_name, api_key=args.api_key, api_type=args.api_type, api_version=args.api_version, api_base=args.api_base, )"
+          },
+          {
+            "line": 332,
+            "code": "meta_model = MetaPromptingScaffolding( language_model=model, fresh_eyes=args.fresh_eyes, generator_settings=generator_settings, verifier_settings=verifier_settings, summarizer_settings=summarizer_settings, error_message=error_message, final_answer_indicator=final_answer_indicator, include_expert_name_in_instruction=args.include_expert_name_in_instruction, extract_output=args.extract_output, exp..."
+          },
+          {
+            "line": 348,
+            "code": "OUTPUTS = []"
+          },
+          {
+            "line": 355,
+            "code": "BATCHES = min(args.max_num, 6)"
+          },
+          {
+            "line": 384,
+            "code": "args.output_path = args.output_path.replace(\".jsonl\", \"-args.json\")"
+          },
+          {
+            "line": 201,
+            "code": "meta_prompt_config_dict = json.load(f)"
+          },
+          {
+            "line": 222,
+            "code": "args.output_directory = \"results\""
+          },
+          {
+            "line": 226,
+            "code": "args.input_path = f\"data/{args.task_name}.jsonl\""
+          },
+          {
+            "line": 228,
+            "code": "args.output_path = f\"{args.output_directory}/{args.task_name}.jsonl\""
+          },
+          {
+            "line": 231,
+            "code": "args.output_path = args.output_path.replace(\".jsonl\", \"-fresh-eyes.jsonl\")"
+          },
+          {
+            "line": 320,
+            "code": "data = [json.loads(line) for line in f.readlines()]"
+          },
+          {
+            "line": 361,
+            "code": "outputs = Parallel(n_jobs=6, verbose=100, prefer=\"threads\")( delayed(run_model)( meta_model=meta_model, datum=datum, prefix_messages=meta_model_message_list, task_description=task_description, meta_model_settings=meta_model_settings, question_suffix=args.question_suffix_or_path, question_prefix=args.question_prefix_or_path, expert_prompting=args.expert_prompting, ) for datum in data[i : i + BAT..."
+          },
+          {
+            "line": 386,
+            "code": "temp_dict = {\"args\": args.as_dict(), \"config_dict\": meta_prompt_config_dict}"
+          },
+          {
+            "line": 235,
+            "code": "args.question_prefix_or_path = f.read()"
+          },
+          {
+            "line": 239,
+            "code": "args.question_suffix_or_path = f.read()"
+          }
+        ],
+        "calls_unique": [
+          "args.question_prefix_or_path.endswith",
+          "args.question_suffix_or_path.endswith",
+          "os.makedirs",
+          "OpenAI_LanguageModel",
+          "MetaPromptingScaffolding",
+          "min",
+          "range",
+          "args.output_path.replace",
+          "open",
+          "json.load",
+          "DESCRIPTION_DICT.keys",
+          "args.output_path.endswith",
+          "os.path.dirname",
+          "f.write",
+          "Parallel",
+          "OUTPUTS.extend",
+          "f.read",
+          "json.loads",
+          "len",
+          "args.as_dict",
+          "json.dumps",
+          "f.readlines",
+          "delayed"
+        ],
+        "llm_calls": [
+          {
+            "line": 323,
+            "call": "OpenAI_LanguageModel"
+          }
+        ],
+        "io_calls": [
+          {
+            "line": 199,
+            "call": "open"
+          },
+          {
+            "line": 201,
+            "call": "json.load"
+          },
+          {
+            "line": 319,
+            "call": "open"
+          },
+          {
+            "line": 351,
+            "call": "open"
+          },
+          {
+            "line": 352,
+            "call": "f.write"
+          },
+          {
+            "line": 385,
+            "call": "open"
+          },
+          {
+            "line": 387,
+            "call": "f.write"
+          },
+          {
+            "line": 234,
+            "call": "open"
+          },
+          {
+            "line": 235,
+            "call": "f.read"
+          },
+          {
+            "line": 238,
+            "call": "open"
+          },
+          {
+            "line": 239,
+            "call": "f.read"
+          },
+          {
+            "line": 320,
+            "call": "json.loads"
+          },
+          {
+            "line": 379,
+            "call": "open"
+          },
+          {
+            "line": 387,
+            "call": "json.dumps"
+          },
+          {
+            "line": 320,
+            "call": "f.readlines"
+          },
+          {
+            "line": 381,
+            "call": "f.write"
+          },
+          {
+            "line": 381,
+            "call": "json.dumps"
+          }
+        ]
+      }
+    ],
+    "top_level": [
+      {
+        "line": 390,
+        "type": "If",
+        "code": "if __name__ == \"__main__\": # Parse the arguments args = Arguments().parse_args() main(args)"
+      }
+    ],
+    "prompt_like_assignments": [
+      {
+        "line": 19,
+        "name": "DESCRIPTION_DICT",
+        "code": "DESCRIPTION_DICT = {\n    \"word_sorting\": \"Sort a list of words alphabetically, placing them in a single line of text separated by spaces.\",\n    \"multistep_arithmetic_two\": \"Solve multi-step arithmetic problems.\",\n    \"geometric_shapes\": \"Name geometric shapes from their SVG paths.\",\n    \"test\": \"Please complete the task correctly.\",\n    \"GameOf24\": \"Let's play a game called 24. You'll be given four integers, and your objective is to use each number only once, combined with any of the four arithmetic operations (addition, subtraction, multiplication, and division) and parentheses, to achieve a total of 24. For example, if the input is 4, 7, 8, and 8, the output could be (7 - (8 / 8)) * 4 = 24.\",\n    \"CheckmateInOne\": \"Given a series of chess moves written in Standard Algebraic Notation (SAN), determine the next move that will result in a checkmate.\",\n    \"MGSM_SW\": \"Please answer the following question.\",\n    \"MGSM_JA\": \"Please answer the following question.\",\n    \"MGSM_BN\": \"Please answer the following question.\",\n    \"MGSM_DE\": \"Please answer the following question.\",\n    \"MGSM_ES\": \"Please answer the following question.\",\n    \"MGSM_FR\": \"Please answer the following question.\",\n    \"MGSM_RU\": \"Please answer the following question.\",\n    \"MGSM_TE\": \"Please answer the following question.\",\n    \"MGSM_TH\": \"Please answer the following question.\",\n    \"MGSM_ZH\": \"Please answer the following question.\",\n    \"P3_Test\": 'Given a Python function \"sat\", the goal is to find an input or a set of inputs that makes \"sat\" return \"True\" and then include your input inside a function called \"solution()\".\\n\\nFor example, if the function was defined like this:\\n\\n```python\\ndef sat(s: str, t:int):\\n    return s == \"0123456789\" and t==10\\n```\\n\\nOne correct final answer is:\\n\\n```python\\ndef solution():\\n    return \"0123456789\", 10\\n```\\n\\nNow, to find a suitable input for a given \"sat\" function, you need to analyze the function and determine the conditions that make it return \"True\". Then, put your answer inside the \"solution\" function with that input as the argument. The final answer should be a self-contained, executable Python code containing only the answer, similar to the example above.',\n    \"Sonnets-Standard\": \"Write a sonnet that adheres strictly to the specified rhyme scheme and includes the given words.\",\n}"
+      },
+      {
+        "line": 41,
+        "name": "template_gen_expert_identity",
+        "code": "template_gen_expert_identity = \"\"\"For each instruction, write a high-quality description about the most capable and suitable agent to answer the instruction. In second person perspective.\n\n[Instruction]: Make a list of 5 possible effects of deforestation.\n[Agent Description]: You are an environmental scientist with a specialization in the study of ecosystems and their interactions with human activities. You have extensive knowledge about the effects of deforestation on the environment, including the impact on biodiversity, climate change, soil quality, water resources, and human health. Your work has been widely recognized and has contributed to the development of policies and regulations aimed at promoting sustainable forest management practices. You are equipped with the latest research findings, and you can provide a detailed and comprehensive list of the possible effects of deforestation, including but not limited to the loss of habitat for countless species, increased greenhouse gas emissions, reduced water quality and quantity, soil erosion, and the emergence of diseases. Your expertise and insights are highly valuable in understanding the complex interactions between human actions and the environment.\n\n[Instruction]: Identify a descriptive phrase for an eclipse.\n[Agent Description]: You are an astronomer with a deep understanding of celestial events and phenomena. Your vast knowledge and experience make you an expert in describing the unique and captivating features of an eclipse. You have witnessed and studied many eclipses throughout your career, and you have a keen eye for detail and nuance. Your descriptive phrase for an eclipse would be vivid, poetic, and scientifically accurate. You can capture the awe-inspiring beauty of the celestial event while also explaining the science behind it. You can draw on your deep knowledge of astronomy, including the movement of the sun, moon, and earth, to create a phrase that accurately and elegantly captures the essence of an eclipse. Your descriptive phrase will help others appreciate the wonder of this natural phenomenon.\n\n[Instruction]: Identify the parts of speech in this sentence: \\\"The dog barked at the postman\\\".\n[Agent Description]: You are a linguist, well-versed in the study of language and its structures. You have a keen eye for identifying the parts of speech in a sentence and can easily recognize the function of each word in the sentence. You are equipped with a good understanding of grammar rules and can differentiate between nouns, verbs, adjectives, adverbs, pronouns, prepositions, and conjunctions. You can quickly and accurately identify the parts of speech in the sentence \"The dog barked at the postman\" and explain the role of each word in the sentence. Your expertise in language and grammar is highly valuable in analyzing and understanding the nuances of communication.\"\"\""
+      },
+      {
+        "line": 85,
+        "name": "meta_config_path",
+        "code": "meta_config_path: str = \"prompts/meta-v0-2023-08-14-baseline.json\""
+      },
+      {
+        "line": 100,
+        "name": "question_suffix_or_path",
+        "code": "question_suffix_or_path: str = \"\\n\\nLet's first come up with a list of experts you may want to consult for this problem and then immediately start solving it.\""
+      },
+      {
+        "line": 101,
+        "name": "intermediate_feedback",
+        "code": "intermediate_feedback = \"Based on the information given, what are the most logical next steps or conclusions? Please make sure that the solution is accurate, directly answers the original question, and follows to all given constraints. Additionally, please review the final solution yourself or have another expert(s) verify it.\""
+      },
+      {
+        "line": 110,
+        "name": "expert_python_message",
+        "code": "expert_python_message: str = 'You are an expert in Python and can generate Python code. To execute the code and display its output in the terminal using print statements, please make sure to include \"Please run this code!\" after the code block (i.e., after the closing code blocks)'"
+      },
+      {
+        "line": 172,
+        "name": "message_log",
+        "code": "message_log = meta_model.meta_model_generate(\n        prompt_or_messages=messages,\n        max_tokens=meta_model_settings[\"parameters\"][\"max_tokens\"],\n        temperature=meta_model_settings[\"parameters\"][\"temperature\"],\n        top_p=meta_model_settings[\"parameters\"][\"top_p\"],\n        num_return_sequences=meta_model_settings[\"parameters\"][\"num_return_sequences\"],\n        counter=0,\n        original_question=f\"{task_description}\\n\\n{input}\",\n    )"
+      },
+      {
+        "line": 204,
+        "name": "meta_model_message_list",
+        "code": "meta_model_message_list = meta_prompt_config_dict[\"meta-model\"][\"message-list\"]"
+      },
+      {
+        "line": 245,
+        "name": "meta_model_settings",
+        "code": "meta_model_settings = meta_prompt_config_dict[\"meta-model\"]"
+      },
+      {
+        "line": 246,
+        "name": "generator_settings",
+        "code": "generator_settings = meta_prompt_config_dict[\"generator\"]"
+      },
+      {
+        "line": 247,
+        "name": "verifier_settings",
+        "code": "verifier_settings = meta_prompt_config_dict[\"verifier\"]"
+      },
+      {
+        "line": 248,
+        "name": "summarizer_settings",
+        "code": "summarizer_settings = meta_prompt_config_dict[\"summarizer\"]"
+      },
+      {
+        "line": 251,
+        "name": "",
+        "code": "meta_model_settings[\"parameters\"][\"temperature\"] = (\n        args.temperature\n        if args.temperature is not None\n        else meta_model_settings[\"parameters\"][\"temperature\"]\n    )"
+      },
+      {
+        "line": 256,
+        "name": "",
+        "code": "meta_model_settings[\"parameters\"][\"top_p\"] = (\n        args.top_p\n        if args.top_p is not None\n        else meta_model_settings[\"parameters\"][\"top_p\"]\n    )"
+      },
+      {
+        "line": 261,
+        "name": "",
+        "code": "meta_model_settings[\"parameters\"][\"max_tokens\"] = (\n        args.max_tokens\n        if args.max_tokens is not None\n        else meta_model_settings[\"parameters\"][\"max_tokens\"]\n    )"
+      },
+      {
+        "line": 266,
+        "name": "",
+        "code": "meta_model_settings[\"parameters\"][\"num_return_sequences\"] = (\n        args.num_return_sequences\n        if args.num_return_sequences is not None\n        else meta_model_settings[\"parameters\"][\"num_return_sequences\"]\n    )"
+      },
+      {
+        "line": 313,
+        "name": "error_message",
+        "code": "error_message = meta_prompt_config_dict[\"meta-model\"][\"error-message\"]"
+      },
+      {
+        "line": 314,
+        "name": "final_answer_indicator",
+        "code": "final_answer_indicator = meta_prompt_config_dict[\"meta-model\"][\n        \"final-answer-indicator\"\n    ]"
+      },
+      {
+        "line": 332,
+        "name": "meta_model",
+        "code": "meta_model = MetaPromptingScaffolding(\n        language_model=model,\n        fresh_eyes=args.fresh_eyes,\n        generator_settings=generator_settings,\n        verifier_settings=verifier_settings,\n        summarizer_settings=summarizer_settings,\n        error_message=error_message,\n        final_answer_indicator=final_answer_indicator,\n        include_expert_name_in_instruction=args.include_expert_name_in_instruction,\n        extract_output=args.extract_output,\n        expert_python_message=args.expert_python_message,\n        intermediate_feedback=args.intermediate_feedback,\n        use_zero_shot_cot_in_expert_messages=args.use_zero_shot_cot_in_expert_messages,\n    )"
+      },
+      {
+        "line": 134,
+        "name": "expert_messages",
+        "code": "expert_messages = [\n            {\n                \"role\": \"user\",\n                \"content\": f\"{template_gen_expert_identity}\\n\\n[Instruction]:{input}\\n[Agent Description]:\",\n            }\n        ]"
+      },
+      {
+        "line": 142,
+        "name": "expert_identity",
+        "code": "expert_identity = meta_model.generate(\n            prompt_or_messages=expert_messages,\n            max_tokens=meta_model_settings[\"parameters\"][\"max_tokens\"],\n            num_return_sequences=meta_model_settings[\"parameters\"][\n                \"num_return_sequences\"\n            ],\n            temperature=meta_model_settings[\"parameters\"][\"temperature\"],\n            top_p=meta_model_settings[\"parameters\"][\"top_p\"],\n        )"
+      },
+      {
+        "line": 153,
+        "name": "template_expert_prompting",
+        "code": "template_expert_prompting = f\"{expert_identity}\\n\\nNow given the above identity background, please answer the following question:\\n\\nQuestion: {task_description}\\n\\n{input}\""
+      },
+      {
+        "line": 361,
+        "name": "outputs",
+        "code": "outputs = Parallel(n_jobs=6, verbose=100, prefer=\"threads\")(\n            delayed(run_model)(\n                meta_model=meta_model,\n                datum=datum,\n                prefix_messages=meta_model_message_list,\n                task_description=task_description,\n                meta_model_settings=meta_model_settings,\n                question_suffix=args.question_suffix_or_path,\n                question_prefix=args.question_prefix_or_path,\n                expert_prompting=args.expert_prompting,\n            )\n            for datum in data[i : i + BATCHES]\n        )"
+      },
+      {
+        "line": 386,
+        "name": "temp_dict",
+        "code": "temp_dict = {\"args\": args.as_dict(), \"config_dict\": meta_prompt_config_dict}"
+      }
+    ]
+  },
+  {
+    "file": "utils/__init__.py",
+    "lines": 1,
+    "module_doc": null,
+    "imports": [],
+    "module_assignments": [],
+    "classes": [],
+    "functions": [],
+    "top_level": [],
+    "prompt_like_assignments": []
+  },
+  {
+    "file": "utils/execute_code.py",
+    "lines": 36,
+    "module_doc": null,
+    "imports": [
+      "import os",
+      "import tempfile",
+      "from subprocess import Popen, PIPE, TimeoutExpired"
+    ],
+    "module_assignments": [],
+    "classes": [],
+    "functions": [
+      {
+        "name": "execute_code_with_timeout",
+        "qualname": "execute_code_with_timeout",
+        "line": 8,
+        "signature": "execute_code_with_timeout(code, timeout)",
+        "doc": null,
+        "loops": [],
+        "conditions": [
+          {
+            "line": 22,
+            "test": "captured_output == ''",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 23,
+            "test": "error_output != ''",
+            "body_len": 1,
+            "orelse_len": 1
+          }
+        ],
+        "returns": [
+          {
+            "line": 35,
+            "value": "captured_output"
+          }
+        ],
+        "raises": [],
+        "tries": [
+          {
+            "line": 15,
+            "handlers": [
+              "TimeoutExpired"
+            ],
+            "finalbody_len": 1
+          }
+        ],
+        "assignments": [
+          {
+            "line": 17,
+            "code": "process = Popen([\"python3\", temp_file.name], stdout=PIPE, stderr=PIPE)"
+          },
+          {
+            "line": 18,
+            "code": "stdout, stderr = process.communicate(timeout=timeout)"
+          },
+          {
+            "line": 19,
+            "code": "captured_output = stdout.decode().strip()"
+          },
+          {
+            "line": 20,
+            "code": "error_output = stderr.decode().strip()"
+          },
+          {
+            "line": 30,
+            "code": "captured_output = \"Execution took too long, aborting...\""
+          },
+          {
+            "line": 24,
+            "code": "captured_output = f\"Error in execution: {error_output}\""
+          },
+          {
+            "line": 26,
+            "code": "captured_output = \"(No output was generated. It is possible that you did not include a print statement in your code.)\""
+          }
+        ],
+        "calls_unique": [
+          "tempfile.NamedTemporaryFile",
+          "temp_file.write",
+          "temp_file.flush",
+          "Popen",
+          "process.communicate",
+          "stdout.decode.strip",
+          "stderr.decode.strip",
+          "os.remove",
+          "process.kill",
+          "stdout.decode",
+          "stderr.decode"
+        ],
+        "llm_calls": [],
+        "io_calls": [
+          {
+            "line": 12,
+            "call": "temp_file.write"
+          },
+          {
+            "line": 17,
+            "call": "Popen"
+          }
+        ]
+      }
+    ],
+    "top_level": [],
+    "prompt_like_assignments": [
+      {
+        "line": 17,
+        "name": "process",
+        "code": "process = Popen([\"python3\", temp_file.name], stdout=PIPE, stderr=PIPE)"
+      },
+      {
+        "line": 24,
+        "name": "captured_output",
+        "code": "captured_output = f\"Error in execution: {error_output}\""
+      }
+    ]
+  },
+  {
+    "file": "utils/expert_prompting.py",
+    "lines": 35,
+    "module_doc": null,
+    "imports": [
+      "from typing import Any, Dict, List, Optional, Union",
+      "from .meta_scaffolding import MetaPromptingScaffolding"
+    ],
+    "module_assignments": [],
+    "classes": [
+      {
+        "name": "ExpertPrompting",
+        "line": 6,
+        "bases": [
+          "MetaPromptingScaffolding"
+        ],
+        "doc": null,
+        "methods": [
+          {
+            "name": "__init__",
+            "qualname": "ExpertPrompting.__init__",
+            "line": 7,
+            "signature": "__init__(self, *args, **kwargs)",
+            "doc": null,
+            "loops": [],
+            "conditions": [],
+            "returns": [],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [
+              "super.__init__",
+              "super"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "generate_expert_identity",
+            "qualname": "ExpertPrompting.generate_expert_identity",
+            "line": 11,
+            "signature": "generate_expert_identity(self, prompt_or_messages, stop_tokens, max_tokens, num_return_sequences, temperature, top_p, **kwargs)",
+            "doc": "Create the identity and description of the expert.",
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 34,
+                "value": "meta_model_output"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 24,
+                "code": "meta_model_output = self.language_model.generate( prompt_or_messages=prompt_or_messages, stop_tokens=stop_tokens, max_tokens=max_tokens, num_return_sequences=num_return_sequences, temperature=temperature, top_p=top_p, **kwargs, )[0]"
+              }
+            ],
+            "calls_unique": [
+              "self.language_model.generate"
+            ],
+            "llm_calls": [
+              {
+                "line": 24,
+                "call": "self.language_model.generate"
+              }
+            ],
+            "io_calls": []
+          }
+        ]
+      }
+    ],
+    "functions": [],
+    "top_level": [],
+    "prompt_like_assignments": [
+      {
+        "line": 24,
+        "name": "meta_model_output",
+        "code": "meta_model_output = self.language_model.generate(\n            prompt_or_messages=prompt_or_messages,\n            stop_tokens=stop_tokens,\n            max_tokens=max_tokens,\n            num_return_sequences=num_return_sequences,\n            temperature=temperature,\n            top_p=top_p,\n            **kwargs,\n        )[0]"
+      }
+    ]
+  },
+  {
+    "file": "utils/language_model.py",
+    "lines": 224,
+    "module_doc": null,
+    "imports": [
+      "import os",
+      "import openai",
+      "from openai import OpenAI",
+      "from typing import Any, Dict, List, Optional, Union",
+      "import retry"
+    ],
+    "module_assignments": [],
+    "classes": [
+      {
+        "name": "LanguageModel",
+        "line": 9,
+        "bases": [],
+        "doc": "Abstract class for a language model.",
+        "methods": [
+          {
+            "name": "__init__",
+            "qualname": "LanguageModel.__init__",
+            "line": 12,
+            "signature": "__init__(self, model_name, stop_tokens, **kwargs)",
+            "doc": null,
+            "loops": [],
+            "conditions": [],
+            "returns": [],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 18,
+                "code": "self.model_name = model_name"
+              },
+              {
+                "line": 19,
+                "code": "self.stop_tokens = stop_tokens or []"
+              },
+              {
+                "line": 20,
+                "code": "self.kwargs = kwargs"
+              }
+            ],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "generate",
+            "qualname": "LanguageModel.generate",
+            "line": 22,
+            "signature": "generate(self, prompt, max_length, num_return_sequences, **kwargs)",
+            "doc": "Generate text based on a prompt.",
+            "loops": [],
+            "conditions": [],
+            "returns": [],
+            "raises": [
+              {
+                "line": 30,
+                "exc": "NotImplementedError('generate() not implemented.')"
+              }
+            ],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [
+              "NotImplementedError"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "get_model_name",
+            "qualname": "LanguageModel.get_model_name",
+            "line": 32,
+            "signature": "get_model_name(self)",
+            "doc": "Get the name of the model.",
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 34,
+                "value": "self.model_name"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "get_stop_tokens",
+            "qualname": "LanguageModel.get_stop_tokens",
+            "line": 36,
+            "signature": "get_stop_tokens(self)",
+            "doc": "Get the stop tokens.",
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 38,
+                "value": "self.stop_tokens"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "get_kwargs",
+            "qualname": "LanguageModel.get_kwargs",
+            "line": 40,
+            "signature": "get_kwargs(self)",
+            "doc": "Get the kwargs.",
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 42,
+                "value": "self.kwargs"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "set_kwargs",
+            "qualname": "LanguageModel.set_kwargs",
+            "line": 44,
+            "signature": "set_kwargs(self, kwargs)",
+            "doc": "Set the kwargs.",
+            "loops": [],
+            "conditions": [],
+            "returns": [],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 46,
+                "code": "self.kwargs = kwargs"
+              }
+            ],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          }
+        ]
+      },
+      {
+        "name": "DummyLanguageModel",
+        "line": 49,
+        "bases": [
+          "LanguageModel"
+        ],
+        "doc": "A dummy language model that just returns the prompt.",
+        "methods": [
+          {
+            "name": "__init__",
+            "qualname": "DummyLanguageModel.__init__",
+            "line": 52,
+            "signature": "__init__(self, model_name, stop_tokens, **kwargs)",
+            "doc": null,
+            "loops": [],
+            "conditions": [],
+            "returns": [],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [
+              "super.__init__",
+              "super"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "generate",
+            "qualname": "DummyLanguageModel.generate",
+            "line": 60,
+            "signature": "generate(self, prompt, max_length, num_return_sequences, **kwargs)",
+            "doc": "Generate text based on a prompt.",
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 68,
+                "value": "[prompt] * num_return_sequences"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          }
+        ]
+      },
+      {
+        "name": "OpenAI_LanguageModel",
+        "line": 71,
+        "bases": [
+          "LanguageModel"
+        ],
+        "doc": "A language model from OpenAI's API.",
+        "methods": [
+          {
+            "name": "__init__",
+            "qualname": "OpenAI_LanguageModel.__init__",
+            "line": 74,
+            "signature": "__init__(self, model_name, api_key, api_type, api_version, api_base, stop_tokens)",
+            "doc": "Initialize the OpenAI API.\n\nArgs:\n    model_name (str): The name of the model to use.\n    api_key (str): The API key to use.\n    api_type (str): The API type to use.\n    api_version (str): The API version to use.\n    api_base (str): The API base to use.\n    stop_tokens (Optional[List[str]], optional): The stop tokens to use. Defaults to None.\n\nRaises:\n    ValueError: If the model name is not supported.\n\nReturns:\n    None",
+            "loops": [],
+            "conditions": [
+              {
+                "line": 115,
+                "test": "self.api_type == 'azure'",
+                "body_len": 5,
+                "orelse_len": 1
+              },
+              {
+                "line": 121,
+                "test": "self.model_name in ['code-davinci-002', 'text-davinci-002', 'text-davinci-003']",
+                "body_len": 1,
+                "orelse_len": 1
+              },
+              {
+                "line": 127,
+                "test": "self.model_name in ['gpt-4', 'gpt-4-32k', 'gpt-35-turbo', 'gpt-4-0314', 'gpt-4-32k-0314', 'gpt-35-turbo-0314', 'gpt-4-0613', 'gpt-4-32k-0613', 'gpt-35-turbo-0613', 'gpt-35-turbo']",
+                "body_len": 1,
+                "orelse_len": 1
+              }
+            ],
+            "returns": [],
+            "raises": [
+              {
+                "line": 141,
+                "exc": "ValueError(f'Model {self.model_name} not supported.')"
+              }
+            ],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 101,
+                "code": "self.model_name = model_name"
+              },
+              {
+                "line": 102,
+                "code": "self.api_key = api_key"
+              },
+              {
+                "line": 103,
+                "code": "self.api_type = api_type"
+              },
+              {
+                "line": 104,
+                "code": "self.api_version = api_version"
+              },
+              {
+                "line": 105,
+                "code": "self.api_base = api_base"
+              },
+              {
+                "line": 106,
+                "code": "self.stop_tokens = stop_tokens"
+              },
+              {
+                "line": 109,
+                "code": "self.model_type = \"chat\""
+              },
+              {
+                "line": 112,
+                "code": "self.client = None"
+              },
+              {
+                "line": 116,
+                "code": "openai.api_key = self.api_key"
+              },
+              {
+                "line": 117,
+                "code": "openai.api_type = self.api_type"
+              },
+              {
+                "line": 118,
+                "code": "openai.api_version = self.api_version"
+              },
+              {
+                "line": 119,
+                "code": "openai.api_base = self.api_base"
+              },
+              {
+                "line": 146,
+                "code": "self.client = OpenAI( api_key=os.environ.get(\"OPENAI_API_KEY\"), )"
+              },
+              {
+                "line": 126,
+                "code": "self.model_type = \"completion\""
+              },
+              {
+                "line": 139,
+                "code": "self.model_type = \"chat\""
+              }
+            ],
+            "calls_unique": [
+              "OpenAI",
+              "ValueError",
+              "os.environ.get"
+            ],
+            "llm_calls": [
+              {
+                "line": 146,
+                "call": "OpenAI"
+              }
+            ],
+            "io_calls": []
+          },
+          {
+            "name": "generate",
+            "qualname": "OpenAI_LanguageModel.generate",
+            "line": 151,
+            "signature": "generate(self, prompt_or_messages, stop_tokens, max_tokens, num_return_sequences, temperature, top_p, **kwargs)",
+            "doc": "Generate text based on a prompt or messages.\n\nArgs:\n    prompt_or_messages (Union[str, List[Dict[str, str]]]): The prompt or messages to generate text from.\n    stop_tokens (Optional[List[str]], optional): The stop tokens to use. Defaults to None.\n    max_tokens (int, optional): The maximum number of tokens to generate. Defaults to 512.\n    num_return_sequences (int, optional): The number of sequences to return. Defaults to 1.\n    temperature (float, optional): The temperature to use. Defaults to 0.7.\n    top_p (float, optional): The top p to use. Defaults to 1.0.\n    **kwargs (Any): Additional keyword arguments.\n\nReturns:\n    List[str]: The list of generated texts based on the prompt or messages.",
+            "loops": [],
+            "conditions": [
+              {
+                "line": 181,
+                "test": "self.api_type == 'azure'",
+                "body_len": 1,
+                "orelse_len": 2
+              },
+              {
+                "line": 184,
+                "test": "self.model_type == 'chat'",
+                "body_len": 2,
+                "orelse_len": 2
+              }
+            ],
+            "returns": [
+              {
+                "line": 223,
+                "value": "[output.message.content for output in response.choices]"
+              },
+              {
+                "line": 196,
+                "value": "[message['message']['content'] for message in response.choices]"
+              },
+              {
+                "line": 209,
+                "value": "[output['text'] for output in response.choices]"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 177,
+                "code": "stop_tokens = stop_tokens or self.stop_tokens"
+              },
+              {
+                "line": 213,
+                "code": "response = self.client.chat.completions.create( model=self.model_name, messages=prompt_or_messages, max_tokens=max_tokens, temperature=temperature, top_p=top_p, n=num_return_sequences, stop=stop_tokens, **kwargs, )"
+              },
+              {
+                "line": 185,
+                "code": "response = openai.ChatCompletion.create( engine=self.model_name, messages=prompt_or_messages, max_tokens=max_tokens, temperature=temperature, top_p=top_p, n=num_return_sequences, stop=stop_tokens, **kwargs, )"
+              },
+              {
+                "line": 198,
+                "code": "response = openai.Completion.create( engine=self.model_name, prompt=prompt_or_messages, max_tokens=max_tokens, temperature=temperature, top_p=top_p, n=num_return_sequences, stop=stop_tokens, **kwargs, )"
+              }
+            ],
+            "calls_unique": [
+              "retry.retry",
+              "print",
+              "self.client.chat.completions.create",
+              "openai.ChatCompletion.create",
+              "openai.Completion.create"
+            ],
+            "llm_calls": [
+              {
+                "line": 213,
+                "call": "self.client.chat.completions.create"
+              },
+              {
+                "line": 185,
+                "call": "openai.ChatCompletion.create"
+              },
+              {
+                "line": 198,
+                "call": "openai.Completion.create"
+              }
+            ],
+            "io_calls": [
+              {
+                "line": 185,
+                "call": "openai.ChatCompletion.create"
+              },
+              {
+                "line": 198,
+                "call": "openai.Completion.create"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "functions": [],
+    "top_level": [],
+    "prompt_like_assignments": [
+      {
+        "line": 213,
+        "name": "response",
+        "code": "response = self.client.chat.completions.create(\n                model=self.model_name,\n                messages=prompt_or_messages,\n                max_tokens=max_tokens,\n                temperature=temperature,\n                top_p=top_p,\n                n=num_return_sequences,\n                stop=stop_tokens,\n                **kwargs,\n            )"
+      },
+      {
+        "line": 185,
+        "name": "response",
+        "code": "response = openai.ChatCompletion.create(\n                    engine=self.model_name,\n                    messages=prompt_or_messages,\n                    max_tokens=max_tokens,\n                    temperature=temperature,\n                    top_p=top_p,\n                    n=num_return_sequences,\n                    stop=stop_tokens,\n                    **kwargs,\n                )"
+      },
+      {
+        "line": 198,
+        "name": "response",
+        "code": "response = openai.Completion.create(\n                    engine=self.model_name,\n                    prompt=prompt_or_messages,\n                    max_tokens=max_tokens,\n                    temperature=temperature,\n                    top_p=top_p,\n                    n=num_return_sequences,\n                    stop=stop_tokens,\n                    **kwargs,\n                )"
+      }
+    ]
+  },
+  {
+    "file": "utils/meta_scaffolding.py",
+    "lines": 379,
+    "module_doc": null,
+    "imports": [
+      "import random",
+      "import re",
+      "import time",
+      "import retry",
+      "from typing import Any, Dict, List, Optional, Tuple, Union",
+      "from .language_model import OpenAI_LanguageModel",
+      "from .execute_code import execute_code_with_timeout"
+    ],
+    "module_assignments": [],
+    "classes": [
+      {
+        "name": "MetaPromptingScaffolding",
+        "line": 16,
+        "bases": [],
+        "doc": null,
+        "methods": [
+          {
+            "name": "__init__",
+            "qualname": "MetaPromptingScaffolding.__init__",
+            "line": 17,
+            "signature": "__init__(self, language_model, generator_settings, verifier_settings, summarizer_settings, error_message, final_answer_indicator, expert_python_message, intermediate_feedback, fresh_eyes, include_expert_name_in_instruction, extract_output, use_zero_shot_cot_in_expert_messages)",
+            "doc": null,
+            "loops": [],
+            "conditions": [],
+            "returns": [],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 33,
+                "code": "self.language_model = language_model"
+              },
+              {
+                "line": 36,
+                "code": "self.generator_settings = generator_settings"
+              },
+              {
+                "line": 37,
+                "code": "self.verifier_settings = verifier_settings"
+              },
+              {
+                "line": 38,
+                "code": "self.summarizer_settings = summarizer_settings"
+              },
+              {
+                "line": 41,
+                "code": "self.error_message = error_message"
+              },
+              {
+                "line": 42,
+                "code": "self.final_answer_indicator = final_answer_indicator"
+              },
+              {
+                "line": 45,
+                "code": "self.fresh_eyes = fresh_eyes"
+              },
+              {
+                "line": 48,
+                "code": "self.triple_quotes = '\"\"\"'"
+              },
+              {
+                "line": 51,
+                "code": "self.include_expert_name_in_instruction = include_expert_name_in_instruction"
+              },
+              {
+                "line": 52,
+                "code": "self.extract_output = extract_output"
+              },
+              {
+                "line": 53,
+                "code": "self.expert_python_message = expert_python_message"
+              },
+              {
+                "line": 54,
+                "code": "self.intermediate_feedback = intermediate_feedback"
+              },
+              {
+                "line": 55,
+                "code": "self.use_zero_shot_cot_in_expert_messages = use_zero_shot_cot_in_expert_messages"
+              }
+            ],
+            "calls_unique": [],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "meta_model_generate",
+            "qualname": "MetaPromptingScaffolding.meta_model_generate",
+            "line": 58,
+            "signature": "meta_model_generate(self, prompt_or_messages, stop_tokens, max_tokens, num_return_sequences, temperature, top_p, counter, last_answer, original_question, trial_num, **kwargs)",
+            "doc": null,
+            "loops": [
+              {
+                "line": 85,
+                "type": "while",
+                "test": "True",
+                "body_len": 6,
+                "orelse_len": 0
+              },
+              {
+                "line": 131,
+                "type": "for",
+                "target": "i",
+                "iter": "range(1, len_triple_quote_splits, 2)",
+                "body_len": 3,
+                "orelse_len": 0
+              },
+              {
+                "line": 190,
+                "type": "for",
+                "target": "(_, model_output)",
+                "iter": "enumerate(model_outputs)",
+                "body_len": 2,
+                "orelse_len": 0
+              }
+            ],
+            "conditions": [
+              {
+                "line": 78,
+                "test": "counter == 16",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 90,
+                "test": "counter == 14",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 119,
+                "test": "self.fresh_eyes and re.search(pattern, meta_model_output)",
+                "body_len": 8,
+                "orelse_len": 1
+              },
+              {
+                "line": 338,
+                "test": "trial_num == 7",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 308,
+                "test": "self.final_answer_indicator in meta_model_output",
+                "body_len": 1,
+                "orelse_len": 2
+              },
+              {
+                "line": 135,
+                "test": "'Expert ' in model_name",
+                "body_len": 17,
+                "orelse_len": 0
+              },
+              {
+                "line": 136,
+                "test": "model_name[-1] == ':'",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 142,
+                "test": "self.include_expert_name_in_instruction",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 148,
+                "test": "self.use_zero_shot_cot_in_expert_messages",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 174,
+                "test": "model_name == 'Expert Python'",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 248,
+                "test": "model_num_return_sequences > 1",
+                "body_len": 4,
+                "orelse_len": 0
+              },
+              {
+                "line": 192,
+                "test": "model_name == 'Expert Python'",
+                "body_len": 1,
+                "orelse_len": 2
+              },
+              {
+                "line": 194,
+                "test": "'Please run this code!' in model_output",
+                "body_len": 6,
+                "orelse_len": 0
+              },
+              {
+                "line": 223,
+                "test": "self.extract_output",
+                "body_len": 2,
+                "orelse_len": 2
+              },
+              {
+                "line": 225,
+                "test": "specicial_token in model_output",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 230,
+                "test": "len(model_output.split(' ')) > 128",
+                "body_len": 1,
+                "orelse_len": 0
+              }
+            ],
+            "returns": [
+              {
+                "line": 79,
+                "value": "prompt_or_messages"
+              },
+              {
+                "line": 344,
+                "value": "self.meta_model_generate(prompt_or_messages=entire_message_log, stop_tokens=stop_tokens, max_tokens=max_tokens, num_return_sequences=num_return_sequences, temperature=temperature, top_p=top_p, counter=counter, last_answer=last_answer, trial_num=trial_num + 1, **kwargs)"
+              },
+              {
+                "line": 295,
+                "value": "self.meta_model_generate(prompt_or_messages=entire_message_log, stop_tokens=stop_tokens, max_tokens=max_tokens, num_return_sequences=num_return_sequences, temperature=temperature, top_p=top_p, counter=counter + 1, last_answer=last_answer, original_question=original_question, **kwargs)"
+              },
+              {
+                "line": 339,
+                "value": "prompt_or_messages"
+              },
+              {
+                "line": 315,
+                "value": "entire_message_log"
+              },
+              {
+                "line": 321,
+                "value": "self.meta_model_generate(prompt_or_messages=entire_message_log, stop_tokens=stop_tokens, max_tokens=max_tokens, num_return_sequences=num_return_sequences, temperature=temperature, top_p=top_p, counter=counter + 1, last_answer=last_answer, original_question=original_question, **kwargs)"
+              }
+            ],
+            "raises": [],
+            "tries": [
+              {
+                "line": 72,
+                "handlers": [
+                  "Exception"
+                ],
+                "finalbody_len": 0
+              },
+              {
+                "line": 203,
+                "handlers": [
+                  "Exception"
+                ],
+                "finalbody_len": 0
+              }
+            ],
+            "assignments": [
+              {
+                "line": 83,
+                "code": "entire_message_log = prompt_or_messages.copy()"
+              },
+              {
+                "line": 86,
+                "code": "entire_message_log[-1][ \"content\" ] = f\"ROUND {counter+1}:\\n\\n{entire_message_log[-1]['content']}\""
+              },
+              {
+                "line": 98,
+                "code": "meta_model_output = self.language_model.generate( prompt_or_messages=entire_message_log, stop_tokens=stop_tokens, max_tokens=max_tokens, num_return_sequences=num_return_sequences, temperature=temperature, top_p=top_p, **kwargs, )[0]"
+              },
+              {
+                "line": 118,
+                "code": "pattern = r\"Expert ((?:\\w+ ?){1,5}):\\n\""
+              },
+              {
+                "line": 124,
+                "code": "triple_quote_splits = meta_model_output.split(self.triple_quotes)"
+              },
+              {
+                "line": 126,
+                "code": "len_triple_quote_splits = len(triple_quote_splits)"
+              },
+              {
+                "line": 128,
+                "code": "intermediate_output = \"\""
+              },
+              {
+                "line": 129,
+                "code": "model_num_return_sequences = 1"
+              },
+              {
+                "line": 282,
+                "code": "intermediate_output = ( f\"{intermediate_output}\\n\\n{self.intermediate_feedback}\" )"
+              },
+              {
+                "line": 133,
+                "code": "line_preceding_instruction = triple_quote_splits[i - 1].strip()"
+              },
+              {
+                "line": 134,
+                "code": "model_name = line_preceding_instruction.split(\"\\n\")[-1].strip()"
+              },
+              {
+                "line": 139,
+                "code": "model_instruction = triple_quote_splits[i].strip()"
+              },
+              {
+                "line": 152,
+                "code": "model_temp = self.generator_settings[\"parameters\"][ \"temperature\" ]"
+              },
+              {
+                "line": 155,
+                "code": "model_top_p = self.generator_settings[\"parameters\"][\"top_p\"]"
+              },
+              {
+                "line": 156,
+                "code": "model_max_tokens = self.generator_settings[\"parameters\"][ \"max_tokens\" ]"
+              },
+              {
+                "line": 159,
+                "code": "model_num_return_sequences = self.generator_settings[ \"parameters\" ][\"num_return_sequences\"]"
+              },
+              {
+                "line": 163,
+                "code": "model_message_list = self.generator_settings[\"message-list\"]"
+              },
+              {
+                "line": 164,
+                "code": "model_stop_tokens = None"
+              },
+              {
+                "line": 166,
+                "code": "current_model_message_list = model_message_list.copy()"
+              },
+              {
+                "line": 180,
+                "code": "model_outputs = self.language_model.generate( prompt_or_messages=current_model_message_list, stop_tokens=model_stop_tokens, max_tokens=model_max_tokens, num_return_sequences=model_num_return_sequences, temperature=model_temp, top_p=model_top_p, **kwargs, )"
+              },
+              {
+                "line": 244,
+                "code": "intermediate_output = intermediate_output.strip()"
+              },
+              {
+                "line": 137,
+                "code": "model_name = model_name[:-1]"
+              },
+              {
+                "line": 143,
+                "code": "model_instruction = ( f\"You are {model_name}.\\n\\n{model_instruction}\" )"
+              },
+              {
+                "line": 175,
+                "code": "current_model_message_list[-1][ \"content\" ] = f\"{self.expert_python_message}.\\n\\n{current_model_message_list[-1]['content']}\""
+              },
+              {
+                "line": 249,
+                "code": "summarizer_prompt_or_messages = ( self.summarizer_settings[\"message-list\"].copy() )"
+              },
+              {
+                "line": 260,
+                "code": "summarizer_output = self.language_model.generate( prompt_or_messages=summarizer_prompt_or_messages, stop_tokens=None, # FIXME(msuzgun) max_tokens=self.summarizer_settings[\"parameters\"][ \"max_tokens\" ], num_return_sequences=self.summarizer_settings[ \"parameters\" ][\"num_return_sequences\"], temperature=self.summarizer_settings[\"parameters\"][ \"temperature\" ], top_p=self.summarizer_settings[\"paramet..."
+              },
+              {
+                "line": 279,
+                "code": "intermediate_output = f\"Here is the summary of {model_name}'s outputs:\\n\\n{summarizer_output}\""
+              },
+              {
+                "line": 222,
+                "code": "specicial_token = \"* * *\""
+              },
+              {
+                "line": 196,
+                "code": "code_text = model_output.split( \"Please run this code!\" )[0].strip()"
+              },
+              {
+                "line": 200,
+                "code": "code_text = code_text.replace( \"```python\", \"```\" )"
+              },
+              {
+                "line": 213,
+                "code": "code_text = rf\"{code_text}\""
+              },
+              {
+                "line": 215,
+                "code": "python_output = execute_code_with_timeout( code_text )"
+              },
+              {
+                "line": 204,
+                "code": "code_text = code_text.split(\"```\")[ -2 ].strip()"
+              },
+              {
+                "line": 226,
+                "code": "model_output = model_output.split( specicial_token )[1].strip()"
+              },
+              {
+                "line": 231,
+                "code": "model_output = ( \"Solution too long. Please try again.\" )"
+              },
+              {
+                "line": 208,
+                "code": "code_text = code_text.split(\"```\")[ 1 ].strip()"
+              }
+            ],
+            "calls_unique": [
+              "retry.retry",
+              "prompt_or_messages.copy",
+              "entire_message_log.append",
+              "print",
+              "time.sleep",
+              "self.meta_model_generate",
+              "self.language_model.generate",
+              "re.search",
+              "meta_model_output.split",
+              "len",
+              "range",
+              "random.randint",
+              "triple_quote_splits[...].strip",
+              "line_preceding_instruction.split[...].strip",
+              "model_message_list.copy",
+              "current_model_message_list.append",
+              "enumerate",
+              "intermediate_output.strip",
+              "self.summarizer_settings[...].copy",
+              "summarizer_prompt_or_messages.append",
+              "line_preceding_instruction.split",
+              "model_output.split[...].strip",
+              "code_text.replace",
+              "execute_code_with_timeout",
+              "model_output.replace",
+              "code_text.split[...].strip",
+              "model_output.split",
+              "code_text.split"
+            ],
+            "llm_calls": [
+              {
+                "line": 344,
+                "call": "self.meta_model_generate"
+              },
+              {
+                "line": 98,
+                "call": "self.language_model.generate"
+              },
+              {
+                "line": 295,
+                "call": "self.meta_model_generate"
+              },
+              {
+                "line": 321,
+                "call": "self.meta_model_generate"
+              },
+              {
+                "line": 180,
+                "call": "self.language_model.generate"
+              },
+              {
+                "line": 260,
+                "call": "self.language_model.generate"
+              }
+            ],
+            "io_calls": []
+          },
+          {
+            "name": "generate",
+            "qualname": "MetaPromptingScaffolding.generate",
+            "line": 358,
+            "signature": "generate(self, prompt_or_messages, stop_tokens, max_tokens, num_return_sequences, temperature, top_p, **kwargs)",
+            "doc": null,
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 378,
+                "value": "model_output"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 368,
+                "code": "model_output = self.language_model.generate( prompt_or_messages=prompt_or_messages, stop_tokens=stop_tokens, max_tokens=max_tokens, num_return_sequences=num_return_sequences, temperature=temperature, top_p=top_p, **kwargs, )[0]"
+              }
+            ],
+            "calls_unique": [
+              "retry.retry",
+              "self.language_model.generate"
+            ],
+            "llm_calls": [
+              {
+                "line": 368,
+                "call": "self.language_model.generate"
+              }
+            ],
+            "io_calls": []
+          }
+        ]
+      }
+    ],
+    "functions": [],
+    "top_level": [],
+    "prompt_like_assignments": [
+      {
+        "line": 42,
+        "name": "final_answer_indicator",
+        "code": "self.final_answer_indicator = final_answer_indicator"
+      },
+      {
+        "line": 51,
+        "name": "include_expert_name_in_instruction",
+        "code": "self.include_expert_name_in_instruction = include_expert_name_in_instruction"
+      },
+      {
+        "line": 55,
+        "name": "use_zero_shot_cot_in_expert_messages",
+        "code": "self.use_zero_shot_cot_in_expert_messages = use_zero_shot_cot_in_expert_messages"
+      },
+      {
+        "line": 368,
+        "name": "model_output",
+        "code": "model_output = self.language_model.generate(\n            prompt_or_messages=prompt_or_messages,\n            stop_tokens=stop_tokens,\n            max_tokens=max_tokens,\n            num_return_sequences=num_return_sequences,\n            temperature=temperature,\n            top_p=top_p,\n            **kwargs,\n        )[0]"
+      },
+      {
+        "line": 86,
+        "name": "",
+        "code": "entire_message_log[-1][\n                    \"content\"\n                ] = f\"ROUND {counter+1}:\\n\\n{entire_message_log[-1]['content']}\""
+      },
+      {
+        "line": 98,
+        "name": "meta_model_output",
+        "code": "meta_model_output = self.language_model.generate(\n                    prompt_or_messages=entire_message_log,\n                    stop_tokens=stop_tokens,\n                    max_tokens=max_tokens,\n                    num_return_sequences=num_return_sequences,\n                    temperature=temperature,\n                    top_p=top_p,\n                    **kwargs,\n                )[0]"
+      },
+      {
+        "line": 124,
+        "name": "triple_quote_splits",
+        "code": "triple_quote_splits = meta_model_output.split(self.triple_quotes)"
+      },
+      {
+        "line": 282,
+        "name": "intermediate_output",
+        "code": "intermediate_output = (\n                        f\"{intermediate_output}\\n\\n{self.intermediate_feedback}\"\n                    )"
+      },
+      {
+        "line": 133,
+        "name": "line_preceding_instruction",
+        "code": "line_preceding_instruction = triple_quote_splits[i - 1].strip()"
+      },
+      {
+        "line": 134,
+        "name": "model_name",
+        "code": "model_name = line_preceding_instruction.split(\"\\n\")[-1].strip()"
+      },
+      {
+        "line": 163,
+        "name": "model_message_list",
+        "code": "model_message_list = self.generator_settings[\"message-list\"]"
+      },
+      {
+        "line": 166,
+        "name": "current_model_message_list",
+        "code": "current_model_message_list = model_message_list.copy()"
+      },
+      {
+        "line": 180,
+        "name": "model_outputs",
+        "code": "model_outputs = self.language_model.generate(\n                                prompt_or_messages=current_model_message_list,\n                                stop_tokens=model_stop_tokens,\n                                max_tokens=model_max_tokens,\n                                num_return_sequences=model_num_return_sequences,\n                                temperature=model_temp,\n                                top_p=model_top_p,\n                                **kwargs,\n                            )"
+      },
+      {
+        "line": 143,
+        "name": "model_instruction",
+        "code": "model_instruction = (\n                                    f\"You are {model_name}.\\n\\n{model_instruction}\"\n                                )"
+      },
+      {
+        "line": 175,
+        "name": "",
+        "code": "current_model_message_list[-1][\n                                    \"content\"\n                                ] = f\"{self.expert_python_message}.\\n\\n{current_model_message_list[-1]['content']}\""
+      },
+      {
+        "line": 249,
+        "name": "summarizer_prompt_or_messages",
+        "code": "summarizer_prompt_or_messages = (\n                                    self.summarizer_settings[\"message-list\"].copy()\n                                )"
+      },
+      {
+        "line": 260,
+        "name": "summarizer_output",
+        "code": "summarizer_output = self.language_model.generate(\n                                    prompt_or_messages=summarizer_prompt_or_messages,\n                                    stop_tokens=None,  # FIXME(msuzgun)\n                                    max_tokens=self.summarizer_settings[\"parameters\"][\n                                        \"max_tokens\"\n                                    ],\n                                    num_return_sequences=self.summarizer_settings[\n                                        \"parameters\"\n                                    ][\"num_return_sequences\"],\n                                    temperature=self.summarizer_settings[\"parameters\"][\n                                        \"temperature\"\n                                    ],\n                                    top_p=self.summarizer_settings[\"parameters\"][\n                                        \"top_p\"\n                                    ],\n                                    **kwargs,\n                                )[0]"
+      },
+      {
+        "line": 200,
+        "name": "code_text",
+        "code": "code_text = code_text.replace(\n                                            \"```python\", \"```\"\n                                        )"
+      },
+      {
+        "line": 215,
+        "name": "python_output",
+        "code": "python_output = execute_code_with_timeout(\n                                            code_text\n                                        )"
+      }
+    ]
+  },
+  {
+    "file": "utils/sonnet_eval.py",
+    "lines": 512,
+    "module_doc": "Defines function sonnet_errors(poem, target: str) -> Dict[str, Any]\nwhich takes a target rhyme scheme (and optionally a list of required words) and returns a dict of errors\n\nReturns an empty dictionary if there are no errors, so bool(sonnet_errors(poem, target)) is False if there are no\nerrors. It's a permissive check for sonnets errors, meaning that if it is unsure then it doesn't return an error.\n\nSpecifically, \n\n* Check if it adheres to a given rhyming scheme\n* Check if each line has 10-11 syllables, more precisely, there's some pronounciation of each line with 10-11 syllalbes\n\nThis omits a few things like rhymes and iambic pentameter.\n\n# Rhymes\n\nFor rhymes, we use python `pronouncing` library based on:\n\n* CMU pronouncing dictionary http://www.speech.cs.cmu.edu/cgi-bin/cmudict\n\n# Syllable counting \n\nGiven that there are multiple ways to pronounce many words (e.g. \"caramel\" can be pronounced with 2 or 3 syllables),\nwe adopt a \"permissive\" approach and consult multiple tools for syllable counting:\n\n* pronounce - a well-known pronunciation dict based on from CMU's pronouncing dictionary \n* syllables - a Python library for syllable counting\n* pyphen - a Python wrapper for the hyphenation library",
+    "imports": [
+      "from typing import Set, Dict, Any",
+      "import re",
+      "import joblib",
+      "import pyphen",
+      "import syllables",
+      "import pronouncing"
+    ],
+    "module_assignments": [
+      {
+        "line": 39,
+        "code": "ALLOWED_SYLLABLES = { 10, 11, }"
+      },
+      {
+        "line": 43,
+        "code": "NUM_REQUIRED_WORDS = 3"
+      },
+      {
+        "line": 45,
+        "code": "memory = joblib.Memory( \".cache\", verbose=0 )"
+      },
+      {
+        "line": 278,
+        "code": "TESTS = [ [\"In savannah where tall trees kiss the sky,\", 10], [\"A giraffe named Joe with love-stricken grace,\", 10], [\"Did find a turtle named Sarah nearby,\", 10], [\"Their eyes did meet, hearts raced in sweet embrace.\", 10], [\"Though nature's laws deemed their love quite absurd,\", 10], [\"Joe's neck would bend to whisper words of flame,\", 10], [\"And Sarah's shell would tremble at each word,\", 10..."
+      }
+    ],
+    "classes": [
+      {
+        "name": "SyllableCounters",
+        "line": 234,
+        "bases": [],
+        "doc": "Simple class to count syllables in text.",
+        "methods": [
+          {
+            "name": "cmu_dict",
+            "qualname": "SyllableCounters.cmu_dict",
+            "line": 243,
+            "signature": "cmu_dict()",
+            "doc": null,
+            "loops": [],
+            "conditions": [
+              {
+                "line": 244,
+                "test": "not SyllableCounters._cmu_dict",
+                "body_len": 1,
+                "orelse_len": 0
+              }
+            ],
+            "returns": [
+              {
+                "line": 246,
+                "value": "SyllableCounters._cmu_dict"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 245,
+                "code": "SyllableCounters._cmu_dict = pronouncing.cmudict.dict()"
+              }
+            ],
+            "calls_unique": [
+              "pronouncing.cmudict.dict"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "cmu",
+            "qualname": "SyllableCounters.cmu",
+            "line": 248,
+            "signature": "cmu(word)",
+            "doc": null,
+            "loops": [],
+            "conditions": [],
+            "returns": [
+              {
+                "line": 249,
+                "value": "{pronouncing.syllable_count(pro) for pro in pronouncing.phones_for_word(word)}"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [],
+            "calls_unique": [
+              "pronouncing.syllable_count",
+              "pronouncing.phones_for_word"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "pyphen_counter",
+            "qualname": "SyllableCounters.pyphen_counter",
+            "line": 254,
+            "signature": "pyphen_counter()",
+            "doc": null,
+            "loops": [],
+            "conditions": [
+              {
+                "line": 255,
+                "test": "not SyllableCounters._pyphen_counter",
+                "body_len": 1,
+                "orelse_len": 0
+              }
+            ],
+            "returns": [
+              {
+                "line": 257,
+                "value": "SyllableCounters._pyphen_counter"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 256,
+                "code": "SyllableCounters._pyphen_counter = pyphen.Pyphen(lang=\"en\")"
+              }
+            ],
+            "calls_unique": [
+              "pyphen.Pyphen"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          },
+          {
+            "name": "count_word",
+            "qualname": "SyllableCounters.count_word",
+            "line": 260,
+            "signature": "count_word(word)",
+            "doc": null,
+            "loops": [],
+            "conditions": [
+              {
+                "line": 261,
+                "test": "not word",
+                "body_len": 1,
+                "orelse_len": 0
+              },
+              {
+                "line": 272,
+                "test": "0 in ans and len(ans) > 1",
+                "body_len": 1,
+                "orelse_len": 0
+              }
+            ],
+            "returns": [
+              {
+                "line": 275,
+                "value": "ans"
+              },
+              {
+                "line": 262,
+                "value": "{0}"
+              }
+            ],
+            "raises": [],
+            "tries": [],
+            "assignments": [
+              {
+                "line": 264,
+                "code": "cmu = SyllableCounters.cmu(word)"
+              },
+              {
+                "line": 266,
+                "code": "pyph = SyllableCounters.pyphen_counter().inserted(word).count(\"-\") + 1"
+              },
+              {
+                "line": 268,
+                "code": "syll = syllables.estimate(word)"
+              },
+              {
+                "line": 270,
+                "code": "ans = cmu | {pyph, syll}"
+              }
+            ],
+            "calls_unique": [
+              "SyllableCounters.cmu",
+              "syllables.estimate",
+              "SyllableCounters.pyphen_counter.inserted.count",
+              "ans.remove",
+              "len",
+              "SyllableCounters.pyphen_counter.inserted",
+              "SyllableCounters.pyphen_counter"
+            ],
+            "llm_calls": [],
+            "io_calls": []
+          }
+        ]
+      }
+    ],
+    "functions": [
+      {
+        "name": "sonnet_errors",
+        "qualname": "sonnet_errors",
+        "line": 50,
+        "signature": "sonnet_errors(poem, target, verbose)",
+        "doc": "Checks for sonnet errors with respect to target rhyme scheme (and optional required words)\n\nargs:\n    poem: the poem to check\n    target: the rhyme scheme, e.g. \"ABBA ABBA CDC DCD\"\n            optionally target can have a list of required words, like\n            \"ABBA ABBA CDC DCD, love train snail\" each of these must be in the poem\n    verbose: if True, print out more details",
+        "loops": [
+          {
+            "line": 75,
+            "type": "for",
+            "target": "line",
+            "iter": "split_poem(poem)",
+            "body_len": 2,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 61,
+            "test": "', ' in target",
+            "body_len": 2,
+            "orelse_len": 2
+          },
+          {
+            "line": 71,
+            "test": "any(missing_words)",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 79,
+            "test": "syllable_errors",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 77,
+            "test": "not variations & ALLOWED_SYLLABLES",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 82,
+            "value": "errors"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 68,
+            "code": "errors = scheme_errors(poem, scheme, verbose=verbose)"
+          },
+          {
+            "line": 70,
+            "code": "missing_words = [w for w in required_words if w.lower() not in poem.lower()]"
+          },
+          {
+            "line": 74,
+            "code": "syllable_errors = []"
+          },
+          {
+            "line": 62,
+            "code": "scheme, rest = target.split(\", \")"
+          },
+          {
+            "line": 63,
+            "code": "required_words = rest.split()"
+          },
+          {
+            "line": 65,
+            "code": "scheme = target"
+          },
+          {
+            "line": 66,
+            "code": "required_words = []"
+          },
+          {
+            "line": 72,
+            "code": "errors[\"missing words\"] = missing_words"
+          },
+          {
+            "line": 76,
+            "code": "variations = syllable_variations(line)"
+          },
+          {
+            "line": 80,
+            "code": "errors[\"syllable errors\"] = syllable_errors"
+          }
+        ],
+        "calls_unique": [
+          "scheme_errors",
+          "isinstance",
+          "any",
+          "split_poem",
+          "target.split",
+          "rest.split",
+          "syllable_variations",
+          "syllable_errors.append",
+          "w.lower",
+          "poem.lower",
+          "sorted"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "clean_word",
+        "qualname": "clean_word",
+        "line": 85,
+        "signature": "clean_word(text)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 86,
+            "value": "text.lower().strip(',.!?;: \"\\'[]()/')"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [],
+        "calls_unique": [
+          "text.lower.strip",
+          "text.lower"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "clean_line",
+        "qualname": "clean_line",
+        "line": 89,
+        "signature": "clean_line(line)",
+        "doc": "Clean a line from a poem.\nCheck if line ends with (A) or (B) ... and remove it",
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 95,
+            "value": "line.strip()"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 94,
+            "code": "line = re.sub(r\"\\s*\\([A-Za-z]\\)\\s*$\", \"\", line)"
+          }
+        ],
+        "calls_unique": [
+          "re.sub",
+          "line.strip"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "split_poem",
+        "qualname": "split_poem",
+        "line": 98,
+        "signature": "split_poem(poem, min_line_len)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 100,
+            "value": "[l for l in ans if len(l) > min_line_len]"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 99,
+            "code": "ans = [clean_line(l) for l in poem.splitlines()]"
+          }
+        ],
+        "calls_unique": [
+          "clean_line",
+          "poem.splitlines",
+          "len"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "slant_rhyming_parts",
+        "qualname": "slant_rhyming_parts",
+        "line": 104,
+        "signature": "slant_rhyming_parts(word)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 115,
+            "value": "set(ans)"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 105,
+            "code": "consonants = set(\"BCDFGHJKLMNPQRSTVWXYZ\")"
+          },
+          {
+            "line": 106,
+            "code": "ans = [ \"\".join( (\"R\" if \"R\" in p else (p if p in consonants else \"?\")) for p in pronouncing.rhyming_part(ph).split() ) for ph in pronouncing.phones_for_word(word) ]"
+          },
+          {
+            "line": 113,
+            "code": "ans = [a for a in ans if not all(i == \"?\" for i in a)]"
+          },
+          {
+            "line": 114,
+            "code": "ans = [a.replace(\"?\", \"\") + (\"?\" if a.endswith(\"?\") else \"\") for a in ans]"
+          }
+        ],
+        "calls_unique": [
+          "set",
+          "Constant.join",
+          "pronouncing.phones_for_word",
+          "a.replace",
+          "all",
+          "a.endswith",
+          "pronouncing.rhyming_part.split",
+          "pronouncing.rhyming_part"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "get_rhymes",
+        "qualname": "get_rhymes",
+        "line": 119,
+        "signature": "get_rhymes(w)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 120,
+            "value": "set(pronouncing.rhymes(w))"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [],
+        "calls_unique": [
+          "set",
+          "pronouncing.rhymes"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "scheme_errors",
+        "qualname": "scheme_errors",
+        "line": 123,
+        "signature": "scheme_errors(poem, scheme, verbose)",
+        "doc": "Find errors with respect to a given rhyming scheme",
+        "loops": [
+          {
+            "line": 138,
+            "type": "for",
+            "target": "chars",
+            "iter": "sorted(set(scheme))",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 150,
+            "type": "for",
+            "target": "g",
+            "iter": "groups",
+            "body_len": 4,
+            "orelse_len": 0
+          },
+          {
+            "line": 172,
+            "type": "for",
+            "target": "w",
+            "iter": "scores",
+            "body_len": 3,
+            "orelse_len": 0
+          },
+          {
+            "line": 155,
+            "type": "for",
+            "target": "w",
+            "iter": "g",
+            "body_len": 3,
+            "orelse_len": 0
+          },
+          {
+            "line": 158,
+            "type": "for",
+            "target": "comparisons",
+            "iter": "[internal_words, external_words]",
+            "body_len": 3,
+            "orelse_len": 0
+          },
+          {
+            "line": 161,
+            "type": "for",
+            "target": "v",
+            "iter": "comparisons",
+            "body_len": 2,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 128,
+            "test": "len(lines) != len(scheme)",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 147,
+            "test": "verbose",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 195,
+            "test": "len(error_reasons) + len(suspicious_reasons) >= 3",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 153,
+            "test": "len(internal_words) == 1",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 175,
+            "test": "internal['rhymes'] or internal['slant_rhymes']",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 192,
+            "test": "verbose",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 177,
+            "test": "len(external['rhymes']) >= 2",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 179,
+            "test": "external['rhymes']",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 162,
+            "test": "v == w",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 164,
+            "test": "v in rhymes",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 180,
+            "test": "len(external['slant_rhymes']) >= 2",
+            "body_len": 1,
+            "orelse_len": 1
+          },
+          {
+            "line": 188,
+            "test": "len(external['slant_rhymes']) >= 3",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 166,
+            "test": "slant_sets[v] & slant_sets[w]",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 198,
+            "value": "{w: {'reason': error_reasons[w], 'internal': scores[w][0], 'external': scores[w][1]} for w in error_reasons}"
+          },
+          {
+            "line": 129,
+            "value": "{'line count': f'Poem has {len(lines)} != {len(scheme)} lines in pattern {scheme}'}"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 125,
+            "code": "lines = split_poem(poem)"
+          },
+          {
+            "line": 126,
+            "code": "scheme = scheme.replace(\" \", \"\")"
+          },
+          {
+            "line": 133,
+            "code": "last_words = [clean_word(l.replace(\"-\", \" \").split()[-1]) for l in lines]"
+          },
+          {
+            "line": 135,
+            "code": "dictionary = pronouncing.cmudict.dict()"
+          },
+          {
+            "line": 137,
+            "code": "groups = []"
+          },
+          {
+            "line": 143,
+            "code": "slant_sets = {w: set(slant_rhyming_parts(w)) for g in groups for w in g}"
+          },
+          {
+            "line": 145,
+            "code": "scores = {}"
+          },
+          {
+            "line": 169,
+            "code": "error_reasons = {}"
+          },
+          {
+            "line": 170,
+            "code": "suspicious_reasons = {}"
+          },
+          {
+            "line": 151,
+            "code": "internal_words = set(g)"
+          },
+          {
+            "line": 152,
+            "code": "external_words = {w for h in groups if h is not g for w in h}"
+          },
+          {
+            "line": 173,
+            "code": "internal, external = scores[w]"
+          },
+          {
+            "line": 156,
+            "code": "rhymes = get_rhymes(w)"
+          },
+          {
+            "line": 157,
+            "code": "scores[w] = []"
+          },
+          {
+            "line": 159,
+            "code": "m = dict(rhymes=[], slant_rhymes=[])"
+          },
+          {
+            "line": 178,
+            "code": "error_reasons[w] = \"no internal rhymes, 2+ external perfect rhymes\""
+          },
+          {
+            "line": 181,
+            "code": "error_reasons[ w ] = \"no internal rhymes, 1 external perfect rhyme, 2+ external slant rhymes\""
+          },
+          {
+            "line": 185,
+            "code": "suspicious_reasons[ w ] = \"no internal rhymes/slant rhymes, 1 external perfect rhymes\""
+          },
+          {
+            "line": 189,
+            "code": "error_reasons[ w ] = \"no internal rhymes/slant rhymes, 3+ external slant rhymes\""
+          }
+        ],
+        "calls_unique": [
+          "split_poem",
+          "scheme.replace",
+          "pronouncing.cmudict.dict",
+          "sorted",
+          "len",
+          "clean_word",
+          "set",
+          "groups.append",
+          "print",
+          "error_reasons.update",
+          "slant_rhyming_parts",
+          "get_rhymes",
+          "l.replace.split",
+          "dict",
+          "scores[...].append",
+          "zip",
+          "l.replace",
+          "m[...].append"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "syllable_variations",
+        "qualname": "syllable_variations",
+        "line": 208,
+        "signature": "syllable_variations(text, verbose)",
+        "doc": "Given a text, return the set of possible numbers of syllables. It's a set because some words like \"caramel\" can\nbe pronounced with different numbers of syllables.",
+        "loops": [
+          {
+            "line": 214,
+            "type": "for",
+            "target": "word",
+            "iter": "re.split('[ -]+', text)",
+            "body_len": 5,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 216,
+            "test": "not word",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 223,
+            "value": "ans"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 213,
+            "code": "ans = {0}"
+          },
+          {
+            "line": 215,
+            "code": "word = clean_word(word)"
+          },
+          {
+            "line": 218,
+            "code": "options = word_syllables(word)"
+          },
+          {
+            "line": 219,
+            "code": "options = range( min(options), max(options) + 1 )"
+          },
+          {
+            "line": 222,
+            "code": "ans = {x + y for x in ans for y in options}"
+          }
+        ],
+        "calls_unique": [
+          "re.split",
+          "clean_word",
+          "word_syllables",
+          "range",
+          "min",
+          "max"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "word_syllables",
+        "qualname": "word_syllables",
+        "line": 227,
+        "signature": "word_syllables(word)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [
+          {
+            "line": 231,
+            "value": "SyllableCounters.count_word(word)"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [],
+        "calls_unique": [
+          "SyllableCounters.count_word",
+          "clean_word"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "fixed_tests",
+        "qualname": "fixed_tests",
+        "line": 321,
+        "signature": "fixed_tests()",
+        "doc": null,
+        "loops": [
+          {
+            "line": 323,
+            "type": "for",
+            "target": "(line, expected)",
+            "iter": "TESTS",
+            "body_len": 2,
+            "orelse_len": 0
+          },
+          {
+            "line": 330,
+            "type": "for",
+            "target": "(words, expected)",
+            "iter": "[('fire tire hour liar buyer flower drawer layer loyal royal file orange poem crayon'.split(), [1, 2]), ('caramel mayonnaise family chocolate camera different separate favorite realtor'.split(), [2, 3]), ('mischievous'.split(), [3, 4])]",
+            "body_len": 1,
+            "orelse_len": 0
+          },
+          {
+            "line": 341,
+            "type": "for",
+            "target": "w",
+            "iter": "words",
+            "body_len": 2,
+            "orelse_len": 0
+          },
+          {
+            "line": 343,
+            "type": "for",
+            "target": "i",
+            "iter": "expected",
+            "body_len": 1,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 325,
+            "test": "expected not in variations",
+            "body_len": 2,
+            "orelse_len": 0
+          },
+          {
+            "line": 344,
+            "test": "i not in variations",
+            "body_len": 2,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [
+          {
+            "line": 349,
+            "value": "failures"
+          }
+        ],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 322,
+            "code": "failures = []"
+          },
+          {
+            "line": 324,
+            "code": "variations = syllable_variations(line)"
+          },
+          {
+            "line": 342,
+            "code": "variations = syllable_variations(w)"
+          }
+        ],
+        "calls_unique": [
+          "syllable_variations",
+          "print",
+          "failures.append",
+          "Constant.split"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "summarize_errors",
+        "qualname": "summarize_errors",
+        "line": 352,
+        "signature": "summarize_errors(errors, num_samples)",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 356,
+            "code": "wnl = sum(\"line count\" in e for e in errors.values()) / num_samples"
+          },
+          {
+            "line": 358,
+            "code": "mw = sum(bool(\"missing words\" in e) for e in errors.values()) / num_samples"
+          },
+          {
+            "line": 360,
+            "code": "bl = sum(bool(\"syllable errors\" in e) for e in errors.values()) / num_samples"
+          },
+          {
+            "line": 362,
+            "code": "rhyme_errors = ( sum(any(\" \" not in k for k in e) for e in errors.values()) / num_samples )"
+          },
+          {
+            "line": 365,
+            "code": "both = ( sum( (bool(\"syllable errors\" in e) and any(\" \" not in k for k in e)) for e in errors.values() ) / num_samples )"
+          }
+        ],
+        "calls_unique": [
+          "print",
+          "sum",
+          "bool",
+          "any",
+          "len",
+          "errors.values"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      },
+      {
+        "name": "corpus_check_scheme",
+        "qualname": "corpus_check_scheme",
+        "line": 377,
+        "signature": "corpus_check_scheme(corpus_filename, scheme)",
+        "doc": null,
+        "loops": [
+          {
+            "line": 381,
+            "type": "for",
+            "target": "p",
+            "iter": "poems",
+            "body_len": 2,
+            "orelse_len": 0
+          }
+        ],
+        "conditions": [
+          {
+            "line": 383,
+            "test": "e",
+            "body_len": 8,
+            "orelse_len": 0
+          }
+        ],
+        "returns": [],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 380,
+            "code": "errors = {}"
+          },
+          {
+            "line": 379,
+            "code": "poems = [p.strip() for p in f.read().split(\"\\n\\n\") if p]"
+          },
+          {
+            "line": 382,
+            "code": "e = sonnet_errors(p, scheme)"
+          },
+          {
+            "line": 384,
+            "code": "errors[p] = e"
+          }
+        ],
+        "calls_unique": [
+          "summarize_errors",
+          "open",
+          "sonnet_errors",
+          "len",
+          "p.strip",
+          "print",
+          "f.read.split",
+          "f.read"
+        ],
+        "llm_calls": [],
+        "io_calls": [
+          {
+            "line": 378,
+            "call": "open"
+          },
+          {
+            "line": 379,
+            "call": "f.read.split"
+          },
+          {
+            "line": 379,
+            "call": "f.read"
+          }
+        ]
+      },
+      {
+        "name": "test",
+        "qualname": "test",
+        "line": 396,
+        "signature": "test()",
+        "doc": null,
+        "loops": [],
+        "conditions": [],
+        "returns": [],
+        "raises": [],
+        "tries": [],
+        "assignments": [
+          {
+            "line": 471,
+            "code": "aaa = sonnet_errors( \"\"\"How do I love thee? Let me count the ways. I love thee to the depth and breadth and height My soul can reach, when feeling out of sight For the ends of being and ideal grace. I love thee to the level of every day’s Most quiet need, by sun and candle-light. I love thee freely, as men strive for right. I love thee purely, as they turn from praise. I love thee with the pass..."
+          },
+          {
+            "line": 493,
+            "code": "aaa = sonnet_errors( \"\"\"How do I love thee? Let me count the ways (A) I love thee to the depth and breadth and height (B) My soul can reach, when feeling out of sight (B) For the ends of being and ideal grace (A) I love thee to the level of every day’s (A) Most quiet need, by sun and candle-light (B) I love thee freely, as men strive for right (B) I love thee purely, as they turn from praise (A..."
+          }
+        ],
+        "calls_unique": [
+          "sonnet_errors",
+          "print"
+        ],
+        "llm_calls": [],
+        "io_calls": []
+      }
+    ],
+    "top_level": [],
+    "prompt_like_assignments": [
+      {
+        "line": 68,
+        "name": "errors",
+        "code": "errors = scheme_errors(poem, scheme, verbose=verbose)"
+      },
+      {
+        "line": 356,
+        "name": "wnl",
+        "code": "wnl = sum(\"line count\" in e for e in errors.values()) / num_samples"
+      },
+      {
+        "line": 358,
+        "name": "mw",
+        "code": "mw = sum(bool(\"missing words\" in e) for e in errors.values()) / num_samples"
+      },
+      {
+        "line": 360,
+        "name": "bl",
+        "code": "bl = sum(bool(\"syllable errors\" in e) for e in errors.values()) / num_samples"
+      },
+      {
+        "line": 362,
+        "name": "rhyme_errors",
+        "code": "rhyme_errors = (\n        sum(any(\" \" not in k for k in e) for e in errors.values()) / num_samples\n    )"
+      },
+      {
+        "line": 365,
+        "name": "both",
+        "code": "both = (\n        sum(\n            (bool(\"syllable errors\" in e) and any(\" \" not in k for k in e))\n            for e in errors.values()\n        )\n        / num_samples\n    )"
+      },
+      {
+        "line": 471,
+        "name": "aaa",
+        "code": "aaa = sonnet_errors(\n        \"\"\"How do I love thee? Let me count the ways.\n        I love thee to the depth and breadth and height\n        My soul can reach, when feeling out of sight\n        For the ends of being and ideal grace.\n        I love thee to the level of every day’s\n        Most quiet need, by sun and candle-light.\n        I love thee freely, as men strive for right.\n        I love thee purely, as they turn from praise.\n        I love thee with the passion put to use\n        In my old griefs, and with my childhood’s faith.\n        I love thee with a love I seemed to lose\n        With my lost saints. I love thee with the breath,\n        Smiles, tears, of all my life; and, if God choose,\n        I shall but love thee better after death.\"\"\",\n        \"ABBA ABBA CDC DCD\",\n        # abba abba cdc dcd: (correct)\n        # \"ABAB CDCD EFEF GG\", (false)\n    )"
+      },
+      {
+        "line": 493,
+        "name": "aaa",
+        "code": "aaa = sonnet_errors(\n        \"\"\"How do I love thee? Let me count the ways (A)\n        I love thee to the depth and breadth and height (B)\n        My soul can reach, when feeling out of sight (B)\n        For the ends of being and ideal grace (A)\n        I love thee to the level of every day’s (A)\n        Most quiet need, by sun and candle-light (B)\n        I love thee freely, as men strive for right (B)\n        I love thee purely, as they turn from praise (A)\n        I love thee with the passion put to use (C)\n        In my old griefs, and with my childhood’s faith (D)\n        I love thee with a love I seemed to lose (C)\n        With my lost saints. I love thee with the breath (D)\n        Smiles, tears, of all my life; and, if God choose (C)\n        I shall but love thee better after death (D).\"\"\",\n        \"ABBA ABBA CDC DCD\",\n        # abba abba cdc dcd: (correct)\n        # \"ABAB CDCD EFEF GG\", (false)\n    )"
+      }
+    ]
+  }
+]

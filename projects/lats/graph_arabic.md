@@ -1,0 +1,47 @@
+# مخطط نظام LATS الكامل — عربي
+
+```mermaid
+flowchart TD
+  A[بداية مهمة LATS] --> DOMAIN{المجال}
+  DOMAIN --> HP[HotPotQA]
+  DOMAIN --> WS[WebShop]
+  DOMAIN --> PR[البرمجة]
+
+  subgraph CORE[نواة LATS / MCTS]
+    ROOT[عقدة الجذر: سؤال أو مشكلة أو حالة] --> SELECT[اختيار عقدة باستخدام UCT/tree policy]
+    SELECT --> TERM{هل عقدة ناجحة نهائية؟}
+    TERM -->|نعم| SUCCESS[إرجاع المسار أو الحل]
+    TERM -->|فشل نهائي أو exhausted| BACKTRACK[رجوع أو حذف الفرع المنتهي]
+    BACKTRACK --> SELECT
+    TERM -->|ليست نهائية| EXPAND[توسيع العقدة بعينات من LLM]
+    EXPAND --> VALUE[تقييم الأطفال بقيمة LLM أو feedback من البيئة]
+    VALUE --> BEST[اختيار أفضل child للـ rollout]
+    BEST --> ROLLOUT[محاكاة/rollout حتى max depth]
+    ROLLOUT --> RTERM{نجاح أثناء rollout؟}
+    RTERM -->|نعم| SUCCESS
+    RTERM -->|لا| BACKPROP[تحديث القيم بالـ backpropagation]
+    BACKPROP --> FAILS[حفظ trajectory فاشل]
+    FAILS --> REFLECT{هل نولد reflection؟}
+    REFLECT -->|نعم| REFL[Self-reflection من المسارات الفاشلة الفريدة]
+    REFLECT -->|لا| SELECT
+    REFL --> SELECT
+  end
+
+  HP --> HENV[إعادة ضبط WikiEnv وHotPotQAWrapper]
+  HENV --> ROOT
+  WS --> WENV[بيئة WebShop وبرومبت التسوق]
+  WENV --> ROOT
+  PR --> PLOAD[تحميل benchmark وgenerator وexecutor]
+  PLOAD --> PCODE[توليد مرشح كود]
+  PCODE --> PEXEC[تشغيل الاختبارات أو تنفيذ الكود]
+  PEXEC --> PPASS{هل الاختبارات نجحت؟}
+  PPASS -->|نعم| SUCCESS
+  PPASS -->|لا| PREFLECT[توليد self-reflection من feedback]
+  PREFLECT --> PSEARCH[اختيار مرشح جديد عبر Tree/DFS/MCTS]
+  PSEARCH --> PCODE
+
+  EXPAND --> PROMPTS[عائلات البرومبت: ReAct/CoT/value/reflection/code generation]
+  VALUE --> PROMPTS
+  REFL --> PROMPTS
+
+```

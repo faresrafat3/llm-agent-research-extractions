@@ -1,0 +1,42 @@
+flowchart TD
+  A[Start LATS task] --> DOMAIN{Domain}
+  DOMAIN --> HP[HotPotQA]
+  DOMAIN --> WS[WebShop]
+  DOMAIN --> PR[Programming]
+
+  subgraph CORE[LATS / MCTS core]
+    ROOT[Root node: question/problem/state] --> SELECT[Select node by UCT/tree policy]
+    SELECT --> TERM{terminal successful?}
+    TERM -->|yes| SUCCESS[Return trajectory/solution]
+    TERM -->|terminal fail/exhausted| BACKTRACK[Backtrack or remove exhausted branch]
+    BACKTRACK --> SELECT
+    TERM -->|not terminal| EXPAND[Expand node with LM samples]
+    EXPAND --> VALUE[Evaluate children with LM value/environment feedback]
+    VALUE --> BEST[Choose best child for rollout]
+    BEST --> ROLLOUT[Rollout/simulate to max depth]
+    ROLLOUT --> RTERM{success during rollout?}
+    RTERM -->|yes| SUCCESS
+    RTERM -->|no| BACKPROP[Backpropagate reward/value]
+    BACKPROP --> FAILS[Store failed trajectory]
+    FAILS --> REFLECT{generate reflection?}
+    REFLECT -->|yes| REFL[Self-reflection from unique failed trajectories]
+    REFLECT -->|no| SELECT
+    REFL --> SELECT
+  end
+
+  HP --> HENV[WikiEnv reset and HotPotQAWrapper]
+  HENV --> ROOT
+  WS --> WENV[WebShop environment and shopping prompt]
+  WENV --> ROOT
+  PR --> PLOAD[Load benchmark + generator + executor]
+  PLOAD --> PCODE[Generate code candidate]
+  PCODE --> PEXEC[Run tests/execute code]
+  PEXEC --> PPASS{tests pass?}
+  PPASS -->|yes| SUCCESS
+  PPASS -->|no| PREFLECT[Generate self-reflection from feedback]
+  PREFLECT --> PSEARCH[Tree/DFS/MCTS next candidate]
+  PSEARCH --> PCODE
+
+  EXPAND --> PROMPTS[Prompt families: ReAct/CoT/value/reflection/code generation]
+  VALUE --> PROMPTS
+  REFL --> PROMPTS

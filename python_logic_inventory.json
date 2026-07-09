@@ -1,0 +1,9 @@
+{
+  "type": "consolidated_manifest",
+  "projects": {
+    "ai_scientist_v2": "projects/ai-scientist-v2/logic_flow_extract/python_logic_inventory.json",
+    "self_refine": "projects/self-refine/python_logic_inventory.json",
+    "reflexion": "projects/reflexion/python_logic_inventory.json",
+    "meta_prompting": "projects/meta-prompting/python_logic_inventory.json"
+  }
+}

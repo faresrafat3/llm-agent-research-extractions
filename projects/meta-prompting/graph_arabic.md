@@ -1,0 +1,42 @@
+# مخطط نظام Meta-Prompting الكامل — عربي
+
+```mermaid
+flowchart TD
+  A[البداية run_experiments.py] --> CLI[قراءة معاملات CLI]
+  CLI --> DATA[تحميل بيانات المهمة jsonl]
+  CLI --> PROMPT[تحميل prompt/config من prompts]
+  CLI --> LM[إنشاء language model wrapper]
+  DATA --> LOOP{حلقة على الأمثلة حتى max_num}
+  LOOP --> METHOD{طريقة prompting}
+  METHOD --> STD[Standard أو Zero-shot-CoT أو Expert أو Multipersona]
+  METHOD --> META[Meta-Prompting]
+  STD --> GEN[توليد مباشر من LLM]
+  GEN --> SAVE[حفظ سجل output]
+  META --> INIT[تهيئة message history بتعليمات meta والسؤال]
+  INIT --> MCALL[استدعاء Meta Model]
+  MCALL --> DECIDE{نوع مخرج Meta}
+  DECIDE -->|استدعاء خبير| EXPERT[بناء prompt الخبير]
+  DECIDE -->|final answer| FINAL[إرجاع الإجابة النهائية أو السجل]
+  DECIDE -->|لا هذا ولا ذاك| ERR[إضافة رسالة خطأ]
+  ERR --> MCALL
+  EXPERT --> ENAME{هل الخبير Expert Python؟}
+  ENAME -->|لا| EGEN[توليد من خبير عادي]
+  ENAME -->|نعم| EPY[خبير Python يولد كود/تعليمات]
+  EPY --> RUNCODE{هل المخرج يقول Please run this code؟}
+  RUNCODE -->|نعم| EXEC[تنفيذ Python بمهلة]
+  EXEC --> APPENDPY[إضافة الكود والمخرج]
+  RUNCODE -->|لا| APPENDPY
+  EGEN --> SUMM{هل عدد المخرجات أكبر من 1؟}
+  SUMM -->|نعم| SUMMARIZE[خبير تلخيص يلخص المخرجات]
+  SUMM -->|لا| MID[إضافة output الخبير وfeedback الوسيط]
+  SUMMARIZE --> MID
+  APPENDPY --> MID
+  MID --> MCALL
+  FINAL --> SAVE
+  SAVE --> LOOP
+  SAVE --> EVAL[evaluate_outputs.py]
+  EVAL --> EXTRACT[استخراج إجابة حسب المهمة]
+  EXTRACT --> METRIC{EM أو SM أو Functional correctness}
+  METRIC --> REPORT[تقرير الدقة]
+
+```

@@ -1,0 +1,8 @@
+AI Scientist v2 prompt extraction audit
+Repository: https://github.com/SakanaAI/AI-Scientist-v2.git
+Commit audited: 96bd51617cfdbb494a9fc283af00fe090edfae48
+Total files in repo snapshot (excluding .git): 69
+Python files: 38
+Prompt-like grep hits across all files: 506
+Non-Python prompt-like hits: README only; no additional standalone prompt templates in YAML/JSON/LaTeX beyond topic/example/review content files.
+Final prompt entries in ai_scientist_v2_prompts_complete.md after second audit: 72
