@@ -1,0 +1,317 @@
+# AI Scientist v2 Flow Graph — English — Code-Checked Update
+
+```mermaid
+flowchart TD
+  %% AI Scientist v2 — code-checked complete logic graph (English)
+
+  A[Start: launch_scientist_bfts.py] --> ARG[Parse CLI arguments]
+  ARG --> GPU[Detect available GPUs]
+  GPU --> LIDEAS[Load ideas JSON from --load_ideas]
+  LIDEAS --> IDX[Select idea by --idea_idx]
+  IDX --> MKDIR[Create timestamped experiment directory]
+  MKDIR --> LC{--load_code?}
+  LC -->|yes| LCP{matching .py exists?}
+  LCP -->|yes| CODE[Read starting code]
+  LCP -->|no| NOWARN1[Warn: code file not found]
+  LC -->|no| NOCODE[code=None]
+  CODE --> MD[Write idea.md via idea_to_markdown]
+  NOWARN1 --> MD
+  NOCODE --> MD
+  MD --> DR{--add_dataset_ref?}
+  DR -->|yes| DRP{hf_dataset_reference.py exists?}
+  DRP -->|yes| DRCODE[Read dataset reference code]
+  DRP -->|no| NOWARN2[Warn and dataset_ref_code=None]
+  DR -->|no| NODR[dataset_ref_code=None]
+  DRCODE --> MERGE{Merge added_code}
+  NOWARN2 --> MERGE
+  NODR --> MERGE
+  MERGE -->|dataset ref + code| ADD1[added_code = dataset_ref + code]
+  MERGE -->|dataset only| ADD2[added_code = dataset_ref]
+  MERGE -->|code only| ADD3[added_code = code]
+  MERGE -->|none| ADD4[added_code=None]
+  ADD1 --> ADDJSON{added_code exists?}
+  ADD2 --> ADDJSON
+  ADD3 --> ADDJSON
+  ADD4 --> ADDJSON
+  ADDJSON -->|yes| IDEA_CODE[Insert Code into idea JSON]
+  ADDJSON -->|no| SAVEIDEA[Save raw idea.json]
+  IDEA_CODE --> SAVEIDEA
+  SAVEIDEA --> CFG[edit_bfts_config_file and create idea-specific config]
+
+  subgraph IDEATION[Optional separate ideation script: perform_ideation_temp_free.py]
+    I0[Input workshop_description markdown] --> I1[system_prompt with tool_descriptions and tool_names_str]
+    I1 --> ILOOP1{for gen_idx in max_num_generations}
+    ILOOP1 --> I2[idea_generation_prompt with workshop_description and prev_ideas_string]
+    I2 --> ILOOP2{for reflection_round in num_reflections}
+    ILOOP2 -->|round 0| I2
+    ILOOP2 -->|round > 0| I3[idea_reflection_prompt with current_round num_reflections last_tool_results]
+    I2 --> IACTION{Parse ACTION and ARGUMENTS}
+    I3 --> IACTION
+    IACTION -->|SearchSemanticScholar| IS2[SemanticScholarSearchTool.use_tool query]
+    IS2 --> I3
+    IACTION -->|FinalizeIdea| IFIN[Parse idea JSON and append archive]
+    IACTION -->|invalid parse or invalid JSON| IBREAK[Break current proposal]
+    IFIN --> ILOOP1
+    IBREAK --> ILOOP1
+    ILOOP1 --> ISAVE[Save ideas JSON]
+  end
+
+  CFG --> EXP[perform_experiments_bfts]
+  EXP --> LOADCFG[load_cfg and load_task_desc]
+  LOADCFG --> PREP[prep_agent_workspace]
+  PREP --> AM[AgentManager init: validate idea keys and create initial Stage 1]
+
+  subgraph MANAGER[AgentManager.run nested loops]
+    AM --> M0{while current_stage}
+    M0 --> M1[Set current_substage = current_stage]
+    M1 --> M2{while current_substage}
+    M2 --> PA[Create ParallelAgent for substage]
+    PA --> M3{while True node loop}
+    M3 --> STEP[agent.step executes one parallel BFTS step]
+    STEP --> CALLBACK[step_callback saves summaries and run]
+    CALLBACK --> MSC{_check_stage_completion}
+    MSC -->|complete| BEST{best node found?}
+    BEST -->|yes| MSE[_run_multi_seed_evaluation on best node]
+    MSE --> SAP[_run_plot_aggregation over seed nodes]
+    SAP --> MMAINEND[End substage and move to next main stage]
+    BEST -->|no| MFAIL[Set current_stage=None and stop]
+    MSC -->|not complete| SSC{_check_substage_completion}
+    SSC -->|complete| NS[_create_next_substage from goals prompt]
+    NS -->|created| RECORDSS[Record StageTransition and continue substage loop]
+    NS -->|none| MMAINEND
+    SSC -->|not complete| M3
+    RECORDSS --> M2
+    MMAINEND --> CKPT[Save checkpoint]
+    CKPT --> NMS{_create_next_main_stage}
+    NMS -->|stage 1 to 4 available| RECORDMS[Record main-stage transition]
+    RECORDMS --> M0
+    NMS -->|main_stage_num == 4 or none| MEND[All stages complete]
+    MFAIL --> MEND
+  end
+
+  subgraph SELECT[ParallelAgent._select_parallel_nodes]
+    STEP --> SEL0[Initialize nodes_to_process and processed_trees]
+    SEL0 --> SEL1{while len(nodes_to_process) < num_workers}
+    SEL1 --> DRAFT{draft_nodes < num_drafts?}
+    DRAFT -->|yes| ADDDRAFT[Append None means new draft]
+    ADDDRAFT --> SEL1
+    DRAFT -->|no| VIABLE[Build viable_trees excluding trees whose leaves are all buggy]
+    VIABLE --> DBGPROB{random < debug_prob?}
+    DBGPROB -->|yes| DBGELIG[Find buggy leaf nodes with debug_depth <= max_debug_depth]
+    DBGELIG --> DBGFOUND{debuggable nodes exist and tree not already processed?}
+    DBGFOUND -->|yes| ADDDBG[Append debug node]
+    ADDDBG --> SEL1
+    DBGFOUND -->|no| STAGESEL{stage_name prefix?}
+    DBGPROB -->|no| STAGESEL
+    STAGESEL -->|4_| ADDABL[Append best_stage3_node for ablation]
+    STAGESEL -->|2_| ADDHYP[Append best_stage1_node for hyperparameter tuning]
+    STAGESEL -->|1_ or 3_| GOOD{good_nodes exist?}
+    GOOD -->|no| ADDDRAFT
+    GOOD -->|yes| BESTNODE[Select journal.get_best_node]
+    BESTNODE --> TREEDONE{tree already processed?}
+    TREEDONE -->|no| ADDIMP[Append best node for improvement]
+    TREEDONE -->|yes| NEXTBEST[Try next best good nodes]
+    NEXTBEST --> ADDIMP
+    ADDABL --> SEL1
+    ADDHYP --> SEL1
+    ADDIMP --> SEL1
+    SEL1 -->|filled| SUBMIT[Submit selected nodes to workers]
+  end
+
+  subgraph WORKER[ParallelAgent.step and _process_node_wrapper]
+    SUBMIT --> GPUACQ{GPU manager available?}
+    GPUACQ -->|yes| GPUOK{acquire_gpu succeeds?}
+    GPUOK -->|yes| WG[Worker uses assigned GPU]
+    GPUOK -->|no| WCPU[Warn and run on CPU]
+    GPUACQ -->|no| WCPU
+    WG --> NODETYPE{node_data and stage}
+    WCPU --> NODETYPE
+    NODETYPE -->|None| DRAFTPROMPT[_draft prompt]
+    NODETYPE -->|buggy parent| DEBUGPROMPT[_debug prompt]
+    NODETYPE -->|stage 2 non-buggy| HYPIDEA[hyperparameter idea prompt retry up to 5]
+    HYPIDEA --> HYPARSE{parsed HYPERPARAM NAME and DESCRIPTION?}
+    HYPARSE -->|no after retries| HYFALL[Fallback hyperparameter idea]
+    HYPARSE -->|yes| HYIMPL[hyperparameter implementation prompt]
+    HYFALL --> HYIMPL
+    NODETYPE -->|stage 4 non-buggy| ABIDEA[ablation idea prompt retry up to 5]
+    ABIDEA --> ABPARSE{parsed ABLATION NAME and DESCRIPTION?}
+    ABPARSE -->|no after retries| ABFALL[Fallback ablation idea]
+    ABPARSE -->|yes| ABIMPL[ablation implementation prompt]
+    ABFALL --> ABIMPL
+    NODETYPE -->|normal non-buggy| IMPPROMPT[_improve prompt]
+    DRAFTPROMPT --> PCQ[plan_and_code_query retry up to 3]
+    DEBUGPROMPT --> PCQ
+    HYIMPL --> PCQ
+    ABIMPL --> PCQ
+    IMPPROMPT --> PCQ
+    PCQ --> CODEPARSE{plan and python code block parsed?}
+    CODEPARSE -->|no and retries remain| PARSEFB[Add Parsing Feedback prompt key]
+    PARSEFB --> PCQ
+    CODEPARSE -->|no final| BADCOMP[Return failed completion as code]
+    CODEPARSE -->|yes| RUN[Interpreter.run generated experiment code]
+    BADCOMP --> RUN
+    RUN --> EVAL[parse_exec_result prompt with review_func_spec]
+    EVAL --> BUG{is_bug or exception?}
+    BUG -->|yes| MARKBUG[Mark node buggy]
+    BUG -->|no| MPGEN[metric parser code-generation prompt]
+    MPGEN --> MPRUN[Run metric parser code]
+    MPRUN --> METPROMPT[metrics_prompt with metric_parse_spec]
+    METPROMPT --> VALIDMET{valid metrics received?}
+    VALIDMET -->|no| WORST[Set WorstMetricValue and mark buggy]
+    VALIDMET -->|yes| SETMET[Set node.metric]
+    SETMET --> PLOTBR{seed_eval?}
+    PLOTBR -->|yes| USEPARENT[Reuse parent plot_code]
+    PLOTBR -->|no stage3 has previous| USES2[Use best_stage2_plot_code reference]
+    PLOTBR -->|no stage4 has previous| USES3[Use best_stage3_plot_code reference]
+    PLOTBR -->|normal| PLOTPROMPT[plotting code prompt]
+    USEPARENT --> PLOTRUN
+    USES2 --> PLOTPROMPT
+    USES3 --> PLOTPROMPT
+    PLOTPROMPT --> PLOTRUN[Run plotting code]
+    PLOTRUN --> PLOTFAIL{plot failed and retry_count < 3?}
+    PLOTFAIL -->|yes| PLOTPROMPT
+    PLOTFAIL -->|no| MOVEOUT[Move npy/png outputs to experiment_results]
+    MOVEOUT --> PLOTSQ{plots exist?}
+    PLOTSQ -->|yes| VLM[Select plots if many and run VLM plot feedback]
+    PLOTSQ -->|no| NOPLOTS[Skip VLM plot analysis]
+    VLM --> NODEDONE[Return node dict to parent]
+    NOPLOTS --> NODEDONE
+    WORST --> NODEDONE
+    MARKBUG --> NODEDONE
+    NODEDONE --> FUTURE{future result timeout/error?}
+    FUTURE -->|timeout/error| FERR[Log error or raise]
+    FUTURE -->|ok| JOURNAL[Append result node to Journal]
+    JOURNAL --> RELEASE[Release GPU in finally]
+    FERR --> RELEASE
+  end
+
+  MEND --> REPORT{generate_report?}
+  REPORT -->|yes| SUM[overall_summarize draft baseline research ablation]
+  REPORT -->|no| COPYRES[Copy experiment_results to idea_dir]
+  SUM --> COPYRES
+  COPYRES --> PLOTAGG[aggregate_plots]
+
+  subgraph MULTISEED[Multi-seed evaluation and aggregation]
+    MSE --> MSLOOP{for seed in num_seeds}
+    MSLOOP --> SEEDCODE[Inject random numpy torch seed into code]
+    SEEDCODE --> SEEDWORK[_process_node_wrapper with seed_eval=True]
+    SEEDWORK --> MSFUT{future ok?}
+    MSFUT -->|ok| MSAPP[Append seed node]
+    MSFUT -->|timeout/error| MSERR[Log seed error]
+    MSAPP --> MSLOOP
+    MSLOOP --> AGGPROMPT[_aggregate_seed_eval_results plotting prompt]
+    AGGPROMPT --> AGGCODE[Run aggregated seed plotting code]
+    AGGCODE --> AGGNODE[Create seed aggregation node]
+  end
+
+  subgraph PLOTAGGSG[Final plot aggregation]
+    PLOTAGG --> PASYS[AGGREGATOR_SYSTEM_MSG]
+    PASYS --> PAUSER[build_aggregator_prompt with idea_text and combined_summaries_str]
+    PAUSER --> PACODE{LLM returns python code block?}
+    PACODE -->|no| PASTOP[Stop plot aggregation]
+    PACODE -->|yes| PARUN[Run auto_plot_aggregator.py]
+    PARUN --> PAOUT[Capture stdout/stderr even on failure]
+    PAOUT --> PAREF{for i in n_reflections}
+    PAREF --> PAREFPROMPT[reflection prompt with figure_count and aggregator_out]
+    PAREFPROMPT --> PADONE{figure_count > 0 and says I am done?}
+    PADONE -->|yes| FIGS[Final figures directory]
+    PADONE -->|no new/different code| PARUN
+    PADONE -->|identical or no code| PAREF
+    PAREF -->|exhausted| FIGS
+  end
+
+  FIGS --> RMRES[Remove temporary experiment_results copy]
+  RMRES --> TOK1[Save token tracker]
+  TOK1 --> SKIPW{--skip_writeup?}
+  SKIPW -->|yes| TOK2[Save token tracker again]
+  SKIPW -->|no| CITE_START[gather_citations]
+
+  subgraph CITE[Citation loop]
+    CITE_START --> CCACHE{cached citations exist?}
+    CCACHE -->|yes| CACHED[Use cached citations]
+    CCACHE -->|no| CROUND{for round_idx in num_cite_rounds}
+    CROUND --> C1[citation_first_prompt choose missing citation Query]
+    C1 --> CNONE{No more citations needed?}
+    CNONE -->|yes| CACHED
+    CNONE -->|no| S2SEARCH[Semantic Scholar API search]
+    S2SEARCH --> CPAPERS{papers found?}
+    CPAPERS -->|no| CROUND
+    CPAPERS -->|yes| C2[citation_second_prompt select paper indices]
+    C2 --> CADD{Do not add any or Selected empty?}
+    CADD -->|yes| CROUND
+    CADD -->|no| BIB[Append cleaned BibTeX and description]
+    BIB --> CROUND
+    CROUND -->|exhausted| CACHED
+  end
+
+  CACHED --> WRETRY{for attempt in writeup_retries}
+  WRETRY --> WTYPE{writeup_type}
+  WTYPE -->|normal| WN[perform_writeup page_limit=8]
+  WTYPE -->|icbinb| WI[perform_icbinb_writeup page_limit=4]
+  WN --> WOK{writeup_success?}
+  WI --> WOK
+  WOK -->|yes| TOK2
+  WOK -->|no retries remain| WFAIL[Print writeup failed]
+  WOK -->|no and retries remain| WRETRY
+  WFAIL --> TOK2
+
+  subgraph WRITEUP[Writeup internals]
+    WN --> WLOAD[Load idea summaries aggregator code plots template LaTeX]
+    WI --> WLOAD
+    WLOAD --> WPSYS[writeup_system_message_template]
+    WPSYS --> WPUSER[writeup_prompt]
+    WPUSER --> WLATEX[LLM returns complete template.tex]
+    WLATEX --> COMPILE[compile_latex]
+    COMPILE --> WREF{for i in n_writeup_reflections}
+    WREF --> CHK[chktex unused/invalid figs page_limit info]
+    CHK --> ICBINBQ{ICBINB variant?}
+    ICBINBQ -->|yes| IMGREV[perform_imgs_cap_ref_review plus duplicate figure check]
+    IMGREV --> WREFP[writeup reflection_prompt]
+    ICBINBQ -->|no| WREFP
+    WREFP --> WDONE{says I am done or no latex block or unchanged?}
+    WDONE -->|yes| WFINAL[Final compiled PDF]
+    WDONE -->|no revised latex| COMPILE
+    WREF -->|exhausted| VSEL{ICBINB final VLM/page reflection?}
+    VSEL -->|yes| VSELREV[perform_imgs_cap_ref_review_selection]
+    VSELREV --> VREF[img_reflection_prompt]
+    VREF --> FLP[final_reflection_prompt for page limit]
+    FLP --> WFINAL
+    VSEL -->|no| WFINAL
+  end
+
+  TOK2 --> SKIPR{--skip_review or --skip_writeup?}
+  SKIPR -->|yes| CLEAN[Cleanup processes]
+  SKIPR -->|no| PDFSEL[find_pdf_path_for_review]
+  PDFSEL --> PDFD{reflection PDFs?}
+  PDFD -->|final exists| PDFF[Use final reflection PDF]
+  PDFD -->|numbered exists| PDFN[Use highest numbered reflection PDF]
+  PDFD -->|fallback| PDFFB[Use first reflection PDF]
+  PDFF --> PDFEX{PDF path exists?}
+  PDFN --> PDFEX
+  PDFFB --> PDFEX
+  PDFEX -->|no| CLEAN
+  PDFEX -->|yes| LOADPDF[load_paper]
+  LOADPDF --> PR[perform_review]
+
+  subgraph REVIEW[Peer and VLM review]
+    PR --> PRBASE[NeurIPS form plus optional few-shot examples plus paper text]
+    PRBASE --> PRENS{num_reviews_ensemble > 1?}
+    PRENS -->|yes| BATCH[get_batch_responses_from_llm]
+    BATCH --> META[meta_reviewer_system_prompt and get_meta_review]
+    PRENS -->|no| ONE[get_response_from_llm]
+    ONE --> PRREF{num_reflections > 1?}
+    META --> PRREF
+    PRREF -->|yes| PRLOOP[reviewer_reflection_prompt loop until I am done or exhausted]
+    PRREF -->|no| RJSON[Review JSON]
+    PRLOOP --> RJSON
+    RJSON --> VCAP[perform_imgs_cap_ref_review VLM image caption reference review]
+    VCAP --> SAVE_REVIEW[Save review_text.txt and review_img_cap_ref.json]
+  end
+
+  SAVE_REVIEW --> CLEAN
+  CLEAN --> CHILDREN[Loop over child processes send SIGTERM]
+  CHILDREN --> ALIVE[Loop over alive children kill]
+  ALIVE --> ORPHAN[Loop over process_iter keywords python torch mp bfts experiment]
+  ORPHAN --> EXIT[sys.exit(0)]
+
+```

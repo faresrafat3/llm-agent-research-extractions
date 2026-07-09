@@ -1,9 +1,16 @@
 {
   "type": "consolidated_manifest",
   "projects": {
-    "ai_scientist_v2": "projects/ai-scientist-v2/logic_flow_extract/python_logic_inventory.json",
+    "ai_scientist_v2": "projects/ai-scientist-v2/python_logic_inventory.json",
+    "ai_scientist_v2_legacy": "projects/ai-scientist-v2/logic_flow_extract/python_logic_inventory.json",
     "self_refine": "projects/self-refine/python_logic_inventory.json",
     "reflexion": "projects/reflexion/python_logic_inventory.json",
-    "meta_prompting": "projects/meta-prompting/python_logic_inventory.json"
-  }
+    "meta_prompting": "projects/meta-prompting/python_logic_inventory.json",
+    "lats": "projects/lats/python_logic_inventory.json",
+    "ape": "projects/ape/python_logic_inventory.json",
+    "prompt_report": "projects/prompt-report/python_logic_inventory.json"
+  },
+  "generated_at": "2026-07-09",
+  "total_projects": 7,
+  "quality_standard": "https://github.com/faresrafat3/llm-agent-research-extractions/blob/main/QUALITY_STANDARD_AR.md"
 }
