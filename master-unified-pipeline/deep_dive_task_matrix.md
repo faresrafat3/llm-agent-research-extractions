@@ -5,7 +5,9 @@
 | Phase | Layer | Source system | Function | Input | Output | Loop | Key decision | Stop condition |
 |---|---|---|---|---|---|---|---|---|
 | 0 Route | L0 | Prompt Report | `technique_router` | task_spec, modality, budget | route flags + methods | no | which family/method? | always once per trial |
-| 1 Optimize instruction | L1 | APE | `find_prompts` | demos, templates, config | ranked prompts, demo_fn | yes: subsamples + eval rounds | likelihood vs bandits | eval budget / top-k stable |
+| 1 Optimize instruction (APE) | L1 | APE | `find_prompts` | demos, templates | ranked prompts | yes | likelihood vs bandits | eval budget |
+| 1b Optimize instruction (OPRO) | L1 | OPRO | `run_evolution` | seeds, scorer | evolved prompts | yes: steps | meta type / filters | search steps |
+| 1c L1 mode choose | L1 | APE+OPRO | `choose_l1_mode` | budget, demos | ape|opro|cascade|off | no | cascade? | — |
 | 2 Conduct | L2 | Meta-Prompting | `meta_model_generate` | query, meta_instruction | expert calls / final answer | yes: meta rounds | expert vs final vs error | final answer / max rounds |
 | 3 Dispatch expert | L2 | Meta-Prompting | expert extract + call | expert block | expert output | nested | Python expert? | — |
 | 4 Tool exec | L2 | Meta-Prompting | `execute_code_with_timeout` | code | stdout/err | no | run code flag? | timeout |
@@ -21,6 +23,8 @@
 | 10 Local polish | L4 | Self-Refine | gen→fb→refine | x, y, prompts | y_final, history | yes: max_iters | stop(fb,t)? | stop indicator / max |
 | 11 Trial reflect | L5 | Reflexion | `verbal_reflect` | trajectory, feedback | reflection text | per failed trial | use_memory? | success / max trials |
 | 12 Memory update | L5 | Reflexion | append + window | reflection, memory | memory[-K:] | no | window size | — |
+| 12b Curriculum propose | L5 | Voyager | `propose_next_task` | events, progress | task, context | retries | first task / inv full / auto | — |
+| 12c Skill retrieve/add | L5 | Voyager | `retrieve_skills` / `add_new_skill` | query / success info | codes / skills.json | no | success? skip deposit | — |
 | 13 Stage step | L6 | AI Scientist v2 | BFTS node step | parent node, stage goal | child node | yes: node loop | draft/debug/improve/tune/ablate | stage/substage complete |
 | 14 Multi-seed | L6 | AI Scientist v2 | multi_seed_eval | best node | seed metrics | yes: seeds | best node exists? | all seeds done |
 | 15 Plot / aggregate | L6 | AI Scientist v2 | plot + VLM feedback | metrics, data | figures | yes: retry | VLM ok? | — |
@@ -32,18 +36,19 @@
 
 ## Layer activation matrix (by task type)
 
-| Task type | L0 families | L1 APE | L2 Meta | L3 ToT | L3 LATS | L4 Refine | L5 Reflexion | L6 Stages |
-|---|---|---|---|---|---|---|---|---|
-| Simple QA | ICL + CoT | optional | off | off | off | optional | off | off |
-| Math / GSM / Game24-like | CoT + Decomposition | optional | optional | **on** | off/cascade | on | optional | off |
-| Creative constrained writing | Thought + Ensembling | optional | optional | **on** (vote) | off | on | off | off |
-| Code generation | Agents + Self-Criticism | optional | Python expert | optional | **on** | on | on | optional |
-| Interactive env (AlfWorld/WebShop) | Agents + Self-Criticism | off | optional | off | **on** | optional | on | off |
-| Multi-hop QA (HotPotQA) | Agents + Decomposition | off | optional | optional | **on** | optional | on | off |
-| Instruction induction | Prompt Optimization | **on** | off | off | off | off | off | off |
-| Research experiment | All + Evaluation | on | on | on | on | on | on | **on** |
-| Paper writeup | Decomposition + Self-Criticism + Eval | optional | on | off | off | on | optional | writeup+review |
-| Multimodal figure | Multimodal + Self-Criticism | off | on | off | off | visual refine | optional | VLM review |
+| Task type | L0 families | L1 APE | L1 OPRO | L2 Meta | L3 ToT | L3 LATS | L4 Refine | L5 Reflexion | L5 Voyager | L6 Stages |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Simple QA | ICL + CoT | optional | off | off | off | off | optional | off | off | off |
+| Math / GSM / Game24 | CoT + Decomposition | optional | optional | optional | **on** | off/cascade | on | optional | off | off |
+| Creative writing | Thought + Ensembling | optional | optional | optional | **on** (vote) | off | on | off | off | off |
+| Code generation | Agents + Self-Criticism | optional | optional | Python expert | optional | **on** | on | on | optional | optional |
+| Interactive env | Agents + Self-Criticism | off | off | optional | off | **on** | optional | on | optional | off |
+| Multi-hop QA | Agents + Decomposition | off | off | optional | optional | **on** | optional | on | off | off |
+| Instruction induction | Prompt Optimization | **on** | cascade | off | off | off | off | off | off | off |
+| Open-ended skill growth | Agents + Self-Criticism | optional | off | optional | off | optional | on | on | **on** | off |
+| Research experiment | All + Evaluation | on | optional | on | on | on | on | on | optional | **on** |
+| Paper writeup | Decomposition + Eval | optional | off | on | off | off | on | optional | off | writeup+review |
+| Multimodal figure | Multimodal + Self-Criticism | off | off | on | off | off | visual refine | optional | off | VLM review |
 
 ---
 
@@ -57,11 +62,13 @@
 - demos_available?
 - production_pipeline?
 
-### L1 APE
+### L1 APE + OPRO
+- mode ape | opro | cascade | off?
 - prompt_gen_template provided?
-- eval_method = likelihood | bandits?
+- eval_method = likelihood | bandits? (APE)
+- meta_prompt_type / instruction_pos / few-shot criteria? (OPRO)
 - few_shot_data provided?
-- num_prompts_per_round scale?
+- num_prompts_per_round / num_search_steps scale?
 
 ### L2 Meta
 - output type: expert_call | final_answer | invalid?
@@ -85,11 +92,13 @@
 - score parse success?
 - max_iters reached?
 
-### L5 Reflexion
+### L5 Reflexion + Voyager
 - success?
 - trials remaining?
 - use_memory?
 - env already successful (skip)?
+- enable Voyager curriculum/skills?
+- add_skill on success?
 
 ### L6 Stages
 - stage complete?

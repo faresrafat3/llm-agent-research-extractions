@@ -88,6 +88,49 @@ Candidate instruction:
 
 ---
 
+
+### P1.5 OPRO meta-prompt (iterative instruction search)
+
+```text
+Your task is to generate the instruction <INS>.
+Below are some previous instructions with their scores.
+The score ranges from 0 to 100.
+
+text:
+{{old_instruction_i}}
+score:
+{{score_i}}
+...
+
+Below are some problems.
+input:
+Q: <INS>
+{{question}}
+A:
+Ground truth answer:
+{{answer}}
+
+Generate an instruction that is different from all the instructions <INS> above,
+and has a higher score than all the instructions <INS> above.
+The instruction should begin with <INS> and end with </INS>.
+The instruction should be concise, effective, and generally applicable.
+```
+
+### P1.6 L1 mode router (APE vs OPRO)
+
+```text
+Choose instruction-optimization mode:
+- ape: one-shot/bandit candidate generation when demos exist and budget is tight
+- opro: multi-step meta-prompt evolution when a scorer and step budget exist
+- cascade: APE seeds then OPRO refines
+- off: use hand prompts
+
+Task: {{task_spec}}
+Demos available: {{demos}}
+Eval budget: {{budget}}
+Return JSON: {"mode":"ape|opro|cascade|off","steps":int,"rationale":"..."}
+```
+
 ## P2 — Meta Conductor (Meta-Prompting)
 
 ### P2.1 Meta-prompting instruction (core)
@@ -349,6 +392,43 @@ Explain the bugs and how to fix them in the next attempt.
 
 ---
 
+
+### P5.4 Voyager curriculum next-task (open-ended)
+
+```text
+You are a mentor proposing the next immediate task.
+Prefer novel, feasible, specific tasks (Mine/Craft/Kill/...).
+Avoid unverifiable build/place-only tasks unless required.
+
+State:
+{{observation}}
+Completed: {{completed_tasks}}
+Failed: {{failed_tasks}}
+
+Format:
+Reasoning: ...
+Task: <single concise task phrase>
+```
+
+### P5.5 Voyager critic (env-grounded success)
+
+```text
+Evaluate if the agent met the task requirements from final state.
+Return JSON only:
+{"reasoning":"...","success":true|false,"critique":"..."}
+Exceeding requirements counts as success.
+```
+
+### P5.6 Voyager skill description (for library)
+
+```text
+Describe the main function in <=6 sentences, one line.
+Do not mention the function name or chat helpers.
+Code:
+{{program_code}}
+The main function is `{{program_name}}`.
+```
+
 ## P6 — Progressive Stages (AI Scientist v2)
 
 ### P6.1 Ideation
@@ -474,20 +554,20 @@ Then, let's carry out the plan and solve the problem step by step.
 | Prompt ID | Used by | Consumes | Produces |
 |---|---|---|---|
 | P0.1 | L0 | task_spec | route JSON |
-| P1.* | L1 | demos | candidate prompts / scores |
+| P1.* | L1 | demos / score history | candidate prompts / scores / evolution |
 | P2.* | L2 | query, experts | final answer / expert log |
 | P3.* | L3 | state, tree | children / values / reflections |
 | P4.* | L4 | x, y_t | fb_t, y_{t+1} |
-| P5.* | L5 | trajectory, memory | action / reflection |
+| P5.* | L5 | trajectory, memory, skills | action / reflection / skill |
 | P6.* | L6 | idea, stage, logs | code, metrics, paper, review |
 | P7.* | L0/L2 optional | x | reasoning + answer |
 
 ## Composition example
 
 1. **P0.1** → activate ape+meta+lats+refine+reflexion+stages  
-2. **P1.1/P1.2** → best task instruction  
+2. **P1.1–P1.6** → best task instruction (APE and/or OPRO)  
 3. **P2.1** conductor uses instruction  
 4. Expert TreeSearch uses **P3.1/P3.2**  
 5. Each leaf polished with **P4.2/P4.3**  
-6. Failure → **P5.2** into memory for next trial  
+6. Failure → **P5.2** verbal memory; optional **P5.4–P5.6** Voyager curriculum/skills  
 7. Stage shell uses **P6.3–P6.8** for production  

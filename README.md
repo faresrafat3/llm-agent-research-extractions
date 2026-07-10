@@ -131,7 +131,7 @@ Every project is structured to the same quality standard as much as the original
 
 ## ARSENAL — Unified Master Pipeline
 
-The eight extractions are also fused into one operational master system:
+The ten extractions are also fused into one operational master system:
 
 - Folder: `master-unified-pipeline/`
 - Standalone repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline

@@ -9,14 +9,14 @@ ARSENAL is a six-layer nested agent architecture. Outer layers set goals, budget
 │ L6  PROGRESSIVE STAGE SHELL  (AI Scientist v2)                   │
 │  stages · multi-seed · plots · citations · writeup · peer review │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │ L5  EPISODIC VERBAL MEMORY  (Reflexion)                    │  │
-│  │  trial loop · reflection bank · memory window              │  │
+│  │ L5  MEMORY (Reflexion verbal + Voyager skills/curriculum)  │  │
+│  │  trials · reflections · optional skill library             │  │
 │  │  ┌──────────────────────────────────────────────────────┐  │  │
 │  │  │ L0  TECHNIQUE ROUTER  (Prompt Report)                │  │  │
 │  │  │  family select · method select · layer activation    │  │  │
 │  │  │  ┌────────────────────────────────────────────────┐  │  │  │
-│  │  │  │ L1  INSTRUCTION OPTIMIZER  (APE)               │  │  │  │
-│  │  │  │  generate · dedup · likelihood/UCB · rank      │  │  │  │
+│  │  │  │ L1  INSTRUCTION OPTIMIZER  (APE + OPRO)        │  │  │  │
+│  │  │  │  APE one-shot/bandit · OPRO meta-evolve        │  │  │  │
 │  │  │  │  ┌──────────────────────────────────────────┐  │  │  │  │
 │  │  │  │  │ L2  META CONDUCTOR  (Meta-Prompting)     │  │  │  │  │
 │  │  │  │  │  decompose · expert dispatch · tools     │  │  │  │  │
@@ -44,15 +44,19 @@ Input:  task_spec, modality, budget, safety_flags
 Output: route {
   families: [...],
   methods: [...],
-  activate: {ape, meta, lats, refine, reflexion, stages},
+  activate: {ape, opro, meta, tot, lats, refine, reflexion, voyager, stages},
   ensemble_n, cot_variant, ...
 }
 ```
 
-### L1 Instruction Optimizer (APE)
+### L1 Instruction Optimizer (APE baseline + OPRO iterative)
 ```
-Input:  demos | task_desc, eval_template, config
-Output: best_prompts[], scores[], demo_fn
+Input:  demos | task_desc, eval_template, mode ∈ {ape, opro, cascade}, config
+Output: best_prompts[], scores[], demo_fn?, evolution_history?
+
+mode=ape:     generate → dedup → likelihood|UCB → rank
+mode=opro:    seed score → meta_prompt evolve → filter → rescore (steps)
+mode=cascade: APE warm-start → OPRO refine under eval budget
 ```
 
 ### L2 Meta Conductor
@@ -79,10 +83,14 @@ Input:  x, y0?, p_gen, p_fb, p_refine, max_iters, stop_fn
 Output: y_final, feedback_history[], scores
 ```
 
-### L5 Episodic Memory (Reflexion)
+### L5 Memory (Reflexion verbal + Voyager procedural)
 ```
-Input:  task, actor, env, memory[], max_trials
-Output: success?, best_result, updated memory[]
+Input:  task, actor, env, memory[], max_trials, skill_bank?
+Output: success?, best_result, updated memory[], optional new skills
+
+verbal (Reflexion): on fail → reflection → memory[-K:] for next trial
+procedural (Voyager, optional):
+  curriculum.propose_next_task → retrieve skills → act/critic loop → add_skill on success
 ```
 
 ### L6 Stage Shell (AI Scientist v2)
@@ -106,11 +114,17 @@ def arsenal_run(task, config):
             # L0 — route
             route = technique_router(task, stage, config)
 
-            # L1 — optional prompt optimization
-            if route.activate.ape:
+            # L1 — optional prompt optimization (APE / OPRO / cascade)
+            if route.activate.opro and route.activate.ape:
+                seeds, _ = ape_find_prompts(task.demos, config.ape)
+                prompts, demo_fn = opro_evolve(seeds, task, config.opro)
+            elif route.activate.opro:
+                prompts, demo_fn = opro_evolve(config.default_prompts, task, config.opro)
+            elif route.activate.ape:
                 prompts, demo_fn = ape_find_prompts(task.demos, config.ape)
             else:
                 prompts = config.default_prompts
+                demo_fn = None
 
             # L2 — meta conductor
             def expert_handler(expert_name, instruction):
@@ -167,7 +181,7 @@ User Task / Research Idea
    [L0 Router] ── family, methods, layer flags
         │
         ▼
-   [L1 APE] ──── best instruction(s) + demo_fn
+   [L1 APE|OPRO|cascade] ── best instruction(s) + optional history
         │
         ▼
    [L2 Meta] ───┬── Expert A ──► [L3 ToT|LATS] ── leaves ──► [L4 Refine]
@@ -177,8 +191,11 @@ User Task / Research Idea
         ▼
    Final candidate ──► [L4 Refine]
         │
-   success? ──no──► [L5 Reflect] ── memory ──► next trial
+   success? ──no──► [L5 Reflect] ── verbal memory ──► next trial
         │ yes
+        ▼
+   optional [Voyager add_skill / curriculum next]
+        │
         ▼
    Stage artifact ──► multi-seed / plots
         │
@@ -193,11 +210,13 @@ User Task / Research Idea
 | Store | Owner | Contents | Window |
 |---|---|---|---|
 | `route_cache` | L0 | task → route | session |
-| `prompt_bank` | L1 | ranked prompts + scores | persistent per task family |
+| `prompt_bank` | L1 | ranked prompts + scores (+ OPRO history) | persistent per task family |
 | `message_log` | L2 | meta + expert messages | per trial |
 | `search_tree` | L3 | nodes, values, visits | per trial |
 | `refine_history` | L4 | y_t, fb_t pairs | per candidate |
 | `reflection_memory` | L5 | verbal reflections | last K across trials |
+| `skill_library` | L5-Voyager | code skills + descriptions + embeddings | persistent |
+| `curriculum_state` | L5-Voyager | completed/failed tasks, QA cache | run/persistent |
 | `stage_journal` | L6 | nodes, metrics, plots, summaries | full run |
 
 ## 6. Stop conditions (unified)
@@ -208,7 +227,7 @@ User Task / Research Idea
 | L3 | success terminal OR max iterations OR tree exhausted |
 | L2 | final-answer indicator OR max meta rounds |
 | L5 | success OR max trials |
-| L1 | evaluation budget exhausted OR ranked top-k stable |
+| L1 | APE eval budget / OPRO search steps exhausted OR top-k stable |
 | L6 | stage 4 complete OR no best node OR skip flags |
 
 ## 7. Configuration skeleton
@@ -223,6 +242,13 @@ arsenal:
     num_prompts_per_subsample: 10
     eval_method: bandits  # or likelihood
     bandit_rounds: 20
+  opro:
+    enabled: false  # or cascade with ape
+    num_search_steps: 20
+    num_generated_per_step: 8
+    meta_prompt_type: both_instructions_and_exemplars
+    instruction_pos: Q_begin
+    score_threshold: 0.1
   meta:
     max_rounds: 15
     python_expert: true
@@ -238,6 +264,11 @@ arsenal:
   reflexion:
     max_trials: 5
     memory_window: 3
+  voyager:
+    enabled: false
+    skill_top_k: 5
+    task_max_retries: 4
+    curriculum: auto
   stages:
     enabled: true
     list: [draft, tune, improve, ablate]
@@ -250,11 +281,11 @@ arsenal:
 
 | Failure | Mitigation |
 |---|---|
-| Bad instruction | L1 APE re-search; Prompt Report re-route |
+| Bad instruction | L1 APE re-search and/or OPRO evolve; Prompt Report re-route |
 | Infinite expert loop | L2 max_rounds + format-error retry budget |
 | Tree explosion | L3 depth/iteration caps; UCT exploration constant |
 | Refine thrashing | L4 history + stop indicators + max_iters |
-| Memory pollution | L5 window K; only store failures |
+| Memory pollution | L5 window K; only store failures; skill versioning / skip chores |
 | Stage stall | L6 no-best-node abort; skip flags; human checkpoint |
 
 ## 9. Evaluation hooks
@@ -270,10 +301,12 @@ arsenal:
 | ARSENAL component | Primary extraction folder |
 |---|---|
 | L0 Router | `projects/prompt-report/` |
-| L1 APE | `projects/ape/` |
+| L1 APE (baseline) | `projects/ape/` |
+| L1 OPRO (iterative) | `projects/opro/` |
 | L2 Meta | `projects/meta-prompting/` |
 | L3 ToT (baseline) | `projects/tot/` |
 | L3 LATS (full) | `projects/lats/` |
 | L4 Self-Refine | `projects/self-refine/` |
-| L5 Reflexion | `projects/reflexion/` |
+| L5 Reflexion (verbal) | `projects/reflexion/` |
+| L5 Voyager (skills/curriculum) | `projects/voyager/` |
 | L6 Stages | `projects/ai-scientist-v2/` |

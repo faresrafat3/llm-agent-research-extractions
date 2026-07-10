@@ -1,15 +1,19 @@
 # ARSENAL — Master Unified Pipeline Graph (English)
 
-**One system. Eight sources. Nested layers L0–L6 (L3 = ToT baseline + LATS full).**
+**One system. Ten sources. Nested layers L0–L6.**
 
-See also: `search_family_map.md` for ToT vs LATS routing.
+- **L1** = APE baseline + OPRO iterative (+ cascade)
+- **L3** = ToT baseline + LATS full (+ cascade)
+- **L5** = Reflexion verbal memory + optional Voyager skills/curriculum
+
+See: `search_family_map.md`
 
 ## Mermaid
 
 ```mermaid
 flowchart TB
-  %% ARSENAL — Unified Master Pipeline combining all 8 systems
-  %% Sources: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | ToT | LATS | APE | Prompt Report
+  %% ARSENAL — Unified Master Pipeline combining all 10 systems
+  %% Sources: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | ToT | LATS | APE | OPRO | Voyager | Prompt Report
 
   START([User Task / Research Idea / Query]) --> L6_IN[L6 Progressive Stage Shell<br/>AI Scientist v2]
 
@@ -39,14 +43,17 @@ flowchart TB
   end
 
   %% ═══════════════ L5 TRIAL + MEMORY ═══════════════
-  subgraph L5["L5 — EPISODIC VERBAL MEMORY (Reflexion)"]
+  subgraph L5["L5 — MEMORY (Reflexion verbal + Voyager skills)"]
     direction TB
-    TRIAL_WRAP --> MEM_INIT[memory = prior reflections window K]
+    TRIAL_WRAP --> MEM_INIT[memory = reflections window K; optional skill_bank]
     MEM_INIT --> TRIAL_LOOP{for trial in 1..max_trials}
     TRIAL_LOOP --> L0_CALL[Call L0 Technique Router]
     %% L0..L4 execute here (linked below)
     INNER_DONE[Inner stack result] --> SUCC{Success?}
-    SUCC -->|yes| TRIAL_DONE
+    SUCC -->|yes| VYG{voyager enabled?}
+    VYG -->|yes| VSKILL[Optional: add_skill + curriculum next task]
+    VYG -->|no| TRIAL_DONE
+    VSKILL --> TRIAL_DONE
     SUCC -->|no retries left| TRIAL_DONE
     SUCC -->|no retries remain| REFLECT[P5 Verbal reflection from trajectory + feedback]
     REFLECT --> MEM_UPD[Append reflection — keep last K]
@@ -66,28 +73,21 @@ flowchart TB
     FAM --> F6[Prompt Optimization APE/OPRO]
     FAM --> F7[Agents Tools ReAct]
     F1 & F2 & F3 & F4 & F5 & F6 & F7 --> ACT[Build activate flags]
-    ACT --> FLAGS["activate: ape / meta / lats / refine / reflexion / stages"]
+    ACT --> FLAGS["activate: ape / opro / meta / tot / lats / refine / reflexion / voyager / stages"]
     FLAGS --> L1_GATE
   end
 
   %% ═══════════════ L1 APE ═══════════════
-  subgraph L1["L1 — INSTRUCTION OPTIMIZER (APE)"]
+  subgraph L1["L1 — INSTRUCTION OPTIMIZER (APE + OPRO)"]
     direction TB
-    L1_GATE{activate.ape AND demos available?}
-    L1_GATE -->|no| L1_SKIP[Use default / hand prompts]
-    L1_GATE -->|yes| APE_TPL{prompt_gen_template provided?}
-    APE_TPL -->|no| APE_CONV[Convert EvalTemplate → GenerationTemplate<br/>PROMPT → APE]
-    APE_TPL -->|yes| APE_USE[Use provided GenerationTemplate]
-    APE_CONV --> APE_GEN
-    APE_USE --> APE_GEN
-    APE_GEN[Generate candidates: for num_subsamples<br/>subsample demos → LLM generate]
-    APE_GEN --> APE_DEDUP[Deduplicate prompts]
-    APE_DEDUP --> APE_EVAL{eval_method?}
-    APE_EVAL -->|likelihood| APE_LL[Likelihood: log p output given prompt+input]
-    APE_EVAL -->|bandits| APE_UCB[UCB bandit rounds over prompt arms]
-    APE_LL --> APE_RANK[Rank prompts by score]
-    APE_UCB --> APE_RANK
-    APE_RANK --> APE_OUT[best_prompts + demo_fn]
+    L1_GATE{L1 mode?}
+    L1_GATE -->|off| L1_SKIP[Use default / hand prompts]
+    L1_GATE -->|ape| APE_PATH[APE: generate → dedup → likelihood/UCB → rank]
+    L1_GATE -->|opro| OPRO_PATH[OPRO: seed scores → meta_prompt → evolve → rescore]
+    L1_GATE -->|cascade| APE_THEN[APE warm-start seeds]
+    APE_THEN --> OPRO_PATH
+    APE_PATH --> APE_OUT[best_prompts + demo_fn]
+    OPRO_PATH --> APE_OUT
     APE_OUT --> L2_GATE
     L1_SKIP --> L2_GATE
   end
@@ -196,11 +196,11 @@ flowchart TB
   subgraph LEGEND["Pattern sources"]
     direction LR
     LG0[L0 Prompt Report taxonomy routing]
-    LG1[L1 APE generate-dedup-evaluate-rank]
+    LG1[L1 APE + OPRO instruction optimize]
     LG2[L2 Meta expert dispatch + Python tool]
     LG3[L3 ToT beam/DFS + LATS UCT/MCTS]
     LG4[L4 Self-Refine gen-feedback-refine-stop]
-    LG5[L5 Reflexion verbal memory across trials]
+    LG5[L5 Reflexion verbal + Voyager skills/curriculum]
     LG6[L6 AI Scientist stages multi-seed writeup review]
   end
 

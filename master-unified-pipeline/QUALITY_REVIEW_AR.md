@@ -42,7 +42,7 @@
 
 ## التوصية
 
-- اعتماد ARSENAL كـ **خريطة تصميم رئيسية** فوق المستودعات الثمانية.
+- اعتماد ARSENAL كـ **خريطة تصميم رئيسية** فوق المستودعات العشرة.
 - عند البناء: ابدأ بمسار ضيق (L0+L4+L5) ثم فعّل L1/L2/L3/L6 تدريجياً.
 - أبقِ حزم الاستخراج الفردية كمصدر حقيقة لكل نظام.
 
@@ -55,3 +55,10 @@
 - أُضيف Tree of Thoughts كـ L3-baseline بجانب LATS.
 - ملف القرار: `search_family_map.md`.
 - المخططات الموحّدة تدعم mode=tot|lats|cascade.
+
+
+## تحديث Voyager + OPRO
+- OPRO مدمج في L1 (مع APE، mode ape|opro|cascade).
+- Voyager مدمج في L5 (مهارات + منهج بجانب Reflexion).
+- المخططات EN/AR + pattern_extraction + prompts + architecture محدّثة.
+- self-QA: `docs/SELF_QA_IMPROVEMENT_VOYAGER_OPRO_AR.md`.

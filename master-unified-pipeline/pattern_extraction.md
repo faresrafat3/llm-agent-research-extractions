@@ -1,4 +1,4 @@
-# Pattern Extraction — Strongest Patterns from All 8 Systems
+# Pattern Extraction — Strongest Patterns from All 10 Systems
 
 This document extracts the *best loops, decision points, prompts, and logic flows* from each system for fusion into ARSENAL.
 
@@ -257,6 +257,84 @@ return sorted(prompts by score), demo_fn
 
 ---
 
+
+---
+
+## 6b. OPRO — Iterative Meta-Prompt Instruction Optimizer
+
+### Best loops
+```
+score initial_instructions on train
+for step in 1..num_search_steps:
+  meta_prompt = history of (instruction, score) [+ optional few-shot QAs]
+  candidates = optimizer_llm(meta_prompt)
+  filter (length, digits, tag leaks, duplicates)
+  score each candidate with scorer_llm
+  append to history
+return best instructions by score
+```
+
+### Best decision points
+- `meta_prompt_type`: both_instructions_and_exemplars vs instructions_only.
+- `instruction_pos`: before_Q / Q_begin / Q_end / A_begin.
+- Few-shot selection: accumulative_most_frequent / current_most_frequent / constant / random.
+- Temperature schedule: constant vs linear_increase.
+- Skip rules: len>500, GSM8K digits, leaked "INS", MD5 duplicates.
+- Score threshold for including old instructions in the meta-prompt.
+
+### Best prompts
+- GPT meta headers + `<INS>...</INS>` / `<Start>...</Start>` closings.
+- text-bison score-ordered texts + square-bracket request.
+- Scorer `gen_prompt` placements around Q/A.
+- LR/TSP meta-prompts as same pattern on non-NL objectives.
+
+### Best logic
+- Solutions **condition** the next proposals (unlike APE one-shot pool).
+- Optimizer LLM ≠ scorer LLM allowed.
+- Explicit evolution budget (`num_search_steps`, candidates per step).
+
+### Role in ARSENAL
+**L1-iterative** — use when evaluation signal exists and budget allows multi-step search.  
+**Cascade:** APE warm-start → OPRO refine, or OPRO alone from seed instructions.
+
+---
+
+## 6c. Voyager — Skill Library + Automatic Curriculum (L5 procedural)
+
+### Best loops
+```
+while iterations:
+  task, context = curriculum.propose_next_task(state)  # auto curriculum
+  skills = skill_library.retrieve(context)
+  for retry in 1..max_retries:                         # iterative prompting
+    code = action_llm(state, skills, errors, critique)
+    events = env.step(code)
+    success, critique = critic(events, task)
+  if success: skill_library.add(code, description)
+```
+
+### Best decision points
+- First hard-coded bootstrap task vs LLM curriculum.
+- Inventory-full forced housekeeping tasks.
+- Warm-up gates for which observations enter curriculum prompt.
+- Critic auto vs manual; action parse success.
+- Add skill only on success; skip deposit-like chores; version name collisions.
+
+### Best prompts
+- Action template + response format (Mineflayer JS).
+- Critic JSON `{reasoning, success, critique}`.
+- Curriculum next-task + QA ask/answer + task decomposition.
+- Skill description prompt for embedding/retrieval.
+
+### Best logic
+- **Procedural memory** (executable skills) compounds across tasks.
+- Automatic curriculum keeps tasks novel and feasible.
+- Env-grounded generate→execute→critique loop (Self-Refine cousin with real feedback).
+
+### Role in ARSENAL
+**L5-procedural + curriculum** — optional open-ended growth path beside Reflexion verbal memory.  
+Use when the domain supports reusable skills and an environment/executor (code, tools, games, agents).
+
 ## 7. The Prompt Report — Technique Router
 
 ### Best structure (not a loop — a taxonomy)
@@ -276,8 +354,8 @@ Plus agents (ReAct, tools), multilingual, multimodal, evaluation (LLM-as-Judge, 
 - Task is complex multi-step? → Decomposition (+ maybe LATS).
 - High variance answers? → Ensembling (Self-Consistency).
 - Quality-sensitive draft? → Self-Criticism (Self-Refine / Reflexion).
-- Instruction unknown? → Prompt Optimization (APE).
-- Tools / env needed? → Agents (ReAct / Meta experts).
+- Instruction unknown? → Prompt Optimization (APE and/or OPRO).
+- Tools / env needed? → Agents (ReAct / Meta experts / Voyager skills).
 - Non-English / multimodal? → specialized families.
 
 ### Role in ARSENAL
@@ -290,12 +368,16 @@ Plus agents (ReAct, tools), multilingual, multimodal, evaluation (LLM-as-Judge, 
 | When | Activate | From |
 |---|---|---|
 | Task arrives | L0 Router | Prompt Report |
-| Instruction quality low / demos available | L1 APE | APE |
+| Instruction quality low / demos, cheap budget | L1-baseline APE | APE |
+| Need iterative prompt search / score history | L1-iterative OPRO | OPRO |
+| Warm-start then refine prompts | L1 cascade APE→OPRO | APE + OPRO |
 | Task multi-part / needs tools | L2 Conductor | Meta-Prompting |
 | Large search space / offline puzzle | L3-baseline ToT | Tree of Thoughts |
 | Interactive / long-horizon / env tools | L3-full LATS | LATS |
 | Candidate draft exists | L4 Self-Refine | Self-Refine |
-| Trial failed | L5 Reflexion memory | Reflexion |
+| Code/skill with env critique | L4+Voyager critic pattern | Voyager |
+| Trial failed | L5 Reflexion verbal memory | Reflexion |
+| Open-ended multi-task skill growth | L5 Voyager curriculum+skills | Voyager |
 | Multi-phase production needed | L6 Stages | AI Scientist v2 |
 | Final artifact | Peer review + VLM | AI Scientist v2 |
 
@@ -303,17 +385,20 @@ Plus agents (ReAct, tools), multilingual, multimodal, evaluation (LLM-as-Judge, 
 
 ```
 L6 stage
-  └─ L5 trial (with memory)
+  └─ L5 trial (Reflexion memory [+ optional Voyager skill bank])
        └─ L0 route technique
             └─ L1 optimize prompt (optional)
-                 └─ L2 meta conductor
-                      ├─ expert: L3 tree search
-                      │    ├─ mode=ToT  (BFS/DFS deliberate)   if offline/puzzle
-                      │    └─ mode=LATS (MCTS+env+reflect)     if interactive
-                      │         └─ each leaf: L4 refine
-                      ├─ expert: direct generate + L4 refine
-                      └─ expert: tool/Python
-                 └─ L4 final polish
-       └─ on fail: L5 reflect → next trial
+                 ├─ mode=APE | OPRO | cascade APE→OPRO
+            └─ L2 meta conductor
+                 ├─ expert: L3 tree search
+                 │    ├─ mode=ToT  if offline/puzzle
+                 │    └─ mode=LATS if interactive
+                 │         └─ each leaf: L4 refine
+                 ├─ expert: direct generate + L4 refine
+                 ├─ expert: tool/Python
+                 └─ expert: Voyager-style skill retrieve + env act (optional)
+            └─ L4 final polish
+       └─ on fail: L5 verbal reflect → next trial
+       └─ on success (open-ended): optional Voyager add_skill + curriculum next
   └─ stage complete → multi-seed / next stage / writeup / review
 ```

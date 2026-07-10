@@ -1,6 +1,6 @@
 {
   "system": "ARSENAL",
-  "description": "Unified master pipeline combining AI Scientist v2, Self-Refine, Reflexion, Meta-Prompting, Tree of Thoughts, LATS, APE, and The Prompt Report",
+  "description": "Unified master pipeline combining 10 systems: AI Scientist v2, Self-Refine, Reflexion, Meta-Prompting, ToT, LATS, APE, OPRO, Voyager, Prompt Report",
   "layers": [
     {
       "id": "L0",
@@ -35,7 +35,7 @@
     {
       "id": "L1",
       "name": "Instruction Optimizer",
-      "source": "APE",
+      "source": "APE (baseline) + OPRO (iterative)",
       "functions": [
         "ape_find_prompts",
         "generate_prompts",
@@ -44,18 +44,29 @@
         "ucb_select",
         "update_ucb",
         "make_demo_fn",
-        "EvalTemplate.convert_to_generation_template"
+        "EvalTemplate.convert_to_generation_template",
+        "opro_evolve",
+        "gen_meta_prompt",
+        "run_evolution",
+        "choose_l1_mode"
       ],
       "loops": [
         "num_subsamples",
         "prompts x samples",
-        "bandit_rounds"
+        "bandit_rounds",
+        "opro_search_steps",
+        "generate_candidates_per_step"
       ],
       "decisions": [
         "prompt_gen_template is None?",
         "eval_method likelihood|bandits?",
         "few_shot_data is None?",
-        "num_prompts_per_round < 1?"
+        "num_prompts_per_round < 1?",
+        "mode ape|opro|cascade?",
+        "meta_prompt_type both|instructions_only?",
+        "instruction_pos?",
+        "few_shot selection criteria?",
+        "skip long/digit/INS/duplicate?"
       ],
       "inputs": [
         "demos",
@@ -67,7 +78,8 @@
       "outputs": [
         "ranked_prompts",
         "scores",
-        "demo_fn"
+        "demo_fn",
+        "evolution_history"
       ]
     },
     {
@@ -197,21 +209,31 @@
     },
     {
       "id": "L5",
-      "name": "Episodic Verbal Memory",
-      "source": "Reflexion",
+      "name": "Memory (verbal + procedural)",
+      "source": "Reflexion (verbal) + Voyager (skills/curriculum)",
       "functions": [
         "run_trial_stack",
         "verbal_reflect",
-        "task.with_memory"
+        "task.with_memory",
+        "propose_next_task",
+        "retrieve_skills",
+        "add_new_skill",
+        "curriculum_update"
       ],
       "loops": [
-        "max_trials"
+        "max_trials",
+        "voyager_learn_iterations",
+        "action_retries"
       ],
       "decisions": [
         "success?",
         "use_memory?",
         "trials remaining?",
-        "memory_window K"
+        "memory_window K",
+        "use verbal memory?",
+        "use skill library?",
+        "curriculum auto|manual?",
+        "add skill on success?"
       ],
       "inputs": [
         "task",
@@ -222,7 +244,8 @@
       ],
       "outputs": [
         "best_result",
-        "updated_memory"
+        "updated_memory",
+        "skills"
       ]
     },
     {
@@ -272,13 +295,15 @@
     "L6.stages",
     "L5.trials",
     "L0.route",
-    "L1.ape_optional",
+    "L1.choose_ape_or_opro",
+    "L1.ape_and_or_opro",
     "L2.meta_rounds",
     "L3.choose_tot_or_lats",
     "L3.tot_or_mcts",
     "L4.refine_on_leaves",
     "L4.final_polish",
     "L5.reflect_on_fail",
+    "L5.optional_voyager_skill",
     "L6.multi_seed_plots_writeup_review"
   ],
   "stop_conditions": {
@@ -303,7 +328,8 @@
       "max_trials"
     ],
     "L1": [
-      "eval_budget",
+      "ape_eval_budget",
+      "opro_search_steps",
       "top_k_stable"
     ],
     "L6": [
@@ -321,6 +347,8 @@
     "ape": "https://github.com/faresrafat3/ape-full-extraction",
     "prompt_report": "https://github.com/faresrafat3/prompt-report-full-extraction",
     "consolidated": "https://github.com/faresrafat3/llm-agent-research-extractions",
-    "tot": "https://github.com/faresrafat3/tot-full-extraction"
+    "tot": "https://github.com/faresrafat3/tot-full-extraction",
+    "opro": "https://github.com/faresrafat3/opro-full-extraction",
+    "voyager": "https://github.com/faresrafat3/voyager-full-extraction"
   }
 }

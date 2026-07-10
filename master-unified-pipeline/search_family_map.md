@@ -116,3 +116,34 @@ Use ToT-style `propose` as the expansion operator, then UCT/backprop as in LATS.
 
 > **ToT thinks carefully on a page; LATS acts carefully in a world.**  
 > ARSENAL L3 picks ToT for the page, LATS for the world, and may cascade page → world.
+
+---
+
+## 8) L1 Instruction family — APE vs OPRO
+
+| Axis | APE | OPRO |
+|---|---|---|
+| Generation | LLM from demos (forward) | LLM from **scored history** meta-prompt |
+| Scoring | likelihood / UCB bandits | task accuracy via scorer LLM |
+| Iteration | generate pool then rank | multi-step evolution |
+| State | candidate set | meta-prompt trajectory of (instruction, score) |
+| Best when | demos exist, tight budget | scorer + step budget available |
+
+### L1 one-line rule
+> **APE finds a good instruction quickly; OPRO climbs from scored attempts.**  
+> Cascade: APE seeds → OPRO refine.
+
+---
+
+## 9) L5 Memory family — Reflexion vs Voyager
+
+| Axis | Reflexion | Voyager |
+|---|---|---|
+| Memory type | verbal reflections | executable skills + descriptions |
+| Loop | trial → fail → reflect → retry | curriculum task → act/critic → add skill |
+| Retrieval | last-K text in prompt | embedding top-k skills |
+| Best when | sparse failures, language advice helps | reusable procedures + env/executor |
+
+### L5 one-line rule
+> **Reflexion remembers what went wrong in words; Voyager remembers what worked as code.**  
+> Use both when open-ended agents should grow a skill bank across tasks.

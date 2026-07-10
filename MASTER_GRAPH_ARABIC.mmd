@@ -1,5 +1,5 @@
 flowchart TB
-  %% أرسينال — خط الأنابيب الموحّد الرئيسي من دمج الأنظمة الثمانية
+  %% أرسينال — خط الأنابيب الموحّد الرئيسي من دمج الأنظمة العشرة
   %% المصادر: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | ToT | LATS | APE | Prompt Report
   %% المصادر: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | LATS | APE | The Prompt Report
 
@@ -30,13 +30,16 @@ flowchart TB
   end
 
   %% ═══════════════ L5 المحاولات والذاكرة ═══════════════
-  subgraph L5["L5 — الذاكرة اللفظية الحلقية (Reflexion)"]
+  subgraph L5["L5 — الذاكرة (Reflexion لفظي + Voyager مهارات)"]
     direction TB
-    TRIAL_WRAP --> MEM_INIT[memory = آخر K تأملات]
+    TRIAL_WRAP --> MEM_INIT[memory = آخر K تأملات؛ skill_bank اختياري]
     MEM_INIT --> TRIAL_LOOP{لكل محاولة trial حتى max_trials}
     TRIAL_LOOP --> L0_CALL[استدعاء موجّه التقنيات L0]
     INNER_DONE[نتيجة المكدس الداخلي] --> SUCC{نجاح؟}
-    SUCC -->|نعم| TRIAL_DONE
+    SUCC -->|نعم| VYG{voyager مفعّل؟}
+    VYG -->|نعم| VSKILL[اختياري: add_skill + مهمة المنهج التالية]
+    VYG -->|لا| TRIAL_DONE
+    VSKILL --> TRIAL_DONE
     SUCC -->|لا ومحاولات منتهية| TRIAL_DONE
     SUCC -->|لا وتبقى محاولات| REFLECT[تأمل لفظي P5 من المسار + التغذية الراجعة]
     REFLECT --> MEM_UPD[إلحاق التأمل — الإبقاء على آخر K]
@@ -56,28 +59,21 @@ flowchart TB
     FAM --> F6[تحسين الأوامر APE/OPRO]
     FAM --> F7[وكلاء وأدوات ReAct]
     F1 & F2 & F3 & F4 & F5 & F6 & F7 --> ACT[بناء أعلام التفعيل]
-    ACT --> FLAGS["تفعيل: ape / meta / tot / lats / refine / reflexion / stages"]
+    ACT --> FLAGS["تفعيل: ape / opro / meta / tot / lats / refine / reflexion / voyager / stages"]
     FLAGS --> L1_GATE
   end
 
   %% ═══════════════ L1 APE ═══════════════
-  subgraph L1["L1 — محسّن التعليمات (APE)"]
+  subgraph L1["L1 — محسّن التعليمات (APE + OPRO)"]
     direction TB
-    L1_GATE{activate.ape ووجود أمثلة؟}
-    L1_GATE -->|لا| L1_SKIP[استخدام أوامر افتراضية / يدوية]
-    L1_GATE -->|نعم| APE_TPL{هل وُفر قالب التوليد؟}
-    APE_TPL -->|لا| APE_CONV[تحويل EvalTemplate إلى GenerationTemplate<br/>PROMPT ← APE]
-    APE_TPL -->|نعم| APE_USE[استخدام قالب التوليد المقدَّم]
-    APE_CONV --> APE_GEN
-    APE_USE --> APE_GEN
-    APE_GEN[توليد المرشحين: لكل subsample<br/>عيّنة أمثلة → توليد بالنموذج]
-    APE_GEN --> APE_DEDUP[إزالة التكرارات]
-    APE_DEDUP --> APE_EVAL{طريقة التقييم؟}
-    APE_EVAL -->|likelihood| APE_LL[الاحتمالية: log p للمخرجات]
-    APE_EVAL -->|bandits| APE_UCB[جولات عصابات UCB على أذرع الأوامر]
-    APE_LL --> APE_RANK[ترتيب الأوامر حسب الدرجة]
-    APE_UCB --> APE_RANK
-    APE_RANK --> APE_OUT[أفضل الأوامر + demo_fn]
+    L1_GATE{وضع L1؟}
+    L1_GATE -->|off| L1_SKIP[أوامر افتراضية / يدوية]
+    L1_GATE -->|ape| APE_PATH[APE: توليد → إزالة تكرار → likelihood/UCB → ترتيب]
+    L1_GATE -->|opro| OPRO_PATH[OPRO: درجات البذور → meta_prompt → تطور → إعادة تقييم]
+    L1_GATE -->|cascade| APE_THEN[APE تهيئة البذور]
+    APE_THEN --> OPRO_PATH
+    APE_PATH --> APE_OUT[أفضل الأوامر + demo_fn]
+    OPRO_PATH --> APE_OUT
     APE_OUT --> L2_GATE
     L1_SKIP --> L2_GATE
   end
@@ -185,11 +181,11 @@ flowchart TB
   subgraph LEGEND["مصادر الأنماط"]
     direction LR
     LG0[L0 توجيه تصنيف Prompt Report]
-    LG1[L1 APE توليد-إزالة تكرار-تقييم-ترتيب]
+    LG1[L1 APE + OPRO تحسين التعليمات]
     LG2[L2 ميتا توزيع الخبراء + أداة بايثون]
     LG3[L3 ToT حزمة/DFS + LATS UCT/MCTS]
     LG4[L4 Self-Refine توليد-تغذية-صقل-إيقاف]
-    LG5[L5 Reflexion ذاكرة لفظية عبر المحاولات]
+    LG5[L5 Reflexion لفظي + Voyager مهارات/منهج]
     LG6[L6 AI Scientist مراحل بذور متعددة كتابة مراجعة]
   end
 
