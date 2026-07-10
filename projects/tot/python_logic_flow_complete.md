@@ -4,6 +4,40 @@ Audited commit: `8050e67d0e3a0fddc424d7fa5801538722a4c4cc`
 
 ---
 
+## 0. Task interface and factory
+
+### `src/tot/tasks/base.py`
+```python
+DATA_PATH = <package>/data
+class Task:
+    def __init__(self): ...
+    def __len__(self) -> int: ...
+    def get_input(self, idx: int) -> str: ...
+    def test_output(self, idx: int, output: str): ...
+```
+Abstract interface only — no prompts. All concrete tasks implement these four members plus prompt wrap helpers.
+
+### `src/tot/tasks/__init__.py` → `get_task(name)`
+```
+if name == 'game24': return Game24Task()
+elif name == 'text': return TextTask()
+elif name == 'crosswords': return MiniCrosswordsTask()
+else: raise NotImplementedError
+```
+
+### Paper experiment shell configs (`scripts/`)
+| Script | Meaning |
+|---|---|
+| `scripts/game24/bfs.sh` | propose + value×3 + greedy b=5, idx 900–1000 |
+| `scripts/game24/standard_sampling.sh` | naive IO, n=100 |
+| `scripts/game24/cot_sampling.sh` | naive CoT, n=100 |
+| `scripts/text/bfs.sh` | sample+cot + vote×5 + greedy b=1, temp=1.0, idx 0–100 |
+| `scripts/text/standard_sampling.sh` / `cot_sampling.sh` | naive n=10 |
+| `scripts/crosswords/standard_sampling.sh` / `cot_sampling.sh` | naive n=10, idx 0–20 |
+| DFS notebook | ToT search for crosswords (not via `run.py` BFS) |
+
+---
+
 ## 1. Entry: `run.py`
 
 ```

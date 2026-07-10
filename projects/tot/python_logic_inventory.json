@@ -6,6 +6,32 @@
   "stars_approx": 6024,
   "files": [
     {
+      "path": "src/tot/tasks/base.py",
+      "role": "Abstract Task interface + DATA_PATH",
+      "functions": ["Task.__init__", "Task.__len__", "Task.get_input", "Task.test_output"],
+      "loops": [],
+      "decisions": []
+    },
+    {
+      "path": "src/tot/tasks/__init__.py",
+      "role": "Task factory",
+      "functions": ["get_task"],
+      "loops": [],
+      "decisions": ["name game24|text|crosswords|else NotImplementedError"]
+    },
+    {
+      "path": "scripts/game24/*.sh, scripts/text/*.sh, scripts/crosswords/*.sh",
+      "role": "Paper experiment hyperparameter shells for run.py",
+      "functions": [],
+      "loops": [],
+      "decisions": ["task-specific generate/evaluate/select/n_*/index ranges"],
+      "notable_configs": {
+        "game24_bfs": "propose, value n_eval=3, greedy b=5, idx 900-1000",
+        "text_bfs": "sample cot, vote n_eval=5, greedy b=1, temp=1.0, idx 0-100",
+        "crosswords_naive": "standard/cot n_gen=10, idx 0-20"
+      }
+    },
+    {
       "path": "run.py",
       "role": "CLI entry, experiment loop, JSON logging, accuracy aggregate",
       "functions": ["run", "parse_args"],

@@ -115,3 +115,28 @@
 --naive_run
 --prompt_sample standard|cot
 ```
+
+## 7. Paper shell configs (exact flags from `scripts/`)
+
+| Shell | Flags (essence) |
+|---|---|
+| `game24/bfs.sh` | propose, value, greedy, `n_evaluate_sample=3`, `n_select_sample=5`, idx 900–1000 |
+| `game24/standard_sampling.sh` | naive, standard, `n_generate_sample=100` |
+| `game24/cot_sampling.sh` | naive, cot, `n_generate_sample=100` |
+| `text/bfs.sh` | sample, vote, greedy, `n_generate_sample=5`, `n_evaluate_sample=5`, `n_select_sample=1`, cot, `temperature=1.0`, idx 0–100 |
+| `text/standard_sampling.sh` | naive, standard, n=10, temp=1.0 |
+| `text/cot_sampling.sh` | naive, cot, n=10, temp=1.0 |
+| `crosswords/standard_sampling.sh` | naive, standard, n=10, idx 0–20 |
+| `crosswords/cot_sampling.sh` | naive, cot, n=10, idx 0–20 |
+| DFS notebook | `prune=True/False`, `max_per_state=3`, `time_limit=100`, propose n=8 |
+
+## 8. Crosswords render helpers (env surface)
+
+| Method | Purpose |
+|---|---|
+| `render_board` / `render_gt_board` | current vs ground-truth 5×5 |
+| `render_clues` | h1–h5 / v1–v5 clue list |
+| `render_ans` / `render_gt_ans` | clue + filled word by status filter |
+| `render` | board + Unfilled/Filled/Changed sections (fed to propose_prompt) |
+| `set_status` | sync env to trajectory y before propose/evaluate |
+| `get_ans` | derive 10 words from board (rows + cols) |
