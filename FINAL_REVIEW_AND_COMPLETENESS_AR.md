@@ -229,7 +229,7 @@
 ## تحديث ToT / ARSENAL (تحسين جودة داخل الهدف)
 
 - استخراج ToT مكتمل ومدقق (`projects/tot/`, `tot-full-extraction`).
-- أرسينال محدّث لـ **8 أنظمة** مع L3 = ToT baseline + LATS full.
+- أرسينال محدّث لـ **10 أنظمة** (L1 APE+OPRO، L3 ToT+LATS، L5 Reflexion+Voyager).
 - ملف قرار: `master-unified-pipeline/search_family_map.md`.
 - MASTER_GRAPH_EN/AR في الجذر = المخطط التشغيلي الموحّد بعد الدمج.
 - أسئلة التحسين الذاتية: `master-unified-pipeline/docs/SELF_QA_IMPROVEMENT_AR.md`.
@@ -245,3 +245,13 @@
 - استخراج كامل: `projects/opro/` و https://github.com/faresrafat3/opro-full-extraction
 - المكوّنات: meta-prompt evolution، scorer prompts، linear regression/TSP demos
 - commit المصدر: `a76bdce`
+
+## تحديث Voyager + OPRO في أرسينال (دمج كامل)
+
+- أرسينال = **10 أنظمة**.
+- **L1**: APE (أساس) + OPRO (تكراري) + cascade APE→OPRO.
+- **L3**: ToT + LATS (كما في دمج ToT السابق).
+- **L5**: Reflexion (لفظي) + Voyager (مهارات + منهج تلقائي).
+- الملفات: `master-unified-pipeline/` + `MASTER_GRAPH_ENGLISH/ARABIC`.
+- self-QA: `master-unified-pipeline/docs/SELF_QA_IMPROVEMENT_VOYAGER_OPRO_AR.md`.
+- المستودعات: `opro-full-extraction`, `voyager-full-extraction`.
