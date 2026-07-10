@@ -2,7 +2,7 @@
 
 ## الهدف
 
-هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع الثمانية وصلت لنفس معيار الجودة قدر الإمكان:
+هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع التسعة وصلت لنفس معيار الجودة قدر الإمكان:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -12,6 +12,7 @@
 6. APE
 7. Prompt Report
 8. Tree of Thoughts (ToT)
+9. Voyager
 
 ## حالة الريبوهات
 
@@ -26,6 +27,7 @@
 - `https://github.com/faresrafat3/ape-full-extraction`
 - `https://github.com/faresrafat3/prompt-report-full-extraction`
 - `https://github.com/faresrafat3/tot-full-extraction`
+- `https://github.com/faresrafat3/voyager-full-extraction`
 - `https://github.com/faresrafat3/arsenal-unified-master-pipeline`
 
 ## معيار الجودة المستخدم
@@ -229,3 +231,9 @@
 - ملف قرار: `master-unified-pipeline/search_family_map.md`.
 - MASTER_GRAPH_EN/AR في الجذر = المخطط التشغيلي الموحّد بعد الدمج.
 - أسئلة التحسين الذاتية: `master-unified-pipeline/docs/SELF_QA_IMPROVEMENT_AR.md`.
+
+## تحديث Voyager
+
+- استخراج كامل: `projects/voyager/` و https://github.com/faresrafat3/voyager-full-extraction
+- المكوّنات: منهج تلقائي، مكتبة مهارات، تحفيز تكراري Action+Critic، learn/inference
+- commit المصدر: `55e45a8`

@@ -6,6 +6,7 @@
 | Self-Refine | `madaan/self-refine` | `projects/self-refine/` | https://github.com/faresrafat3/self-refine-full-extraction | prompts, raw prompt files, notebook/docs audit, graphs, deep dive |
 | Reflexion | `noahshinn/reflexion` | `projects/reflexion/` | https://github.com/faresrafat3/reflexion-full-extraction | prompts/configs, raw files, logic flow, graphs, deep dive |
 | Meta-Prompting | `suzgunmirac/meta-prompting` | `projects/meta-prompting/` | https://github.com/faresrafat3/meta-prompting-full-extraction | prompts/configs, raw data samples, logic flow, graphs, deep dive |
+| Voyager | `MineDojo/Voyager` | `projects/voyager/` | https://github.com/faresrafat3/voyager-full-extraction | curriculum, skill library, iterative prompting, EN/AR graphs |
 | Tree of Thoughts (ToT) | `princeton-nlp/tree-of-thought-llm` | `projects/tot/` | https://github.com/faresrafat3/tot-full-extraction | prompts, BFS/DFS logic, EN/AR graphs, paper scripts, audit |
 | LATS | `lapisrocks/LanguageAgentTreeSearch` | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction | prompts, raw data samples, MCTS/LATS logic, graphs, deep dive |
 | APE | `keirp/automatic_prompt_engineer` | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction | prompt generation templates, likelihood/bandit evaluation, logic flow, graphs, deep dive |
@@ -107,3 +108,14 @@
 - Deep dive: `projects/tot/deep_dive_task_matrix.md`
 - Completeness: `projects/tot/final_completeness_check_ar.md`
 - Audit: `projects/tot/AUDIT_REVIEW_AR.md`
+
+### Voyager
+
+- Prompts: `projects/voyager/prompts_complete.md`
+- Raw prompts/agents: `projects/voyager/raw_prompt_files/`
+- Skill samples: `projects/voyager/raw_data_samples/`
+- Logic: `projects/voyager/python_logic_flow_complete.md`
+- Graph EN: `projects/voyager/graph_english.md`
+- Graph AR: `projects/voyager/graph_arabic.md`
+- Deep dive: `projects/voyager/deep_dive_task_matrix.md`
+- Completeness: `projects/voyager/final_completeness_check_ar.md`

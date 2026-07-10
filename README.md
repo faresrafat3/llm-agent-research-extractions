@@ -1,6 +1,6 @@
 # LLM Agent Research Systems — High-Quality Prompt, Logic, Flow, and Graph Extractions
 
-This repository is a consolidated research/audit archive for eight important LLM agent and self-improvement systems:
+This repository is a consolidated research/audit archive for nine important LLM agent and self-improvement systems:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -10,6 +10,7 @@ This repository is a consolidated research/audit archive for eight important LLM
 6. APE / Automatic Prompt Engineer
 7. The Prompt Report — Systematic Survey of Prompt Engineering Techniques
 8. Tree of Thoughts (ToT)
+9. Voyager
 
 Every project is structured to the same quality standard as much as the original repository structure allows:
 
@@ -35,6 +36,7 @@ Every project is structured to the same quality standard as much as the original
 | APE | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction |
 | Prompt Report | `projects/prompt-report/` | https://github.com/faresrafat3/prompt-report-full-extraction |
 | Tree of Thoughts (ToT) | `projects/tot/` | https://github.com/faresrafat3/tot-full-extraction |
+| Voyager | `projects/voyager/` | https://github.com/faresrafat3/voyager-full-extraction |
 
 ## Recommended reading order
 
@@ -149,6 +151,19 @@ Layers: L0 Prompt Report router → L1 APE → L2 Meta-Prompting → L3 ToT base
 7. `projects/tot/graph_arabic.md`
 8. `projects/tot/final_completeness_check_ar.md`
 9. `projects/tot/QUALITY_REVIEW_AR.md`
+
+
+### Voyager
+
+1. `projects/voyager/README.md`
+2. `projects/voyager/research_summary.md`
+3. `projects/voyager/deep_dive_task_matrix.md`
+4. `projects/voyager/prompts_complete.md`
+5. `projects/voyager/python_logic_flow_complete.md`
+6. `projects/voyager/graph_english.md`
+7. `projects/voyager/graph_arabic.md`
+8. `projects/voyager/final_completeness_check_ar.md`
+9. `projects/voyager/QUALITY_REVIEW_AR.md`
 
 ## Master graphs
 

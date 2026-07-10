@@ -28,3 +28,5 @@
 تم إضافة Tree of Thoughts (ToT) لنفس معيار الجودة الموحد — prompts + BFS/DFS + scripts الورقة + graphs عربي/إنجليزي + completeness + audit.
 
 تم تحديث ARSENAL لدمج 8 أنظمة: ToT كـ L3-baseline بجانب LATS، مع `search_family_map.md` و mode tot|lats|cascade.
+
+تم إضافة Voyager لنفس معيار الجودة الموحد — curriculum + skill library + iterative prompting (Action/Critic) + graphs عربي/إنجليزي + completeness + quality review.
