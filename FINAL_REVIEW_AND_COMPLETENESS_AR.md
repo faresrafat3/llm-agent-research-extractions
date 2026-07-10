@@ -2,7 +2,7 @@
 
 ## الهدف
 
-هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع السبعة وصلت لنفس معيار الجودة قدر الإمكان:
+هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع الثمانية وصلت لنفس معيار الجودة قدر الإمكان:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -11,6 +11,7 @@
 5. LATS
 6. APE
 7. Prompt Report
+8. Tree of Thoughts (ToT)
 
 ## حالة الريبوهات
 
@@ -24,6 +25,8 @@
 - `https://github.com/faresrafat3/lats-full-extraction`
 - `https://github.com/faresrafat3/ape-full-extraction`
 - `https://github.com/faresrafat3/prompt-report-full-extraction`
+- `https://github.com/faresrafat3/tot-full-extraction`
+- `https://github.com/faresrafat3/arsenal-unified-master-pipeline`
 
 ## معيار الجودة المستخدم
 
@@ -218,3 +221,11 @@
 - تم بناء Mermaid taxonomy كامل EN/AR يغطي كل العائلات مع decision flow: Task → Budget → Reasoning? → Decomposition? → Verify? → Tools? → Output control → Evaluate.
 - تم توثيق كل inputs/outputs/loops/decision points/conditions لكل تقنية.
 - حجم ZIP: 2.3 MB.
+
+## تحديث ToT / ARSENAL (تحسين جودة داخل الهدف)
+
+- استخراج ToT مكتمل ومدقق (`projects/tot/`, `tot-full-extraction`).
+- أرسينال محدّث لـ **8 أنظمة** مع L3 = ToT baseline + LATS full.
+- ملف قرار: `master-unified-pipeline/search_family_map.md`.
+- MASTER_GRAPH_EN/AR في الجذر = المخطط التشغيلي الموحّد بعد الدمج.
+- أسئلة التحسين الذاتية: `master-unified-pipeline/docs/SELF_QA_IMPROVEMENT_AR.md`.

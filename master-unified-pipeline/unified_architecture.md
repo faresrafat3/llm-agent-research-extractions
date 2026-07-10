@@ -21,8 +21,8 @@ ARSENAL is a six-layer nested agent architecture. Outer layers set goals, budget
 │  │  │  │  │ L2  META CONDUCTOR  (Meta-Prompting)     │  │  │  │  │
 │  │  │  │  │  decompose · expert dispatch · tools     │  │  │  │  │
 │  │  │  │  │  ┌────────────────────────────────────┐  │  │  │  │  │
-│  │  │  │  │  │ L3  TREE SEARCH  (LATS)            │  │  │  │  │  │
-│  │  │  │  │  │  UCT · expand · value · rollout    │  │  │  │  │  │
+│  │  │  │  │  │ L3  TREE SEARCH  (ToT + LATS)      │  │  │  │  │  │
+│  │  │  │  │  │  ToT beam/DFS · LATS UCT/MCTS      │  │  │  │  │  │
 │  │  │  │  │  │  ┌──────────────────────────────┐  │  │  │  │  │  │
 │  │  │  │  │  │  │ L4  LOCAL POLISHER           │  │  │  │  │  │  │
 │  │  │  │  │  │  │  (Self-Refine)               │  │  │  │  │  │  │
@@ -62,11 +62,15 @@ Output: final_answer | expert_log[], message_history
 Side:   may call L3, L4, Python, search tools
 ```
 
-### L3 Tree Search (LATS)
+### L3 Tree Search (ToT baseline + LATS full)
 ```
-Input:  root_state, expand_prompt, value_prompt, env, N, depth
+Input:  root_state, mode ∈ {tot, lats, cascade}, prompts, env?, budgets
 Output: best_trajectory, tree, failed_trajectories[]
 Side:   may call L4 on leaves; emit failures for L5
+
+mode=tot:  generate(sample|propose) → evaluate(value|vote) → select(beam|sample) [BFS/DFS]
+mode=lats: select_UCT → expand → value/env → rollout → backprop → optional reflect
+mode=cascade: run tot; if score < τ or interactive → lats
 ```
 
 ### L4 Local Polisher (Self-Refine)
@@ -166,7 +170,7 @@ User Task / Research Idea
    [L1 APE] ──── best instruction(s) + demo_fn
         │
         ▼
-   [L2 Meta] ───┬── Expert A ──► [L3 LATS] ── leaves ──► [L4 Refine]
+   [L2 Meta] ───┬── Expert A ──► [L3 ToT|LATS] ── leaves ──► [L4 Refine]
                 ├── Expert B ──► generate ──► [L4 Refine]
                 └── Expert Python ──► exec
         │
@@ -268,7 +272,8 @@ arsenal:
 | L0 Router | `projects/prompt-report/` |
 | L1 APE | `projects/ape/` |
 | L2 Meta | `projects/meta-prompting/` |
-| L3 LATS | `projects/lats/` |
+| L3 ToT (baseline) | `projects/tot/` |
+| L3 LATS (full) | `projects/lats/` |
 | L4 Self-Refine | `projects/self-refine/` |
 | L5 Reflexion | `projects/reflexion/` |
 | L6 Stages | `projects/ai-scientist-v2/` |

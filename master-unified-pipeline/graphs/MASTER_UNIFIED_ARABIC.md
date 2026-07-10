@@ -1,36 +1,20 @@
 # أرسينال — مخطط خط الأنابيب الموحّد الرئيسي (عربي)
 
-**نظام واحد. سبعة مصادر. طبقات متداخلة L0–L6.**
+**نظام واحد. ثمانية مصادر. طبقات متداخلة L0–L6 (L3 = ToT أساس + LATS كامل).**
 
-| الطبقة | الدور | النظام المصدر |
-|---|---|---|
-| L0 | موجّه عائلات التقنيات | The Prompt Report |
-| L1 | محسّن التعليمات | APE |
-| L2 | مايسترو ميتا + خبراء | Meta-Prompting |
-| L3 | بحث شجري (MCTS/UCT) | LATS |
-| L4 | حلقة صقل محلي | Self-Refine |
-| L5 | ذاكرة لفظية حلقية | Reflexion |
-| L6 | مراحل تصاعدية + كتابة + مراجعة | AI Scientist v2 |
-
-## كيف تقرأ المخطط
-
-1. ادخل من **مهمة المستخدم** → **غلاف مراحل L6**.
-2. كل مرحلة تفتح **حلقة محاولات L5** مع ذاكرة تأمل.
-3. كل محاولة تستدعي **موجّه L0** لتفعيل الطبقات.
-4. اختيارياً **L1 APE** يرتّب التعليمات.
-5. **L2 ميتا** يوزّع الخبراء (بما فيهم بايثون وTreeSearch).
-6. **L3 LATS** يستكشف تحت عدم اليقين؛ الأوراق تذهب إلى **L4 Self-Refine**.
-7. الإخفاقات تصبح **تأملات L5** للمحاولة التالية.
-8. نجاح المرحلة → بذور متعددة → رسوم → مرحلة تالية → كتابة → مراجعة أقران.
+انظر أيضاً: `search_family_map.md` لقرار ToT مقابل LATS.
 
 ## Mermaid
 
 ```mermaid
 flowchart TB
-  %% أرسينال — خط الأنابيب الموحّد الرئيسي من دمج الأنظمة السبعة
+  %% أرسينال — خط الأنابيب الموحّد الرئيسي من دمج الأنظمة الثمانية
+  %% المصادر: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | ToT | LATS | APE | Prompt Report
+  %% المصادر: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | LATS | APE | The Prompt Report
 
   START([مهمة المستخدم / فكرة بحثية / استعلام]) --> L6_IN[L6 غلاف المراحل التصاعدي<br/>AI Scientist v2]
 
+  %% ═══════════════ L6 المراحل الخارجية ═══════════════
   subgraph L6["L6 — غلاف المراحل التصاعدي (AI Scientist v2)"]
     direction TB
     L6_IN --> STAGE{المرحلة الحالية}
@@ -54,6 +38,7 @@ flowchart TB
     STAGE_OK -->|اكتملت الكل| WRITEUP_GATE{هل الكتابة مفعّلة؟}
   end
 
+  %% ═══════════════ L5 المحاولات والذاكرة ═══════════════
   subgraph L5["L5 — الذاكرة اللفظية الحلقية (Reflexion)"]
     direction TB
     TRIAL_WRAP --> MEM_INIT[memory = آخر K تأملات]
@@ -67,6 +52,7 @@ flowchart TB
     MEM_UPD --> TRIAL_LOOP
   end
 
+  %% ═══════════════ L0 الموجّه ═══════════════
   subgraph L0["L0 — موجّه التقنيات (The Prompt Report)"]
     direction TB
     L0_CALL --> TAX[التصنيف وفق تصنيف 58 تقنية<br/>+ وكلاء / متعدد الوسائط / تقييم]
@@ -79,10 +65,11 @@ flowchart TB
     FAM --> F6[تحسين الأوامر APE/OPRO]
     FAM --> F7[وكلاء وأدوات ReAct]
     F1 & F2 & F3 & F4 & F5 & F6 & F7 --> ACT[بناء أعلام التفعيل]
-    ACT --> FLAGS["تفعيل: ape / meta / lats / refine / reflexion / stages"]
+    ACT --> FLAGS["تفعيل: ape / meta / tot / lats / refine / reflexion / stages"]
     FLAGS --> L1_GATE
   end
 
+  %% ═══════════════ L1 APE ═══════════════
   subgraph L1["L1 — محسّن التعليمات (APE)"]
     direction TB
     L1_GATE{activate.ape ووجود أمثلة؟}
@@ -104,10 +91,11 @@ flowchart TB
     L1_SKIP --> L2_GATE
   end
 
+  %% ═══════════════ L2 META ═══════════════
   subgraph L2["L2 — المايسترو الميتا (Meta-Prompting)"]
     direction TB
     L2_GATE{activate.meta؟}
-    L2_GATE -->|لا| L2_SKIP{activate.lats؟}
+    L2_GATE -->|لا| L2_SKIP{activate.tot أو activate.lats؟}
     L2_GATE -->|نعم| META_INIT[تهيئة الرسائل: تعليمات ميتا + الاستعلام + الذاكرة]
     META_INIT --> META_LOOP{جولة ميتا < الحد الأقصى}
     META_LOOP --> META_CALL[توليد نموذج الميتا]
@@ -122,19 +110,33 @@ flowchart TB
     RUN_Q -->|نعم| EXEC[تنفيذ بمهلة زمنية — إلحاق stdout/err]
     RUN_Q -->|لا| EXP_APPEND
     EXEC --> EXP_APPEND
-    EXP_TYPE -->|بحث شجري / LATS| L3_CALL
+    EXP_TYPE -->|بحث شجري| L3_MODE
     EXP_TYPE -->|خبير عادي| EXP_LM[توليد خبير لغوي]
     EXP_LM --> L4_EXP[صقل مسودة الخبير عبر L4]
     L4_EXP --> EXP_APPEND[إلحاق مخرج الخبير + تغذية راجعة وسيطة]
     EXP_APPEND --> META_LOOP
     META_FINAL --> L4_FINAL
-    L2_SKIP -->|نعم| L3_CALL
+    L2_SKIP -->|نعم| L3_MODE
     L2_SKIP -->|لا| DIRECT[توليد مباشر بالطريقة الموجَّهة]
     DIRECT --> L4_FINAL
   end
 
-  subgraph L3["L3 — محرك البحث الشجري (LATS / MCTS)"]
+  %% ═══════════════ L3 LATS ═══════════════
+  subgraph L3["L3 — محرك البحث الشجري (ToT أساس + LATS كامل)"]
     direction TB
+    L3_MODE{وضع البحث؟}
+    L3_MODE -->|ToT دون اتصال/لغز| TOT[ToT: حدود ys فارغة]
+    L3_MODE -->|LATS تفاعلي/بيئة| L3_CALL
+    L3_MODE -->|تسلسل cascade| TOT
+    TOT --> TOT_STEP{لكل step في task.steps}
+    TOT_STEP --> TOT_GEN{توليد sample أو propose؟}
+    TOT_GEN --> TOT_EVAL{تقييم value أو vote؟}
+    TOT_EVAL --> TOT_SEL[اختيار أفضل b greedy أو sample]
+    TOT_SEL --> TOT_STEP
+    TOT_STEP -->|انتهى| TOT_OUT[أفضل مسارات ToT]
+    TOT_OUT --> CASC{cascade والدرجة < tau؟}
+    CASC -->|نعم ترقية| L3_CALL
+    CASC -->|لا| L4_LEAF
     L3_CALL[العقدة الجذر = الحالة / السؤال / المسألة] --> MCTS{لكل تكرار 1..N}
     MCTS --> SEL[اختيار عقدة بـ UCT]
     SEL --> TERM{حالة العقدة؟}
@@ -157,6 +159,7 @@ flowchart TB
     L3_BEST --> L4_LEAF
   end
 
+  %% ═══════════════ L4 SELF-REFINE ═══════════════
   subgraph L4["L4 — الصاقل المحلي (Self-Refine)"]
     direction TB
     L4_LEAF[ورقة مرشحة / مسودة y] --> L4_INIT{هل y موجودة؟}
@@ -175,6 +178,7 @@ flowchart TB
 
   L4_OUT --> INNER_DONE
 
+  %% ═══════════════ ذيل الإنتاج L6 ═══════════════
   WRITEUP_GATE -->|لا| DELIVER([تسليم مخرجات المراحل + السجل])
   WRITEUP_GATE -->|نعم| CITE[حلقة الاستشهاد: Semantic Scholar ~20 جولة]
   CITE --> WRITE[كتابة الورقة LaTeX / التوليد]
@@ -192,18 +196,12 @@ flowchart TB
     LG0[L0 توجيه تصنيف Prompt Report]
     LG1[L1 APE توليد-إزالة تكرار-تقييم-ترتيب]
     LG2[L2 ميتا توزيع الخبراء + أداة بايثون]
-    LG3[L3 LATS اختيار UCT توسيع قيمة محاكاة نشر]
+    LG3[L3 ToT حزمة/DFS + LATS UCT/MCTS]
     LG4[L4 Self-Refine توليد-تغذية-صقل-إيقاف]
     LG5[L5 Reflexion ذاكرة لفظية عبر المحاولات]
     LG6[L6 AI Scientist مراحل بذور متعددة كتابة مراجعة]
   end
 
   DELIVER --> END([مخرجات أرسينال:<br/>أوامر · مسارات · قطع أثرية · ورقة · مراجعة · ذاكرة])
+
 ```
-
-## ملفات مرافقة
-
-- Mermaid الخام: `MASTER_UNIFIED_ARABIC.mmd`
-- النسخة الإنجليزية: `MASTER_UNIFIED_ENGLISH.md` / `.mmd`
-- سرد البنية: `../unified_architecture.md`
-- استخراج الأنماط: `../pattern_extraction.md`

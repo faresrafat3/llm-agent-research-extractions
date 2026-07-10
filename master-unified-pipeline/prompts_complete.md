@@ -144,9 +144,50 @@ or
 
 ---
 
-## P3 — LATS Tree Search
+## P3 — Tree Search (ToT baseline + LATS full)
 
-### P3.1 Expansion (thought/action)
+### P3.0 Search mode router (ARSENAL L3)
+
+```text
+Choose tree-search mode for this subtask.
+- tot: offline puzzle / fixed-step reasoning / constrained writing (BFS beam or DFS)
+- lats: interactive env, tools, long-horizon actions, unit-test loops (MCTS/UCT)
+- cascade: run tot first; if best score < {{tau}} or env required, escalate to lats
+
+Task: {{task_spec}}
+Interactive env/tools: {{has_env}}
+Budget: {{budget}}
+Return JSON: {"mode": "tot|lats|cascade", "beam_b": int, "mcts_N": int, "rationale": "..."}
+```
+
+### P3.0b ToT propose next thought (from ToT Game24/crosswords pattern)
+
+```text
+Given the current partial solution state, list diverse possible next steps.
+Current state:
+{{state}}
+Possible next steps:
+```
+
+### P3.0c ToT value labels (sure/likely/impossible pattern)
+
+```text
+Evaluate if this partial state can reach a valid final solution.
+State: {{state}}
+Answer with one of: sure / likely / impossible
+and a one-line justification.
+```
+
+### P3.0d ToT vote among candidates (creative-writing pattern)
+
+```text
+Given an instruction and several choices, decide which choice is most promising.
+Analyze each choice, then conclude: "The best choice is {s}" with integer id s.
+Instruction: {{instruction}}
+{{choices_block}}
+```
+
+### P3.1 LATS Expansion (thought/action)
 
 ```text
 You are exploring solutions with tree search.

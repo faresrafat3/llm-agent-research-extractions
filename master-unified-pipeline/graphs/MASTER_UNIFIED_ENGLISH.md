@@ -1,37 +1,19 @@
 # ARSENAL — Master Unified Pipeline Graph (English)
 
-**One system. Seven sources. Nested layers L0–L6.**
+**One system. Eight sources. Nested layers L0–L6 (L3 = ToT baseline + LATS full).**
 
-| Layer | Role | Source system |
-|---|---|---|
-| L0 | Technique family router | The Prompt Report |
-| L1 | Instruction optimizer | APE |
-| L2 | Meta conductor + experts | Meta-Prompting |
-| L3 | Tree search (MCTS/UCT) | LATS |
-| L4 | Local polish loop | Self-Refine |
-| L5 | Verbal episodic memory | Reflexion |
-| L6 | Progressive stages + writeup + review | AI Scientist v2 |
-
-## How to read the graph
-
-1. Enter at **User Task** → **L6 Stage Shell**.
-2. Each stage opens an **L5 trial loop** with reflection memory.
-3. Every trial calls **L0 Router** to activate layers.
-4. Optional **L1 APE** ranks instructions.
-5. **L2 Meta** dispatches experts (including Python and TreeSearch).
-6. **L3 LATS** explores under uncertainty; leaves go to **L4 Self-Refine**.
-7. Failures become **L5 reflections** for the next trial.
-8. Stage success → multi-seed → plots → next stage → writeup → peer review.
+See also: `search_family_map.md` for ToT vs LATS routing.
 
 ## Mermaid
 
 ```mermaid
 flowchart TB
-  %% ARSENAL — Unified Master Pipeline combining all 7 systems
-  %% Sources: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | LATS | APE | Prompt Report
+  %% ARSENAL — Unified Master Pipeline combining all 8 systems
+  %% Sources: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | ToT | LATS | APE | Prompt Report
 
   START([User Task / Research Idea / Query]) --> L6_IN[L6 Progressive Stage Shell<br/>AI Scientist v2]
 
+  %% ═══════════════ L6 OUTER STAGES ═══════════════
   subgraph L6["L6 — PROGRESSIVE STAGE SHELL (AI Scientist v2)"]
     direction TB
     L6_IN --> STAGE{Current stage}
@@ -46,6 +28,7 @@ flowchart TB
 
     TRIAL_WRAP[Enter L5 trial loop with empty/fresh memory for stage]
 
+    %% after trials return
     TRIAL_DONE[Trial stack returns best result] --> BEST{Best node / result found?}
     BEST -->|no| ABORT[Abort pipeline — journal no_best_node]
     BEST -->|yes| MSEED[Multi-seed evaluation]
@@ -55,11 +38,13 @@ flowchart TB
     STAGE_OK -->|all done| WRITEUP_GATE{Writeup enabled?}
   end
 
+  %% ═══════════════ L5 TRIAL + MEMORY ═══════════════
   subgraph L5["L5 — EPISODIC VERBAL MEMORY (Reflexion)"]
     direction TB
     TRIAL_WRAP --> MEM_INIT[memory = prior reflections window K]
     MEM_INIT --> TRIAL_LOOP{for trial in 1..max_trials}
     TRIAL_LOOP --> L0_CALL[Call L0 Technique Router]
+    %% L0..L4 execute here (linked below)
     INNER_DONE[Inner stack result] --> SUCC{Success?}
     SUCC -->|yes| TRIAL_DONE
     SUCC -->|no retries left| TRIAL_DONE
@@ -68,6 +53,7 @@ flowchart TB
     MEM_UPD --> TRIAL_LOOP
   end
 
+  %% ═══════════════ L0 ROUTER ═══════════════
   subgraph L0["L0 — TECHNIQUE ROUTER (The Prompt Report)"]
     direction TB
     L0_CALL --> TAX[Classify against 58-technique taxonomy<br/>+ agents / multimodal / eval]
@@ -84,6 +70,7 @@ flowchart TB
     FLAGS --> L1_GATE
   end
 
+  %% ═══════════════ L1 APE ═══════════════
   subgraph L1["L1 — INSTRUCTION OPTIMIZER (APE)"]
     direction TB
     L1_GATE{activate.ape AND demos available?}
@@ -105,10 +92,11 @@ flowchart TB
     L1_SKIP --> L2_GATE
   end
 
+  %% ═══════════════ L2 META ═══════════════
   subgraph L2["L2 — META CONDUCTOR (Meta-Prompting)"]
     direction TB
     L2_GATE{activate.meta?}
-    L2_GATE -->|no| L2_SKIP{activate.lats?}
+    L2_GATE -->|no| L2_SKIP{activate.tot OR activate.lats?}
     L2_GATE -->|yes| META_INIT[Init messages: meta instruction + query + memory]
     META_INIT --> META_LOOP{meta round < max_rounds}
     META_LOOP --> META_CALL[Meta-Model generate]
@@ -123,19 +111,33 @@ flowchart TB
     RUN_Q -->|yes| EXEC[Execute with timeout — append stdout/err]
     RUN_Q -->|no| EXP_APPEND
     EXEC --> EXP_APPEND
-    EXP_TYPE -->|TreeSearch / LATS| L3_CALL
+    EXP_TYPE -->|TreeSearch| L3_MODE
     EXP_TYPE -->|Normal expert| EXP_LM[LM expert generate]
     EXP_LM --> L4_EXP[L4 polish expert draft]
     L4_EXP --> EXP_APPEND[Append expert output + intermediate feedback]
     EXP_APPEND --> META_LOOP
     META_FINAL --> L4_FINAL
-    L2_SKIP -->|yes| L3_CALL
+    L2_SKIP -->|yes| L3_MODE
     L2_SKIP -->|no| DIRECT[Direct LM generate with routed method]
     DIRECT --> L4_FINAL
   end
 
-  subgraph L3["L3 — TREE SEARCH ENGINE (LATS / MCTS)"]
+  %% ═══════════════ L3 ToT + LATS ═══════════════
+  subgraph L3["L3 — TREE SEARCH ENGINE (ToT baseline + LATS full)"]
     direction TB
+    L3_MODE{Search mode?}
+    L3_MODE -->|ToT offline/puzzle| TOT[ToT: frontier ys empty]
+    L3_MODE -->|LATS interactive/env| L3_CALL
+    L3_MODE -->|cascade| TOT
+    TOT --> TOT_STEP{for step in task.steps}
+    TOT_STEP --> TOT_GEN{generate sample or propose?}
+    TOT_GEN --> TOT_EVAL{evaluate value or vote?}
+    TOT_EVAL --> TOT_SEL[select top-b greedy or sample]
+    TOT_SEL --> TOT_STEP
+    TOT_STEP -->|done| TOT_OUT[ToT best trajectories]
+    TOT_OUT --> CASC{cascade and score < tau?}
+    CASC -->|yes escalate| L3_CALL
+    CASC -->|no| L4_LEAF
     L3_CALL[Root node = state / question / problem] --> MCTS{for iteration in 1..N}
     MCTS --> SEL[Select node by UCT]
     SEL --> TERM{Node status?}
@@ -158,6 +160,7 @@ flowchart TB
     L3_BEST --> L4_LEAF
   end
 
+  %% ═══════════════ L4 SELF-REFINE ═══════════════
   subgraph L4["L4 — LOCAL POLISHER (Self-Refine)"]
     direction TB
     L4_LEAF[Candidate leaf / draft y] --> L4_INIT{y exists?}
@@ -176,6 +179,7 @@ flowchart TB
 
   L4_OUT --> INNER_DONE
 
+  %% ═══════════════ L6 PRODUCTION TAIL ═══════════════
   WRITEUP_GATE -->|no| DELIVER([Deliver stage artifacts + journal])
   WRITEUP_GATE -->|yes| CITE[Citation loop: Semantic Scholar ~20 rounds]
   CITE --> WRITE[Writeup LaTeX / paper generation]
@@ -188,23 +192,18 @@ flowchart TB
   PREVIEW_DO --> DELIVER
   ABORT --> DELIVER
 
+  %% ═══════════════ PATTERN LEGEND ═══════════════
   subgraph LEGEND["Pattern sources"]
     direction LR
     LG0[L0 Prompt Report taxonomy routing]
     LG1[L1 APE generate-dedup-evaluate-rank]
     LG2[L2 Meta expert dispatch + Python tool]
-    LG3[L3 LATS UCT expand value rollout backprop]
+    LG3[L3 ToT beam/DFS + LATS UCT/MCTS]
     LG4[L4 Self-Refine gen-feedback-refine-stop]
     LG5[L5 Reflexion verbal memory across trials]
     LG6[L6 AI Scientist stages multi-seed writeup review]
   end
 
   DELIVER --> END([ARSENAL Deliverable:<br/>prompts · trajectories · artifacts · paper · review · memory])
+
 ```
-
-## Companion files
-
-- Raw Mermaid: `MASTER_UNIFIED_ENGLISH.mmd`
-- Arabic version: `MASTER_UNIFIED_ARABIC.md` / `.mmd`
-- Architecture narrative: `../unified_architecture.md`
-- Pattern extraction: `../pattern_extraction.md`

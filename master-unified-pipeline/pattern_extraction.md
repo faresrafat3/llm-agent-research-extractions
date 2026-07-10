@@ -1,4 +1,4 @@
-# Pattern Extraction — Strongest Patterns from All 7 Systems
+# Pattern Extraction — Strongest Patterns from All 8 Systems
 
 This document extracts the *best loops, decision points, prompts, and logic flows* from each system for fusion into ARSENAL.
 
@@ -145,7 +145,43 @@ while rounds < max:
 
 ---
 
-## 5. LATS — Tree Search Engine
+## 5. Tree of Thoughts — Classic Deliberate Search (L3 baseline)
+
+### Best loops
+```
+ys = ['']  # frontier
+for step in task.steps:
+  new_ys = generate(ys)   # sample independent OR propose next steps
+  values = evaluate(new_ys)  # value each state OR vote among candidates
+  ys = select_top_b(new_ys, values)  # greedy beam or multinomial
+return ys
+# Crosswords variant: DFS + prune if any partial fill is "impossible"
+```
+
+### Best decision points
+- `method_generate`: sample vs propose.
+- `method_evaluate`: value vs vote.
+- `method_select`: greedy vs sample.
+- Value cache hit / duplicate candidate → value 0.
+- Game24: remaining numbers == 24 → switch to final CoT answer prompt.
+- DFS prune when impossible count ≥ 1; max_per_state / time_limit.
+
+### Best prompts
+- Game24: standard, cot, propose, value, value_last_step.
+- Creative writing: standard, cot, vote, score, compare.
+- Crosswords: standard, cot, propose, value (sure/maybe/impossible).
+
+### Best logic
+- Thoughts as intermediate search nodes (not only final answers).
+- Beam width `b = n_select_sample` as explicit budget knob.
+- Clean generate × evaluate × select axes — easy to compose.
+
+### Role in ARSENAL
+**L3-baseline** — prefer ToT when the problem is **offline / puzzle-like** (fixed steps, no interactive env), or as a cheaper deliberate-search mode before escalating to LATS.
+
+---
+
+## 5b. LATS — Interactive MCTS Tree Search (L3 full)
 
 ### Best loops
 ```
@@ -177,9 +213,10 @@ for iteration in 1..N:
 - Unifies reasoning + acting + planning via MCTS.
 - LM as policy (expand) and value (evaluate).
 - External env feedback + reflection memory.
+- **Extends ToT**: UCT instead of fixed beam, env reward, rollout, backprop, failure reflections.
 
 ### Role in ARSENAL
-**L3 Tree Search Engine** — used when the conductor marks a subtask as high-uncertainty / large action space.
+**L3-full Tree Search Engine** — use when the conductor marks a subtask as **interactive, long-horizon, or env-grounded** (tools, web, code tests, multi-step agents).
 
 ---
 
@@ -255,7 +292,8 @@ Plus agents (ReAct, tools), multilingual, multimodal, evaluation (LLM-as-Judge, 
 | Task arrives | L0 Router | Prompt Report |
 | Instruction quality low / demos available | L1 APE | APE |
 | Task multi-part / needs tools | L2 Conductor | Meta-Prompting |
-| Large search space / uncertainty | L3 LATS | LATS |
+| Large search space / offline puzzle | L3-baseline ToT | Tree of Thoughts |
+| Interactive / long-horizon / env tools | L3-full LATS | LATS |
 | Candidate draft exists | L4 Self-Refine | Self-Refine |
 | Trial failed | L5 Reflexion memory | Reflexion |
 | Multi-phase production needed | L6 Stages | AI Scientist v2 |
@@ -270,7 +308,9 @@ L6 stage
             └─ L1 optimize prompt (optional)
                  └─ L2 meta conductor
                       ├─ expert: L3 tree search
-                      │    └─ each leaf: L4 refine
+                      │    ├─ mode=ToT  (BFS/DFS deliberate)   if offline/puzzle
+                      │    └─ mode=LATS (MCTS+env+reflect)     if interactive
+                      │         └─ each leaf: L4 refine
                       ├─ expert: direct generate + L4 refine
                       └─ expert: tool/Python
                  └─ L4 final polish

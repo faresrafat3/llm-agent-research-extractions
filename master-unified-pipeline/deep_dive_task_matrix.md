@@ -9,11 +9,15 @@
 | 2 Conduct | L2 | Meta-Prompting | `meta_model_generate` | query, meta_instruction | expert calls / final answer | yes: meta rounds | expert vs final vs error | final answer / max rounds |
 | 3 Dispatch expert | L2 | Meta-Prompting | expert extract + call | expert block | expert output | nested | Python expert? | — |
 | 4 Tool exec | L2 | Meta-Prompting | `execute_code_with_timeout` | code | stdout/err | no | run code flag? | timeout |
-| 5 Tree select | L3 | LATS | `select_UCT` | tree | node | yes: while not expand-ready | terminal? exhausted? | — |
-| 6 Tree expand | L3 | LATS | `expand_LM` | node, expand_prompt | children | yes: width | reflection available? | — |
-| 7 Tree value | L3 | LATS | `get_value` | child, value_prompt / env | score | yes: children | cache hit? | — |
-| 8 Tree rollout | L3 | LATS | `rollout` | node, env | reward, trajectory | yes: depth | success mid-rollout? | max depth / terminal |
-| 9 Tree backprop | L3 | LATS | `backpropagate` | reward | updated visits/values | yes: to root | — | root reached |
+| 5a ToT generate | L3 | Tree of Thoughts | `get_samples` / `get_proposals` | frontier ys | children | per step | sample vs propose | — |
+| 5b ToT evaluate | L3 | Tree of Thoughts | `get_values` / `get_votes` | new_ys | values | per child / batch | value vs vote; cache | — |
+| 5c ToT select | L3 | Tree of Thoughts | greedy / multinomial | values, b | frontier | per step | greedy vs sample | steps done |
+| 5d mode choose | L3 | ToT+LATS | `choose_search_mode` | task, route, score | tot\|lats\|cascade | no | offline vs interactive; cascade τ | — |
+| 6 Tree select | L3 | LATS | `select_UCT` | tree | node | yes: while not expand-ready | terminal? exhausted? | — |
+| 7 Tree expand | L3 | LATS | `expand_LM` | node, expand_prompt | children | yes: width | reflection available? | — |
+| 8 Tree value | L3 | LATS | `get_value` | child, value_prompt / env | score | yes: children | cache hit? | — |
+| 9 Tree rollout | L3 | LATS | `rollout` | node, env | reward, trajectory | yes: depth | success mid-rollout? | max depth / terminal |
+| 10 Tree backprop | L3 | LATS | `backpropagate` | reward | updated visits/values | yes: to root | — | root reached |
 | 10 Local polish | L4 | Self-Refine | gen→fb→refine | x, y, prompts | y_final, history | yes: max_iters | stop(fb,t)? | stop indicator / max |
 | 11 Trial reflect | L5 | Reflexion | `verbal_reflect` | trajectory, feedback | reflection text | per failed trial | use_memory? | success / max trials |
 | 12 Memory update | L5 | Reflexion | append + window | reflection, memory | memory[-K:] | no | window size | — |
@@ -28,17 +32,18 @@
 
 ## Layer activation matrix (by task type)
 
-| Task type | L0 families | L1 APE | L2 Meta | L3 LATS | L4 Refine | L5 Reflexion | L6 Stages |
-|---|---|---|---|---|---|---|---|
-| Simple QA | ICL + CoT | optional | off | off | optional | off | off |
-| Math / GSM | CoT + Self-Criticism | optional | optional | off | on | optional | off |
-| Code generation | Agents + Self-Criticism | optional | Python expert | optional | on | on | optional |
-| Interactive env (AlfWorld/WebShop) | Agents + Self-Criticism | off | optional | on | optional | on | off |
-| Multi-hop QA (HotPotQA) | Agents + Decomposition | off | optional | on | optional | on | off |
-| Instruction induction | Prompt Optimization | **on** | off | off | off | off | off |
-| Research experiment | All + Evaluation | on | on | on | on | on | **on** |
-| Paper writeup | Decomposition + Self-Criticism + Eval | optional | on | off | on | optional | writeup+review |
-| Multimodal figure | Multimodal + Self-Criticism | off | on | off | visual refine | optional | VLM review |
+| Task type | L0 families | L1 APE | L2 Meta | L3 ToT | L3 LATS | L4 Refine | L5 Reflexion | L6 Stages |
+|---|---|---|---|---|---|---|---|---|
+| Simple QA | ICL + CoT | optional | off | off | off | optional | off | off |
+| Math / GSM / Game24-like | CoT + Decomposition | optional | optional | **on** | off/cascade | on | optional | off |
+| Creative constrained writing | Thought + Ensembling | optional | optional | **on** (vote) | off | on | off | off |
+| Code generation | Agents + Self-Criticism | optional | Python expert | optional | **on** | on | on | optional |
+| Interactive env (AlfWorld/WebShop) | Agents + Self-Criticism | off | optional | off | **on** | optional | on | off |
+| Multi-hop QA (HotPotQA) | Agents + Decomposition | off | optional | optional | **on** | optional | on | off |
+| Instruction induction | Prompt Optimization | **on** | off | off | off | off | off | off |
+| Research experiment | All + Evaluation | on | on | on | on | on | on | **on** |
+| Paper writeup | Decomposition + Self-Criticism + Eval | optional | on | off | off | on | optional | writeup+review |
+| Multimodal figure | Multimodal + Self-Criticism | off | on | off | off | visual refine | optional | VLM review |
 
 ---
 
@@ -65,12 +70,14 @@
 - num_return_sequences > 1 → summarize?
 - rounds >= max?
 
-### L3 LATS
-- node terminal success?
-- node terminal fail / exhausted?
-- UCT pick among children
-- value cache hit?
-- generate reflection from unique failures?
+### L3 ToT + LATS
+- mode tot | lats | cascade?
+- ToT: sample vs propose; value vs vote; greedy vs sample beam?
+- ToT DFS prune if impossible ≥ 1?
+- cascade score < τ → escalate LATS?
+- LATS: node terminal success / fail / exhausted?
+- LATS: UCT pick among children; value cache hit?
+- LATS: generate reflection from unique failures?
 
 ### L4 Self-Refine
 - n_attempts == 0 → init else iterate

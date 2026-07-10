@@ -24,3 +24,7 @@
 
 
 تم إضافة The Prompt Report لنفس معيار الجودة الموحد — 58 تقنية نصية + 40 multimodal + 33 vocabulary terms، مع graphs عربي/إنجليزي، deep dive، completeness، وquality review.
+
+تم إضافة Tree of Thoughts (ToT) لنفس معيار الجودة الموحد — prompts + BFS/DFS + scripts الورقة + graphs عربي/إنجليزي + completeness + audit.
+
+تم تحديث ARSENAL لدمج 8 أنظمة: ToT كـ L3-baseline بجانب LATS، مع `search_family_map.md` و mode tot|lats|cascade.

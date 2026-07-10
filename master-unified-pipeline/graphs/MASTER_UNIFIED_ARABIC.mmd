@@ -1,5 +1,6 @@
 flowchart TB
-  %% أرسينال — خط الأنابيب الموحّد الرئيسي من دمج الأنظمة السبعة
+  %% أرسينال — خط الأنابيب الموحّد الرئيسي من دمج الأنظمة الثمانية
+  %% المصادر: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | ToT | LATS | APE | Prompt Report
   %% المصادر: AI Scientist v2 | Self-Refine | Reflexion | Meta-Prompting | LATS | APE | The Prompt Report
 
   START([مهمة المستخدم / فكرة بحثية / استعلام]) --> L6_IN[L6 غلاف المراحل التصاعدي<br/>AI Scientist v2]
@@ -55,7 +56,7 @@ flowchart TB
     FAM --> F6[تحسين الأوامر APE/OPRO]
     FAM --> F7[وكلاء وأدوات ReAct]
     F1 & F2 & F3 & F4 & F5 & F6 & F7 --> ACT[بناء أعلام التفعيل]
-    ACT --> FLAGS["تفعيل: ape / meta / lats / refine / reflexion / stages"]
+    ACT --> FLAGS["تفعيل: ape / meta / tot / lats / refine / reflexion / stages"]
     FLAGS --> L1_GATE
   end
 
@@ -85,7 +86,7 @@ flowchart TB
   subgraph L2["L2 — المايسترو الميتا (Meta-Prompting)"]
     direction TB
     L2_GATE{activate.meta؟}
-    L2_GATE -->|لا| L2_SKIP{activate.lats؟}
+    L2_GATE -->|لا| L2_SKIP{activate.tot أو activate.lats؟}
     L2_GATE -->|نعم| META_INIT[تهيئة الرسائل: تعليمات ميتا + الاستعلام + الذاكرة]
     META_INIT --> META_LOOP{جولة ميتا < الحد الأقصى}
     META_LOOP --> META_CALL[توليد نموذج الميتا]
@@ -100,20 +101,33 @@ flowchart TB
     RUN_Q -->|نعم| EXEC[تنفيذ بمهلة زمنية — إلحاق stdout/err]
     RUN_Q -->|لا| EXP_APPEND
     EXEC --> EXP_APPEND
-    EXP_TYPE -->|بحث شجري / LATS| L3_CALL
+    EXP_TYPE -->|بحث شجري| L3_MODE
     EXP_TYPE -->|خبير عادي| EXP_LM[توليد خبير لغوي]
     EXP_LM --> L4_EXP[صقل مسودة الخبير عبر L4]
     L4_EXP --> EXP_APPEND[إلحاق مخرج الخبير + تغذية راجعة وسيطة]
     EXP_APPEND --> META_LOOP
     META_FINAL --> L4_FINAL
-    L2_SKIP -->|نعم| L3_CALL
+    L2_SKIP -->|نعم| L3_MODE
     L2_SKIP -->|لا| DIRECT[توليد مباشر بالطريقة الموجَّهة]
     DIRECT --> L4_FINAL
   end
 
   %% ═══════════════ L3 LATS ═══════════════
-  subgraph L3["L3 — محرك البحث الشجري (LATS / MCTS)"]
+  subgraph L3["L3 — محرك البحث الشجري (ToT أساس + LATS كامل)"]
     direction TB
+    L3_MODE{وضع البحث؟}
+    L3_MODE -->|ToT دون اتصال/لغز| TOT[ToT: حدود ys فارغة]
+    L3_MODE -->|LATS تفاعلي/بيئة| L3_CALL
+    L3_MODE -->|تسلسل cascade| TOT
+    TOT --> TOT_STEP{لكل step في task.steps}
+    TOT_STEP --> TOT_GEN{توليد sample أو propose؟}
+    TOT_GEN --> TOT_EVAL{تقييم value أو vote؟}
+    TOT_EVAL --> TOT_SEL[اختيار أفضل b greedy أو sample]
+    TOT_SEL --> TOT_STEP
+    TOT_STEP -->|انتهى| TOT_OUT[أفضل مسارات ToT]
+    TOT_OUT --> CASC{cascade والدرجة < tau؟}
+    CASC -->|نعم ترقية| L3_CALL
+    CASC -->|لا| L4_LEAF
     L3_CALL[العقدة الجذر = الحالة / السؤال / المسألة] --> MCTS{لكل تكرار 1..N}
     MCTS --> SEL[اختيار عقدة بـ UCT]
     SEL --> TERM{حالة العقدة؟}
@@ -173,7 +187,7 @@ flowchart TB
     LG0[L0 توجيه تصنيف Prompt Report]
     LG1[L1 APE توليد-إزالة تكرار-تقييم-ترتيب]
     LG2[L2 ميتا توزيع الخبراء + أداة بايثون]
-    LG3[L3 LATS اختيار UCT توسيع قيمة محاكاة نشر]
+    LG3[L3 ToT حزمة/DFS + LATS UCT/MCTS]
     LG4[L4 Self-Refine توليد-تغذية-صقل-إيقاف]
     LG5[L5 Reflexion ذاكرة لفظية عبر المحاولات]
     LG6[L6 AI Scientist مراحل بذور متعددة كتابة مراجعة]
