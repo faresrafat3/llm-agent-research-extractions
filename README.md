@@ -1,6 +1,6 @@
 # LLM Agent Research Systems — High-Quality Prompt, Logic, Flow, and Graph Extractions
 
-This repository is a consolidated research/audit archive for nine important LLM agent and self-improvement systems:
+This repository is a consolidated research/audit archive for ten important LLM agent and self-improvement systems:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -11,6 +11,7 @@ This repository is a consolidated research/audit archive for nine important LLM 
 7. The Prompt Report — Systematic Survey of Prompt Engineering Techniques
 8. Tree of Thoughts (ToT)
 9. Voyager
+10. OPRO
 
 Every project is structured to the same quality standard as much as the original repository structure allows:
 
@@ -34,6 +35,7 @@ Every project is structured to the same quality standard as much as the original
 | Meta-Prompting | `projects/meta-prompting/` | https://github.com/faresrafat3/meta-prompting-full-extraction |
 | LATS | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction |
 | APE | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction |
+| OPRO | `projects/opro/` | https://github.com/faresrafat3/opro-full-extraction |
 | Prompt Report | `projects/prompt-report/` | https://github.com/faresrafat3/prompt-report-full-extraction |
 | Tree of Thoughts (ToT) | `projects/tot/` | https://github.com/faresrafat3/tot-full-extraction |
 | Voyager | `projects/voyager/` | https://github.com/faresrafat3/voyager-full-extraction |
@@ -164,6 +166,19 @@ Layers: L0 Prompt Report router → L1 APE → L2 Meta-Prompting → L3 ToT base
 7. `projects/voyager/graph_arabic.md`
 8. `projects/voyager/final_completeness_check_ar.md`
 9. `projects/voyager/QUALITY_REVIEW_AR.md`
+
+
+### OPRO
+
+1. `projects/opro/README.md`
+2. `projects/opro/research_summary.md`
+3. `projects/opro/deep_dive_task_matrix.md`
+4. `projects/opro/prompts_complete.md`
+5. `projects/opro/python_logic_flow_complete.md`
+6. `projects/opro/graph_english.md`
+7. `projects/opro/graph_arabic.md`
+8. `projects/opro/final_completeness_check_ar.md`
+9. `projects/opro/QUALITY_REVIEW_AR.md`
 
 ## Master graphs
 

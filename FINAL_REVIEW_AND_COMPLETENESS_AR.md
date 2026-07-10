@@ -2,7 +2,7 @@
 
 ## الهدف
 
-هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع التسعة وصلت لنفس معيار الجودة قدر الإمكان:
+هذا الملف يراجع الريبو الموحد كاملًا ويتأكد أن المشاريع العشرة وصلت لنفس معيار الجودة قدر الإمكان:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -13,6 +13,7 @@
 7. Prompt Report
 8. Tree of Thoughts (ToT)
 9. Voyager
+10. OPRO
 
 ## حالة الريبوهات
 
@@ -28,6 +29,7 @@
 - `https://github.com/faresrafat3/prompt-report-full-extraction`
 - `https://github.com/faresrafat3/tot-full-extraction`
 - `https://github.com/faresrafat3/voyager-full-extraction`
+- `https://github.com/faresrafat3/opro-full-extraction`
 - `https://github.com/faresrafat3/arsenal-unified-master-pipeline`
 
 ## معيار الجودة المستخدم
@@ -237,3 +239,9 @@
 - استخراج كامل: `projects/voyager/` و https://github.com/faresrafat3/voyager-full-extraction
 - المكوّنات: منهج تلقائي، مكتبة مهارات، تحفيز تكراري Action+Critic، learn/inference
 - commit المصدر: `55e45a8`
+
+## تحديث OPRO
+
+- استخراج كامل: `projects/opro/` و https://github.com/faresrafat3/opro-full-extraction
+- المكوّنات: meta-prompt evolution، scorer prompts، linear regression/TSP demos
+- commit المصدر: `a76bdce`

@@ -1,0 +1,110 @@
+{
+  "system": "OPRO (Optimization by PROmpting)",
+  "paper": "https://arxiv.org/abs/2309.03409",
+  "code": "https://github.com/google-deepmind/opro",
+  "commit": "a76bdce2cbf6d4a0d1e570a6fcfe17be9c2abdd7",
+  "stars_approx": 762,
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "path": "opro/optimization/optimize_instructions.py",
+      "role": "CLI entry for instruction optimization; loads data; calls run_evolution",
+      "functions": ["main"],
+      "flags": ["optimizer", "scorer", "dataset", "task", "instruction_pos", "meta_prompt_type", "openai_api_key", "palm_api_key"],
+      "decisions": ["dataset-specific loaders", "initial_instructions list", "train_ratio splits"]
+    },
+    {
+      "path": "opro/optimization/opt_utils.py",
+      "role": "Core evolution + meta-prompt assembly",
+      "functions": [
+        "extract_string_in_square_brackets",
+        "parse_tag_content",
+        "_bucketize_float",
+        "gen_ins_and_score_pairs_substr",
+        "gen_meta_prompt",
+        "run_evolution"
+      ],
+      "loops": ["num_search_steps", "generate while remaining", "score candidates", "initial instructions"],
+      "decisions": [
+        "meta_prompt_type both|instructions_only",
+        "instruction_pos before_Q|Q_begin|Q_end|A_begin",
+        "few_shot criteria accumulative|current|constant|random",
+        "temperature schedule constant|linear_increase",
+        "score threshold / max_num_instructions / buckets",
+        "skip long/digit/INS/duplicate",
+        "GPT tags vs text-bison brackets"
+      ]
+    },
+    {
+      "path": "opro/evaluation/eval_utils.py",
+      "role": "Task prompt assembly and single-instruction evaluation",
+      "functions": [
+        "gen_prompt",
+        "evaluate_single_instruction",
+        "fetch_true_answer",
+        "instruction_to_filename",
+        "polish_sentence",
+        "load_bbh_task_data",
+        "get_bbh_task_names"
+      ],
+      "loops": ["eval indices batches", "retry"],
+      "decisions": ["include_qa", "instruction_pos", "dataset formatters", "parallel eval", "second-pass answer extraction"]
+    },
+    {
+      "path": "opro/evaluation/metrics.py",
+      "role": "Answer normalization and accuracy",
+      "functions": [
+        "get_normalized_prediction",
+        "get_normalized_target_and_prediction",
+        "number_included_accuracy",
+        "_extract_bracketed_choice_from_string"
+      ],
+      "decisions": ["treat_as_number adaptive|bool", "treat_as_bool", "boxed answers"]
+    },
+    {
+      "path": "opro/evaluation/evaluate_instructions.py",
+      "role": "Standalone evaluation of fixed instructions on train/test folds",
+      "functions": ["main"],
+      "loops": ["instructions × folds"]
+    },
+    {
+      "path": "opro/optimization/optimize_linear_regression.py",
+      "role": "OPRO on continuous (w,b) objective",
+      "functions": ["main", "gen_meta_prompt (local)", "parse_output"],
+      "prompts": ["minimize f(w,b) history", "request new [w,b]"]
+    },
+    {
+      "path": "opro/optimization/optimize_tsp.py",
+      "role": "OPRO on TSP traces",
+      "functions": ["main", "gen_meta_prompt (local)"],
+      "prompts": ["request new <trace>...</trace>"]
+    },
+    {
+      "path": "opro/prompt_utils.py",
+      "role": "Model serving wrappers",
+      "functions": [
+        "call_openai_server_single_prompt",
+        "call_openai_server_func",
+        "call_palm_server_from_cloud"
+      ],
+      "loops": ["recursive API retry"]
+    },
+    {
+      "path": "misc/prompt_history/*",
+      "role": "Paper optimization logs (BBH scorer text-bison, optimizer palm-2-l-it)",
+      "notes": "Step-wise training acc and instruction strings"
+    }
+  ],
+  "algorithm_axes": {
+    "domain": ["instruction_opt", "linear_regression", "tsp"],
+    "meta_prompt_type": ["both_instructions_and_exemplars", "instructions_only"],
+    "instruction_pos": ["before_Q", "Q_begin", "Q_end", "A_begin"],
+    "few_shot_selection": ["accumulative_most_frequent", "current_most_frequent", "constant", "random"],
+    "temperature_schedule": ["constant", "linear_increase"],
+    "datasets": ["gsm8k", "bbh", "mmlu", "aqua_eval_support"]
+  },
+  "relation_to_arsenal": {
+    "layer": "L1 Instruction Optimizer (iterative complement to APE)",
+    "vs_ape": "APE one-shot generate+score; OPRO multi-step score-conditioned meta-prompt search"
+  }
+}

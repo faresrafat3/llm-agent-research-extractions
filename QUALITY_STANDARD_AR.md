@@ -30,3 +30,5 @@
 تم تحديث ARSENAL لدمج 8 أنظمة: ToT كـ L3-baseline بجانب LATS، مع `search_family_map.md` و mode tot|lats|cascade.
 
 تم إضافة Voyager لنفس معيار الجودة الموحد — curriculum + skill library + iterative prompting (Action/Critic) + graphs عربي/إنجليزي + completeness + quality review.
+
+تم إضافة OPRO (Large Language Models as Optimizers) لنفس معيار الجودة الموحد — meta-prompt evolution + scoring + LR/TSP demos + graphs عربي/إنجليزي + completeness + quality review.

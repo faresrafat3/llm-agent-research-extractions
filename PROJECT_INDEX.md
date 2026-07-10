@@ -9,6 +9,7 @@
 | Voyager | `MineDojo/Voyager` | `projects/voyager/` | https://github.com/faresrafat3/voyager-full-extraction | curriculum, skill library, iterative prompting, EN/AR graphs |
 | Tree of Thoughts (ToT) | `princeton-nlp/tree-of-thought-llm` | `projects/tot/` | https://github.com/faresrafat3/tot-full-extraction | prompts, BFS/DFS logic, EN/AR graphs, paper scripts, audit |
 | LATS | `lapisrocks/LanguageAgentTreeSearch` | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction | prompts, raw data samples, MCTS/LATS logic, graphs, deep dive |
+| OPRO | `google-deepmind/opro` | `projects/opro/` | https://github.com/faresrafat3/opro-full-extraction | meta-prompt evolution, instruction scoring, LR/TSP, EN/AR graphs |
 | APE | `keirp/automatic_prompt_engineer` | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction | prompt generation templates, likelihood/bandit evaluation, logic flow, graphs, deep dive |
 | Prompt Report | `arxiv:2406.06608` | `projects/prompt-report/` | https://github.com/faresrafat3/prompt-report-full-extraction | 58 LLM techniques + 40 multimodal, 33 vocab terms, taxonomy graphs EN/AR, deep dive |
 
@@ -119,3 +120,13 @@
 - Graph AR: `projects/voyager/graph_arabic.md`
 - Deep dive: `projects/voyager/deep_dive_task_matrix.md`
 - Completeness: `projects/voyager/final_completeness_check_ar.md`
+
+### OPRO
+
+- Prompts/meta-prompts: `projects/opro/prompts_complete.md`
+- Raw code: `projects/opro/raw_prompt_files/`
+- Logic: `projects/opro/python_logic_flow_complete.md`
+- Graph EN: `projects/opro/graph_english.md`
+- Graph AR: `projects/opro/graph_arabic.md`
+- Deep dive: `projects/opro/deep_dive_task_matrix.md`
+- Completeness: `projects/opro/final_completeness_check_ar.md`
