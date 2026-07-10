@@ -1,6 +1,6 @@
 # LLM Agent Research Systems — High-Quality Prompt, Logic, Flow, and Graph Extractions
 
-This repository is a consolidated research/audit archive for seven important LLM agent and self-improvement systems:
+This repository is a consolidated research/audit archive for eight important LLM agent and self-improvement systems:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -9,6 +9,7 @@ This repository is a consolidated research/audit archive for seven important LLM
 5. LATS / Language Agent Tree Search
 6. APE / Automatic Prompt Engineer
 7. The Prompt Report — Systematic Survey of Prompt Engineering Techniques
+8. Tree of Thoughts (ToT)
 
 Every project is structured to the same quality standard as much as the original repository structure allows:
 
@@ -33,6 +34,7 @@ Every project is structured to the same quality standard as much as the original
 | LATS | `projects/lats/` | https://github.com/faresrafat3/lats-full-extraction |
 | APE | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction |
 | Prompt Report | `projects/prompt-report/` | https://github.com/faresrafat3/prompt-report-full-extraction |
+| Tree of Thoughts (ToT) | `projects/tot/` | https://github.com/faresrafat3/tot-full-extraction |
 
 ## Recommended reading order
 
@@ -133,6 +135,19 @@ The seven extractions are also fused into one operational master system:
 - Arabic graph: `master-unified-pipeline/graphs/MASTER_UNIFIED_ARABIC.md`
 
 Layers: L0 Prompt Report router → L1 APE → L2 Meta-Prompting → L3 LATS → L4 Self-Refine → L5 Reflexion → L6 AI Scientist v2 stages.
+
+
+### Tree of Thoughts (ToT)
+
+1. `projects/tot/README.md`
+2. `projects/tot/research_summary.md`
+3. `projects/tot/deep_dive_task_matrix.md`
+4. `projects/tot/prompts_complete.md`
+5. `projects/tot/python_logic_flow_complete.md`
+6. `projects/tot/graph_english.md`
+7. `projects/tot/graph_arabic.md`
+8. `projects/tot/final_completeness_check_ar.md`
+9. `projects/tot/QUALITY_REVIEW_AR.md`
 
 ## Master graphs
 

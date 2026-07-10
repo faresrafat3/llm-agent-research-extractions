@@ -1,0 +1,123 @@
+{
+  "system": "Tree of Thoughts (ToT)",
+  "paper": "https://arxiv.org/abs/2305.10601",
+  "code": "https://github.com/princeton-nlp/tree-of-thought-llm",
+  "commit": "8050e67d0e3a0fddc424d7fa5801538722a4c4cc",
+  "stars_approx": 6024,
+  "files": [
+    {
+      "path": "run.py",
+      "role": "CLI entry, experiment loop, JSON logging, accuracy aggregate",
+      "functions": ["run", "parse_args"],
+      "loops": ["task index range"],
+      "decisions": ["naive_run?", "task type"]
+    },
+    {
+      "path": "src/tot/models.py",
+      "role": "OpenAI ChatCompletion wrapper, backoff, usage/cost",
+      "functions": ["completions_with_backoff", "gpt", "chatgpt", "gpt_usage"],
+      "loops": ["batch n in chunks of 20"],
+      "decisions": ["api_key set?", "api_base set?", "backend cost table"]
+    },
+    {
+      "path": "src/tot/methods/bfs.py",
+      "role": "ToT BFS beam search + naive baseline",
+      "functions": [
+        "get_value", "get_values", "get_votes",
+        "get_proposals", "get_samples", "solve", "naive_solve"
+      ],
+      "loops": ["for step in task.steps", "for y in ys", "for y in new_ys"],
+      "decisions": [
+        "method_generate sample|propose",
+        "method_evaluate value|vote",
+        "method_select sample|greedy",
+        "value cache hit",
+        "duplicate candidate"
+      ]
+    },
+    {
+      "path": "src/tot/tasks/game24.py",
+      "role": "Game of 24 task + prompt wraps + sympy reward",
+      "functions": [
+        "get_current_numbers", "Game24Task.get_input", "test_output",
+        "standard_prompt_wrap", "cot_prompt_wrap", "propose_prompt_wrap",
+        "value_prompt_wrap", "value_outputs_unwrap"
+      ],
+      "loops": [],
+      "decisions": [
+        "current_numbers == 24?",
+        "last step without left:?",
+        "4 lines without answer → 0",
+        "digit multiset match",
+        "sympy == 24"
+      ],
+      "value_map": {"impossible": 0.001, "likely": 1, "sure": 20},
+      "steps": 4
+    },
+    {
+      "path": "src/tot/tasks/text.py",
+      "role": "Creative writing task + vote/score wraps",
+      "functions": [
+        "TextTask.get_input", "test_output",
+        "standard_prompt_wrap", "cot_prompt_wrap",
+        "vote_prompt_wrap", "vote_outputs_unwrap",
+        "compare_prompt_wrap", "compare_output_unwrap"
+      ],
+      "loops": ["score n=5"],
+      "decisions": ["vote regex match", "score regex match", "compare conclusion"],
+      "steps": 2,
+      "stops": ["\\nPassage:\\n", null]
+    },
+    {
+      "path": "src/tot/tasks/crosswords.py",
+      "role": "Mini crosswords env + task + propose/evaluate",
+      "functions": [
+        "MiniCrosswordsEnv.reset", "step", "render", "prompt_status", "get_ans",
+        "MiniCrosswordsTask.get_input", "test_output", "propose_prompt_wrap",
+        "propose_outputs_unwrap", "evaluate"
+      ],
+      "loops": ["prompt_status over clues", "step over output lines"],
+      "decisions": [
+        "action format valid",
+        "word length 5",
+        "h vs v position",
+        "status conflict → 2",
+        "done solved or steps>=20"
+      ],
+      "confidence_map": {"certain": 1, "high": 0.5, "medium": 0.2, "low": 0.1}
+    },
+    {
+      "path": "src/tot/prompts/game24.py",
+      "role": "All Game24 prompt templates",
+      "prompts": ["standard_prompt", "cot_prompt", "propose_prompt", "value_prompt", "value_last_step_prompt"]
+    },
+    {
+      "path": "src/tot/prompts/text.py",
+      "role": "Creative writing prompts",
+      "prompts": ["standard_prompt", "cot_prompt", "vote_prompt", "compare_prompt", "score_prompt"]
+    },
+    {
+      "path": "src/tot/prompts/crosswords.py",
+      "role": "Crossword prompts",
+      "prompts": ["standard_prompt", "cot_prompt", "propose_prompt", "value_prompt"]
+    },
+    {
+      "path": "scripts/crosswords/search_crosswords-dfs.ipynb",
+      "role": "DFS search with optional pruning for crosswords",
+      "functions": ["prompt_wrap", "parse_line", "parse_response", "get_candidates_to_scores", "dfs"],
+      "loops": ["dfs recursion", "for action in candidates", "for idx range experiments"],
+      "decisions": ["prune and impossible>=1?", "max_per_state", "time_limit", "status==2 skip"]
+    }
+  ],
+  "algorithm_axes": {
+    "generate": ["sample", "propose"],
+    "evaluate": ["value", "vote"],
+    "select": ["greedy", "sample"],
+    "search": ["BFS_beam", "DFS_prune", "naive_IO_CoT"]
+  },
+  "tasks": ["game24", "text", "crosswords"],
+  "relation_to_arsenal": {
+    "layer": "L3 classic non-MCTS tree search baseline",
+    "extends_to": "LATS adds UCT, env reward, reflection on failures"
+  }
+}

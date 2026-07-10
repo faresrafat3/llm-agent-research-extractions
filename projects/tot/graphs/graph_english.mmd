@@ -1,0 +1,111 @@
+flowchart TD
+  %% Tree of Thoughts — official code logic graph (English)
+  %% Paper arXiv:2305.10601 | Code princeton-nlp/tree-of-thought-llm
+
+  START([Start run.py]) --> ARGS[Parse CLI args]
+  ARGS --> TASK{Task?}
+  TASK -->|game24| T24[Game24Task]
+  TASK -->|text| TTXT[TextTask]
+  TASK -->|crosswords| TCW[MiniCrosswordsTask / Env]
+
+  T24 --> MODE
+  TTXT --> MODE
+  TCW --> MODE
+
+  MODE{naive_run?}
+  MODE -->|yes| NAIVE[naive_solve: get_samples once]
+  MODE -->|no ToT| SOLVE[solve: ToT + BFS beam]
+
+  subgraph BFS["ToT + BFS core — methods/bfs.py"]
+    direction TB
+    SOLVE --> INIT[x = get_input idx; ys = empty frontier]
+    INIT --> STEP{for step in task.steps}
+    STEP --> GEN{method_generate?}
+
+    GEN -->|sample| SAMP[get_samples: standard or cot wrap → gpt n times]
+    GEN -->|propose| PROP[get_proposals: propose wrap → split lines → children]
+
+    SAMP --> NEWY[new_ys = all children]
+    PROP --> NEWY
+
+    NEWY --> EVAL{method_evaluate?}
+    EVAL -->|value| VAL[get_values: per candidate value_prompt × n_evaluate]
+    EVAL -->|vote| VOTE[get_votes: one vote_prompt over all candidates]
+
+    VAL --> CACHE{value_prompt in cache?}
+    CACHE -->|yes| CVAL[use cached value]
+    CACHE -->|no| CALLV[gpt value samples → unwrap map]
+    CALLV --> STORE[(value_cache)]
+    CVAL --> VALS[values list]
+    CALLV --> VALS
+    STORE --> VALS
+    VOTE --> VALS
+
+    VALS --> DUP{duplicate y in batch?}
+    DUP -->|yes| ZERO[force value 0]
+    DUP -->|no| KEEP[keep value]
+    ZERO --> SEL
+    KEEP --> SEL
+
+    SEL{method_select?}
+    SEL -->|greedy| TOP[top n_select_sample by value]
+    SEL -->|sample| MULTI[multinomial sample by normalized values]
+    TOP --> FRONT[ys = selected frontier]
+    MULTI --> FRONT
+    FRONT --> STEP
+    STEP -->|done steps| OUTY[return ys + step infos]
+  end
+
+  NAIVE --> TEST
+  OUTY --> TEST[test_output for each y]
+
+  subgraph G24["Game24 specifics"]
+    direction TB
+    P24[propose: current left numbers]
+    P24 --> LEFT{left == 24?}
+    LEFT -->|yes| COTF[cot_prompt + Steps + y → Answer]
+    LEFT -->|no| PROPN[propose_prompt next ops]
+    V24[value: intermediate sure/likely/impossible]
+    VL24[value_last_step: judge final answer]
+    R24[reward: sympy expr == 24 and digits match]
+  end
+
+  subgraph TXT["Creative Writing specifics"]
+    direction TB
+    ST0[step0 stop at Passage — produce Plan]
+    ST1[step1 write Passage]
+    VT[vote best choice id]
+    SC[score_prompt ×5 mean coherency 1-10]
+  end
+
+  subgraph CW["Crosswords specifics"]
+    direction TB
+    ENV[MiniCrosswordsEnv board 5x5]
+    PR[propose actions h#/v# word + confidence]
+    DFS[DFS notebook search]
+    DFS --> PRUNE{prune and impossible >= 1?}
+    PRUNE -->|yes| BACK[backtrack]
+    PRUNE -->|no| DEEPER[recurse dfs]
+    BACK --> DFS
+    DEEPER --> DFS
+    STEP_ENV[env.step write word update status]
+    REW[r_letter / r_word / r_game]
+  end
+
+  T24 -.-> G24
+  TTXT -.-> TXT
+  TCW -.-> CW
+
+  TEST --> LOG[Append JSON log + usage cost]
+  LOG --> MORE{more indices?}
+  MORE -->|yes| SOLVE
+  MORE -->|yes naive| NAIVE
+  MORE -->|no| END([Print avg/any accuracy + cost])
+
+  subgraph AXES["Algorithm axes"]
+    direction LR
+    A1[Generate: sample | propose]
+    A2[Evaluate: value | vote]
+    A3[Select: greedy | sample]
+    A4[Search: BFS beam | DFS prune | naive]
+  end

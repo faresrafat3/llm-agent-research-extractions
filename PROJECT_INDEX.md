@@ -90,3 +90,9 @@
 - Completeness: `projects/prompt-report/final_completeness_check_ar.md`
 
 - Final audit: `projects/prompt-report/final_audit_review_ar.md`
+
+## Tree of Thoughts (ToT)
+- Folder: `projects/tot/`
+- Repo: https://github.com/faresrafat3/tot-full-extraction
+- Paper: https://arxiv.org/abs/2305.10601
+

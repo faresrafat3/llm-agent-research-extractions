@@ -1,0 +1,119 @@
+# شجرة الأفكار ToT — مخطط المنطق (عربي)
+
+الورقة: https://arxiv.org/abs/2305.10601  
+الكود: https://github.com/princeton-nlp/tree-of-thought-llm  
+الالتزام: `8050e67d0e3a0fddc424d7fa5801538722a4c4cc`
+
+```mermaid
+flowchart TD
+  %% شجرة الأفكار ToT — مخطط منطق الكود الرسمي (عربي)
+  %% الورقة arXiv:2305.10601 | الكود princeton-nlp/tree-of-thought-llm
+
+  START([البداية run.py]) --> ARGS[تحليل وسائط سطر الأوامر]
+  ARGS --> TASK{المهمة؟}
+  TASK -->|game24| T24[Game24Task]
+  TASK -->|text| TTXT[TextTask]
+  TASK -->|crosswords| TCW[MiniCrosswordsTask / Env]
+
+  T24 --> MODE
+  TTXT --> MODE
+  TCW --> MODE
+
+  MODE{naive_run؟}
+  MODE -->|نعم| NAIVE[naive_solve: get_samples مرة واحدة]
+  MODE -->|لا ToT| SOLVE[solve: ToT + بحث BFS بعرض حزمة]
+
+  subgraph BFS["نواة ToT + BFS — methods/bfs.py"]
+    direction TB
+    SOLVE --> INIT[x = get_input؛ ys = حدود فارغة]
+    INIT --> STEP{لكل step في task.steps}
+    STEP --> GEN{method_generate؟}
+
+    GEN -->|sample| SAMP[get_samples: قالب standard أو cot → gpt n مرات]
+    GEN -->|propose| PROP[get_proposals: قالب propose → تقسيم أسطر → أبناء]
+
+    SAMP --> NEWY[new_ys = كل الأبناء]
+    PROP --> NEWY
+
+    NEWY --> EVAL{method_evaluate؟}
+    EVAL -->|value| VAL[get_values: value_prompt لكل مرشح × n_evaluate]
+    EVAL -->|vote| VOTE[get_votes: vote_prompt واحد على كل المرشحين]
+
+    VAL --> CACHE{value_prompt في الذاكرة المؤقتة؟}
+    CACHE -->|نعم| CVAL[استخدم القيمة المخزّنة]
+    CACHE -->|لا| CALLV[عينات gpt للقيمة → تحويل التسميات]
+    CALLV --> STORE[(value_cache)]
+    CVAL --> VALS[قائمة values]
+    CALLV --> VALS
+    STORE --> VALS
+    VOTE --> VALS
+
+    VALS --> DUP{y مكررة في الدفعة؟}
+    DUP -->|نعم| ZERO[فرض القيمة 0]
+    DUP -->|لا| KEEP[الإبقاء على القيمة]
+    ZERO --> SEL
+    KEEP --> SEL
+
+    SEL{method_select؟}
+    SEL -->|greedy| TOP[أفضل n_select_sample حسب القيمة]
+    SEL -->|sample| MULTI[عينة متعددة الحدود حسب القيم المعيارية]
+    TOP --> FRONT[ys = الحدود المختارة]
+    MULTI --> FRONT
+    FRONT --> STEP
+    STEP -->|انتهت الخطوات| OUTY[إرجاع ys + معلومات الخطوات]
+  end
+
+  NAIVE --> TEST
+  OUTY --> TEST[test_output لكل y]
+
+  subgraph G24["خصوصيات Game24"]
+    direction TB
+    P24[propose: الأرقام المتبقية left]
+    P24 --> LEFT{left == 24؟}
+    LEFT -->|نعم| COTF[cot_prompt + Steps + y → Answer]
+    LEFT -->|لا| PROPN[propose_prompt للعمليات التالية]
+    V24[value: sure/likely/impossible]
+    VL24[value_last_step: الحكم على الإجابة النهائية]
+    R24[المكافأة: sympy == 24 ومطابقة الأرقام]
+  end
+
+  subgraph TXT["خصوصيات الكتابة الإبداعية"]
+    direction TB
+    ST0[الخطوة 0 توقف عند Passage — إنتاج Plan]
+    ST1[الخطوة 1 كتابة Passage]
+    VT[تصويت best choice id]
+    SC[score_prompt ×5 متوسط تماسك 1–10]
+  end
+
+  subgraph CW["خصوصيات الكلمات المتقاطعة"]
+    direction TB
+    ENV[MiniCrosswordsEnv لوحة 5×5]
+    PR[اقتراح أفعال h#/v# كلمة + ثقة]
+    DFS[بحث DFS في الدفتر]
+    DFS --> PRUNE{تقليم و impossible >= 1؟}
+    PRUNE -->|نعم| BACK[تراجع]
+    PRUNE -->|لا| DEEPER[تعميق dfs]
+    BACK --> DFS
+    DEEPER --> DFS
+    STEP_ENV[env.step كتابة كلمة وتحديث الحالة]
+    REW[r_letter / r_word / r_game]
+  end
+
+  T24 -.-> G24
+  TTXT -.-> TXT
+  TCW -.-> CW
+
+  TEST --> LOG[إلحاق سجل JSON + تكلفة الاستخدام]
+  LOG --> MORE{فهارس أخرى؟}
+  MORE -->|نعم| SOLVE
+  MORE -->|نعم naive| NAIVE
+  MORE -->|لا| END([طباعة متوسط/أي دقة + التكلفة])
+
+  subgraph AXES["محاور الخوارزمية"]
+    direction LR
+    A1[التوليد: sample | propose]
+    A2[التقييم: value | vote]
+    A3[الاختيار: greedy | sample]
+    A4[البحث: BFS | DFS | naive]
+  end
+```
