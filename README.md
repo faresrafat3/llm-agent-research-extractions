@@ -123,6 +123,17 @@ Every project is structured to the same quality standard as much as the original
 8. `projects/prompt-report/final_completeness_check_ar.md`
 9. `projects/prompt-report/QUALITY_REVIEW_AR.md`
 
+## ARSENAL — Unified Master Pipeline
+
+The seven extractions are also fused into one operational master system:
+
+- Folder: `master-unified-pipeline/`
+- Standalone repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline
+- English graph: `master-unified-pipeline/graphs/MASTER_UNIFIED_ENGLISH.md`
+- Arabic graph: `master-unified-pipeline/graphs/MASTER_UNIFIED_ARABIC.md`
+
+Layers: L0 Prompt Report router → L1 APE → L2 Meta-Prompting → L3 LATS → L4 Self-Refine → L5 Reflexion → L6 AI Scientist v2 stages.
+
 ## Master graphs
 
 - `MASTER_GRAPH_ENGLISH.md`

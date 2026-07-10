@@ -1,0 +1,170 @@
+{
+  "system": "ARSENAL",
+  "description": "Unified master pipeline combining AI Scientist v2, Self-Refine, Reflexion, Meta-Prompting, LATS, APE, and The Prompt Report",
+  "layers": [
+    {
+      "id": "L0",
+      "name": "Technique Router",
+      "source": "The Prompt Report",
+      "functions": ["technique_router", "default_activate"],
+      "loops": [],
+      "decisions": ["force_families?", "demos_available?", "modality?", "needs_tools?", "high_uncertainty?"],
+      "inputs": ["task_spec", "modality", "budget", "tools", "demos_available"],
+      "outputs": ["Route.families", "Route.methods", "Route.activate", "Route.rationale"]
+    },
+    {
+      "id": "L1",
+      "name": "Instruction Optimizer",
+      "source": "APE",
+      "functions": [
+        "ape_find_prompts",
+        "generate_prompts",
+        "likelihood_evaluator",
+        "bandits_evaluator",
+        "ucb_select",
+        "update_ucb",
+        "make_demo_fn",
+        "EvalTemplate.convert_to_generation_template"
+      ],
+      "loops": ["num_subsamples", "prompts x samples", "bandit_rounds"],
+      "decisions": [
+        "prompt_gen_template is None?",
+        "eval_method likelihood|bandits?",
+        "few_shot_data is None?",
+        "num_prompts_per_round < 1?"
+      ],
+      "inputs": ["demos", "eval_template", "demos_template", "prompt_gen_template", "config"],
+      "outputs": ["ranked_prompts", "scores", "demo_fn"]
+    },
+    {
+      "id": "L2",
+      "name": "Meta Conductor",
+      "source": "Meta-Prompting",
+      "functions": [
+        "meta_conductor",
+        "meta_model_generate",
+        "parse_meta_output",
+        "expert_python",
+        "execute_code_with_timeout",
+        "extract_code"
+      ],
+      "loops": ["meta_rounds"],
+      "decisions": [
+        "expert_call|final_answer|invalid?",
+        "Expert Python?",
+        "Please run this code!?",
+        "num_return_sequences > 1?",
+        "route.lats or TreeSearch expert?"
+      ],
+      "inputs": ["query", "meta_instruction", "prompts", "route", "tools"],
+      "outputs": ["FinalResult", "message_history", "expert_log"]
+    },
+    {
+      "id": "L3",
+      "name": "Tree Search Engine",
+      "source": "LATS",
+      "functions": [
+        "lats_search",
+        "select_uct",
+        "uct",
+        "expand_lm",
+        "get_value",
+        "rollout",
+        "backpropagate",
+        "should_reflect",
+        "self_reflect_trajectory",
+        "best_trajectory"
+      ],
+      "loops": ["mcts_iterations", "selection_while", "expansion_width", "rollout_depth", "backprop_to_root"],
+      "decisions": [
+        "terminal_success?",
+        "terminal_fail|exhausted?",
+        "value cache hit?",
+        "success during rollout?",
+        "generate reflection?"
+      ],
+      "inputs": ["root_state", "expand_prompt", "value_prompt", "env", "N", "max_depth", "reflections"],
+      "outputs": ["TrajectoryResult", "tree", "failed_trajectories"]
+    },
+    {
+      "id": "L4",
+      "name": "Local Polisher",
+      "source": "Self-Refine",
+      "functions": ["self_refine", "stop_refine", "format_history"],
+      "loops": ["refine_iters"],
+      "decisions": [
+        "y is None → generate?",
+        "stop phrase in feedback?",
+        "max_iters reached?",
+        "parse score success?"
+      ],
+      "inputs": ["candidate", "task.x", "p_gen", "p_fb", "p_refine", "max_iters", "stop_mode"],
+      "outputs": ["RefinedResult.y_final", "feedback_history"]
+    },
+    {
+      "id": "L5",
+      "name": "Episodic Verbal Memory",
+      "source": "Reflexion",
+      "functions": ["run_trial_stack", "verbal_reflect", "task.with_memory"],
+      "loops": ["max_trials"],
+      "decisions": ["success?", "use_memory?", "trials remaining?", "memory_window K"],
+      "inputs": ["task", "actor_result", "feedback", "memory", "max_trials"],
+      "outputs": ["best_result", "updated_memory"]
+    },
+    {
+      "id": "L6",
+      "name": "Progressive Stage Shell",
+      "source": "AI Scientist v2",
+      "functions": [
+        "run_stages",
+        "next_stage",
+        "multi_seed_eval",
+        "maybe_plot_aggregate",
+        "writeup_pipeline",
+        "peer_review",
+        "semantic_scholar_search"
+      ],
+      "loops": ["stages", "multi_seed", "citation_rounds", "writeup_reflections", "BFTS_node_loop"],
+      "decisions": [
+        "stage_complete?",
+        "best node found?",
+        "writeup enabled?",
+        "peer_review enabled?",
+        "enough_citations?",
+        "ACTION SearchSemanticScholar|FinalizeIdea?"
+      ],
+      "inputs": ["task/idea", "stage_config", "skip_flags"],
+      "outputs": ["artifacts", "metrics", "plots", "paper", "peer_review", "journal"]
+    }
+  ],
+  "canonical_nesting": [
+    "L6.stages",
+    "L5.trials",
+    "L0.route",
+    "L1.ape_optional",
+    "L2.meta_rounds",
+    "L3.mcts_optional",
+    "L4.refine_on_leaves",
+    "L4.final_polish",
+    "L5.reflect_on_fail",
+    "L6.multi_seed_plots_writeup_review"
+  ],
+  "stop_conditions": {
+    "L4": ["max_iters", "stop_phrase", "score_plateau"],
+    "L3": ["terminal_success", "max_iterations", "tree_exhausted"],
+    "L2": ["final_answer_indicator", "max_meta_rounds"],
+    "L5": ["success", "max_trials"],
+    "L1": ["eval_budget", "top_k_stable"],
+    "L6": ["stage4_complete", "no_best_node", "skip_flags"]
+  },
+  "source_repos": {
+    "ai_scientist_v2": "https://github.com/faresrafat3/ai-scientist-v2-prompts-extraction",
+    "self_refine": "https://github.com/faresrafat3/self-refine-full-extraction",
+    "reflexion": "https://github.com/faresrafat3/reflexion-full-extraction",
+    "meta_prompting": "https://github.com/faresrafat3/meta-prompting-full-extraction",
+    "lats": "https://github.com/faresrafat3/lats-full-extraction",
+    "ape": "https://github.com/faresrafat3/ape-full-extraction",
+    "prompt_report": "https://github.com/faresrafat3/prompt-report-full-extraction",
+    "consolidated": "https://github.com/faresrafat3/llm-agent-research-extractions"
+  }
+}
