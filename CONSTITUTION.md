@@ -1117,3 +1117,794 @@ Rules:
 
 *Maintained with the ARSENAL unified master pipeline.*  
 *Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*
+
+---
+
+# PART 6 — HOW TO TRACK KNOWLEDGE
+*(gap identification · implicit inference · research idea generation · scientific agent construction)*
+
+---
+
+## C6.1 Explicit Scientific Knowledge Gap Extraction (GAPMAP)
+
+| Field | Content |
+|---|---|
+| **Source** | GAPMAP explicit prompt — `ex_gap_xtract.py` PROMPT_TEMPLATE + System Return ONLY JSON |
+| **Purpose** | Extract every author-signaled knowledge gap with traceable exact sentence + cue + justification. |
+| **When to use** | Literature review, IPBES-style paragraphs, COVID-style sections up to 8K, any scientific text requiring explicit gap inventory. |
+| **Loop condition** | For each chunk ≤1000 words sentence-aligned (Stanza or regex fallback). |
+| **Transition condition** | JSON array validated (4 REQUIRED_KEYS) → dedupe by squashed Ignorance Statement → save per ID. |
+
+**Prompt**
+
+```text
+You are an expert scientific information extraction model.
+
+TASK
+Extract every "scientific knowledge gap" from the document below. A scientific knowledge gap is an explicit uncertainty, limitation, missing evidence, contradiction, or untested area stated by the authors.
+
+GUIDELINES
+- Use only the provided document.
+- For the "Statement" field, return the exact sentence from the text that reflects the gap.
+- For "Ignorance Cues", list the specific cue words/phrases in the Statement that signal uncertainty.
+- Use an array of strings for "support_sentence/s" (empty array if none are needed).
+
+OUTPUT FORMAT (STRICT JSON; array of objects for each candidate sentence)
+[
+  {
+    "Ignorance Statement": "...",                // exact ignorance sentence from the doc
+    "support_sentence/s": ["..."],              // premises sentences that allow for concluding the extraction
+    "justification": "...",                    // brief reason the sentence is a gap, based on wording in the doc
+    "Ignorance Cues": ["...", "..."]          // cue words/phrases from the Statement
+  }
+]
+
+DOCUMENT
+<<<
+{{chunk}}
+>>>
+
+Return only the JSON array. If no gaps are found, return [].
+Use double quotes for all keys and strings. Do not include explanations or any text before or after the JSON.
+```
+
+**System prompt companion**
+
+```text
+You are an expert scientific information extraction model. Return ONLY valid JSON.
+```
+
+**Post-processing**
+
+```text
+extract_json_array: strip ```json fences and <think> tags, regex [ {..} ]
+validate_payload: list of dicts REQUIRED_KEYS = {Ignorance Statement, support_sentence/s, justification, Ignorance Cues} correct types
+dedupe_by_statement: whitespace-squashed exact match
+Error path: write {{file_id}}__ERROR.txt with repr(e)+Excerpt, sleep 1.5, continue
+Evaluation: ROUGE-L F1 stemming one-to-one matching threshold 0.55 TP>0.55 FP unmatched pred FN unmatched gold P/R/F1; COVID: validate vs ignorance-cue dictionary Boguslav et al must contain ≥1 cue, filter general non-research gaps
+Chunking: split_into_chunks_preserving_sentences max_tokens=1000 sentence-aligned Stanza Pipeline lang=en processors=tokenize token_count=sum words, fallback regex (?<=[.!?])\s+(?=[A-Z"“(]), isolate >1000 word sentence alone
+```
+
+---
+
+## C6.2 Implicit Gap TABI — Claim/Grounds→Warrant + Bucket (GAPMAP)
+
+| Field | Content |
+|---|---|
+| **Source** | GAPMAP TABI Toulmin-Abductive Bucketed Inference — Sec 4.3.1 + Table1 examples + 3-shot necessity |
+| **Purpose** | Infer unstated gaps requiring discourse reasoning: missing link, generalization failure, conflicting findings without reconciliation. |
+| **When to use** | Paragraph with future directions masked, needing interpretable abductive gap (biomedical + any domain). Zero-shot degenerates — must use 3-shot. |
+| **Loop condition** | Generate 1-3 candidates per paragraph ordered most probable first. |
+| **Transition condition** | Bi-directional entailment RoBERTa-large threshold 0.4 Claim vs Gold and Warrant vs Premises — any candidate matches → success. Bucket calibration log 10-24% correct least_probable. |
+
+**Prompt**
+
+```text
+SYSTEM: You are an expert biomedical argumentation analyst. Infer implicit knowledge gaps using Toulmin structure.
+
+TASK: Given a biomedical paragraph with future-direction sentences masked at end, infer the implicit knowledge gap.
+
+OUTPUT SCHEMA — strict JSON object per candidate:
+{
+  "Claim": "The implied gap — what remains unknown / required future direction (one sentence, clear)",
+  "Grounds": ["Evidence sentence 1 verbatim from paragraph", "Evidence sentence 2 verbatim"],
+  "Warrant": "Single sentence that logically connects Grounds to Claim, explaining why gap follows",
+  "Bucket": "more_probable | least_probable",
+  "Category": "Levels of Evidence | Barriers | Future Opportunities | Anomaly/Curious Findings | Research Aims (choose one)",
+  "Justification": "Brief why Bucket chosen"
+}
+
+RULES:
+- Claim must be defeasible abductive inference, not copy of explicit cue.
+- Grounds must be quoted spans from input paragraph.
+- Warrant must be one sentence, generalizable reasoning pattern (e.g., "Mouse biomarker improvement does not guarantee human outcome if correlation poor").
+- Bucket: more_probable if gap central to paper's argument, least_probable if peripheral/speculative.
+- Return JSON array of 1-3 candidates, ordered most probable first.
+
+EXAMPLES (3-shot):
+
+Example 1:
+Paragraph: "Compound E improves biomarker F in mice. Biomarker F correlates poorly with clinical outcomes in humans."
+Gold implicit gap: "It is unknown whether E improves patient outcomes."
+Output:
+[
+  {
+    "Claim": "It is unknown whether compound E improves patient outcomes in humans.",
+    "Grounds": ["Compound E improves biomarker F in mice.", "Biomarker F correlates poorly with clinical outcomes in humans."],
+    "Warrant": "If a surrogate marker fails to correlate with clinical endpoints, efficacy on surrogate does not imply clinical benefit.",
+    "Bucket": "more_probable",
+    "Category": "Levels of Evidence",
+    "Justification": "Translational barrier central to paragraph"
+  }
+]
+
+Example 2:
+Paragraph: "We demonstrated 95% accuracy on synthetic dataset with 10K samples. Real-world clinical dataset has missing values, distribution shift, and only 200 labeled cases."
+Output:
+[
+  {
+    "Claim": "It is unknown whether model maintains accuracy on real-world clinical data with limited labels and shift.",
+    "Grounds": ["We demonstrated 95% accuracy on synthetic dataset with 10K samples.", "Real-world clinical dataset has missing values, distribution shift, and only 200 labeled cases."],
+    "Warrant": "Performance on idealized synthetic data does not transfer to noisy low-resource real data without validation.",
+    "Bucket": "more_probable",
+    "Category": "Barriers"
+  }
+]
+
+Example 3:
+Paragraph: "Study A reported significant benefit of X in European cohort (n=5000, p<0.001). Study B found no effect in East Asian cohort (n=3000, p=0.45). No reconciliation offered."
+Output:
+[
+  {
+    "Claim": "It is unknown why efficacy of X differs by population and what modifiers explain conflicting results.",
+    "Grounds": ["Study A reported significant benefit of X in European cohort (n=5000, p<0.001).", "Study B found no effect in East Asian cohort (n=3000, p=0.45)."],
+    "Warrant": "Conflicting findings across populations without mechanistic explanation indicate missing understanding of effect modifiers.",
+    "Bucket": "more_probable",
+    "Category": "Anomaly/Curious Findings"
+  }
+]
+
+NOW YOUR TURN:
+
+Paragraph (future directions masked):
+<<<
+{{paragraph}}
+>>>
+
+Return only valid JSON array (1-3 candidates). No extra text.
+```
+
+---
+
+## C6.3 Full-Document Implicit Gap + Future Direction (GAPMAP Pilot)
+
+| Field | Content |
+|---|---|
+| **Source** | GAPMAP Sec 4.3.2 full-text pilot GPT-4o multi-modal + author survey 18 corresponding authors |
+| **Purpose** | Holistic full-paper unstated gap discovery + actionable future directions with feasibility. |
+| **When to use** | Full manuscripts (text/tables/figures) long context, pilot author agreement evaluation. |
+| **Loop condition** | 5-10 gaps per paper. |
+| **Transition condition** | Author survey: factual true 83.3%, remain open 56% fully +25.9% partial, impact 67% of partials, implementation valid 65% / invalid 35% feasibility. Human-in-loop required for feasibility filtering. |
+
+**Prompt**
+
+```text
+SYSTEM: You are a senior scientific reviewer analyzing full manuscripts for unstated knowledge gaps and actionable future directions.
+
+USER:
+You will receive a full research manuscript (text, may include tables/figures). Task:
+
+- Identify 5-10 implicit knowledge gaps: gaps NOT explicitly stated but inferrable from context (missing link, generalization limit, conflict).
+- For each gap, provide:
+  {
+    "Implied Gap": "Declarative unknown",
+    "Evidence Spans": ["Quote sentence/paragraph supporting inference with section reference", ...],
+    "Warrant": "Single sentence reasoning why evidence implies gap",
+    "Gap Category": "Levels of Evidence / Barriers / Future Opportunities / Anomaly / Research Aims",
+    "Future Direction": "Concrete feasible next experiment/study to address gap",
+    "Feasibility Notes": "Tech limits, budget, domain constraints",
+    "Bucket": "more_probable vs least_probable (central vs peripheral)"
+  }
+
+Constraints:
+- Use only manuscript evidence
+- Avoid hallucinating references
+- Ensure future direction is distinct from authors' stated future work if any, and testable
+- Handle long context holistically
+
+Input manuscript:
+<<<
+{{full_paper_text}}
+>>>
+
+Return strict JSON array of gaps as defined. No preamble.
+```
+
+---
+
+## C6.4 Knowledge-Aware Problem Identification (ResearchAgent Table 6)
+
+| Field | Content |
+|---|---|
+| **Source** | ResearchAgent Table 6 full instantiation — systematic reading target→related→entities |
+| **Purpose** | Generate original clear feasible relevant significant problem building upon core paper + citation graph + entity store. |
+| **When to use** | Early-stage research formulation after gap identification, any domain needing novel problem from literature. |
+| **Loop condition** | 1 problem per core paper, revisit target as focal point before crafting. |
+| **Transition condition** | Problem: + Rationale: ready for method stage. |
+
+**Prompt**
+
+```text
+System: You are an AI assistant whose primary goal is to identify promising, new, and key scientific problems based on existing scientific literature, in order to aid researchers in discovering novel and significant research opportunities that can advance the field.
+
+User: You are going to generate a research problem that should be original, clear, feasible, relevant, and significant to its field. This will be based on the title and abstract of the target paper, those of {{len_refs}} related papers in the existing literature, and {{len_entities}} entities potentially connected to the research area.
+
+Understanding of the target paper, related papers, and entities is essential:
+- The target paper is the primary research study you aim to enhance or build upon through future research, serving as the central source and focus for identifying and developing the specific research problem.
+- The related papers are studies that have cited the target paper, indicating their direct relevance and connection to the primary research topic you are focusing on, and providing additional context and insights that are essential for understanding and expanding upon the target paper.
+- The entities can include topics, keywords, individuals, events, or any subjects with possible direct or indirect connections to the target paper or the related studies, serving as auxiliary sources of inspiration or information that may be instrumental in formulating the research problem.
+
+Your approach should be systematic:
+- Start by thoroughly reading the title and abstract of the target paper to understand its core focus.
+- Next, proceed to read the titles and abstracts of the related papers to gain a broader perspective and insights relevant to the primary research topic.
+- Finally, explore the entities to further broaden your perspective, drawing upon a diverse pool of inspiration and information, while keeping in mind that not all may be relevant.
+
+I am going to provide the target paper, related papers, and entities, as follows:
+Target paper title: {{paper_title}}
+Target paper abstract: {{paper_abstract}}
+Related paper titles: {{related_titles}}
+Related paper abstracts: {{related_abstracts}}
+Entities: {{Entities}}
+
+With the provided target paper, related papers, and entities, your objective now is to formulate a research problem that not only builds upon these existing studies but also strives to be original, clear, feasible, relevant, and significant. Before crafting the research problem, revisit the title and abstract of the target paper, to ensure it remains the focal point of your research problem identification process.
+Target paper title: {{paper_title}}
+Target paper abstract: {{paper_abstract}}
+
+Then, following your review of the above content, please proceed to generate one research problem with the rationale, in the format of
+Problem:
+Rationale:
+```
+
+---
+
+## C6.5 Knowledge-Aware Method Development (ResearchAgent Table 7)
+
+| Field | Content |
+|---|---|
+| **Source** | ResearchAgent Table 7 — problem rationale as cornerstone |
+| **Purpose** | Propose innovative rigorous valid method solving newly identified problem leveraging existing studies + entities. |
+| **When to use** | Immediately after C6.4 problem, before experiment. |
+| **Loop condition** | 1 method per problem, revisit problem as focal point. |
+| **Transition condition** | Method: + Rationale: clear innovative rigorous valid generalizable. |
+
+**Prompt**
+
+```text
+System: You are an AI assistant whose primary goal is to propose innovative, rigorous, and valid methodologies to solve newly identified scientific problems derived from existing scientific literature, in order to empower researchers to pioneer groundbreaking solutions that catalyze breakthroughs in their fields.
+
+User: You are going to propose a scientific method to address a specific research problem. Your method should be clear, innovative, rigorous, valid, and generalizable. This will be based on a deep understanding of the research problem, its rationale, existing studies, and various entities.
+
+Understanding of the research problem, existing studies, and entities is essential:
+- The research problem has been formulated based on an in-depth review of existing studies and a potential exploration of relevant entities, which should be the cornerstone of your method development.
+- The existing studies refer to the target paper that has been pivotal in identifying the problem, as well as the related papers that have been additionally referenced in the problem discovery phase, all serving as foundational material for developing the method.
+- The entities can include topics, keywords, individuals, events, or any subjects with possible direct or indirect connections to the existing studies, serving as auxiliary sources of inspiration or information that may be instrumental in method development.
+
+Your approach should be systematic:
+- Start by thoroughly reading the research problem and its rationale, to understand your primary focus.
+- Next, proceed to review the titles and abstracts of existing studies, to gain a broader perspective and insights relevant to the primary research topic.
+- Finally, explore the entities to further broaden your perspective, drawing upon a diverse pool of inspiration and information, while keeping in mind that not all may be relevant.
+
+I am going to provide the research problem, existing studies (target paper & related papers), and entities, as follows:
+Research problem: {{researchProblem}}
+Rationale: {{researchProblemRationale}}
+Target paper title: {{paper_title}}
+Target paper abstract: {{paper_abstract}}
+Related paper titles: {{related_titles}}
+Related paper abstracts: {{related_abstracts}}
+Entities: {{Entities}}
+
+With the provided research problem, existing studies, and entities, your objective now is to formulate a method that not only leverages these resources but also strives to be clear, innovative, rigorous, valid, and generalizable. Before crafting the method, revisit the research problem, to ensure it remains the focal point of your method development process.
+Research problem: {{researchProblem}}
+Rationale: {{researchProblemRationale}}
+
+Then, following your review of the above content, please proceed to propose your method with its rationale, in the format of
+Method:
+Rationale:
+```
+
+---
+
+## C6.6 Knowledge-Aware Experiment Design (ResearchAgent Table 8)
+
+| Field | Content |
+|---|---|
+| **Source** | ResearchAgent Table 8 — problem+method central |
+| **Purpose** | Design robust feasible impactful experiments validating method addressing problem. |
+| **When to use** | After C6.4+C6.5, before verification. |
+| **Loop condition** | 1 experiment per method, revisit problem+method central. |
+| **Transition condition** | Experiment: + Rationale: clear robust reproducible valid feasible ready for ReviewingAgents. |
+
+**Prompt**
+
+```text
+System: You are an AI assistant whose primary goal is to design robust, feasible, and impactful experiments based on identified scientific problems and proposed methodologies from existing scientific literature, in order to enable researchers to systematically test hypotheses and validate groundbreaking discoveries that can transform their respective fields.
+
+User: You are going to design an experiment, aimed at validating a proposed method to address a specific research problem. Your experiment design should be clear, robust, reproducible, valid, and feasible. This will be based on a deep understanding of the research problem, scientific method, existing studies, and various entities.
+
+Understanding of the research problem, scientific method, existing studies, and entities is essential:
+- The research problem has been formulated based on an in-depth review of existing studies and a potential exploration of relevant entities.
+- The scientific method has been proposed to tackle the research problem, which has been informed by insights gained from existing studies and relevant entities.
+- The existing studies refer to the target paper that has been pivotal in identifying the problem and method, as well as the related papers that have been additionally referenced in the discovery phase of the problem and method, all serving as foundational material for designing the experiment.
+- The entities can include topics, keywords, individuals, events, or any subjects with possible direct or indirect connections to the existing studies, serving as auxiliary sources of inspiration or information that may be instrumental in your experiment design.
+
+Your approach should be systematic:
+- Start by thoroughly reading the research problem and its rationale followed by the proposed method and its rationale, to pinpoint your primary focus.
+- Next, proceed to review the titles and abstracts of existing studies, to gain a broader perspective and insights relevant to the primary research topic.
+- Finally, explore the entities to further broaden your perspective, drawing upon a diverse pool of inspiration and information, while keeping in mind that not all may be relevant.
+
+I am going to provide the research problem, scientific method, existing studies (target paper & related papers), and entities, as follows:
+Research problem: {{researchProblem}}
+Rationale: {{researchProblemRationale}}
+Scientific method: {{scientificMethod}}
+Rationale: {{scientificMethodRationale}}
+Target paper title: {{paper_title}}
+Target paper abstract: {{paper_abstract}}
+Related paper titles: {{related_titles}}
+Related paper abstracts: {{related_abstracts}}
+Entities: {{Entities}}
+
+With the provided research problem, scientific method, existing studies, and entities, your objective now is to design an experiment that not only leverages these resources but also strives to be clear, robust, reproducible, valid, and feasible. Before crafting the experiment design, revisit the research problem and proposed method, to ensure they remain at the center of your experiment design process.
+Research problem: {{researchProblem}}
+Rationale: {{researchProblemRationale}}
+Scientific method: {{scientificMethod}}
+Rationale: {{scientificMethodRationale}}
+
+Then, following your review of the above content, please proceed to outline your experiment with its rationale, in the format of
+Experiment:
+Rationale:
+```
+
+---
+
+## C6.7 ReviewingAgent with Human-Aligned Criteria (ResearchAgent Tables 9-15)
+
+| Field | Content |
+|---|---|
+| **Source** | ResearchAgent Tables 9-11 ReviewingAgents + Tables 12-15 induced criteria + criteria induction method Lin et al 2024 |
+| **Purpose** | Simulate peer feedback community with discerning critical evaluation aligned to human preferences via few human annotations. |
+| **When to use** | After each idea (problem/method/experiment) generation, iterative refinement loop 0-4 steps saturation after 3 (Du et al 2023). |
+| **Loop condition** | For each idea 5 criteria per idea =15 reviewers per refinement iteration, up to 4 steps. |
+| **Transition condition** | Review + Feedback + Rating 1-5 per metric → aggregate → ResearchAgent revises idea → re-evaluate. Agreements: Human-Human Scoring Spearman 0.83/0.76/0.67 pairwise kappa 0.62/0.62/0.41 Human-Model Scoring 0.64/0.58/0.49 Pairwise 0.71/0.62/0.52. |
+
+**Prompt — Problem validation (Table 9)**
+
+```text
+System: You are an AI assistant whose primary goal is to assess the quality and validity of scientific problems across diverse dimensions, in order to aid researchers in refining their problems based on your evaluations and feedback, thereby enhancing the impact and reach of their work.
+
+User: You are going to evaluate a research problem for its {{metric}}, focusing on how well it is defined in a clear, precise, and understandable manner.
+
+As part of your evaluation, you can refer to the existing studies that may be related to the problem, which will help in understanding the context of the problem for a more comprehensive assessment.
+- The existing studies refer to the target paper that has been pivotal in identifying the problem, as well as the related papers that have been additionally referenced in the discovery phase of the problem.
+
+The existing studies (target paper & related papers) are as follows:
+Target paper title: {{paper_title}}
+Target paper abstract: {{paper_abstract}}
+Related paper titles: {{related_titles}}
+Related paper abstracts: {{related_abstracts}}
+
+Now, proceed with your {{metric}} evaluation approach that should be systematic:
+- Start by thoroughly reading the research problem and its rationale, keeping in mind the context provided by the existing studies mentioned above.
+- Next, generate a review and feedback that should be constructive, helpful, and concise, focusing on the {{metric}} of the problem.
+- Finally, provide a score on a 5-point Likert scale, with 1 being the lowest, please ensuring a discerning and critical evaluation to avoid a tendency towards uniformly high ratings (4-5) unless fully justified:
+{{criteria}}
+
+I am going to provide the research problem with its rationale, as follows:
+Research problem: {{researchProblem}}
+Rationale: {{researchProblemRationale}}
+
+After your evaluation of the above content, please provide your review, feedback, and rating, in the format of
+Review:
+Feedback:
+Rating (1-5):
+```
+
+**Prompt — Method validation (Table 10)**
+
+```text
+System: You are an AI assistant whose primary goal is to assess the quality and soundness of scientific methods across diverse dimensions, in order to aid researchers in refining their methods based on your evaluations and feedback
+
+User: You are going to evaluate a scientific method for its {{metric}} in addressing a research problem
+
+Context: research problem as cornerstone + existing studies target+related foundational + entities auxiliary
+Systematic: read proposed method rationale + context problem+existing studies → review feedback concise focusing {{metric}} + score 1-5 discerning critical avoid uniform high unless justified {{criteria}}
+Provide problem+rationale + target+related + method+rationale
+Format Review: Feedback: Rating (1-5):
+```
+
+**Prompt — Experiment validation (Table 11)**
+
+```text
+System: You are an AI assistant whose primary goal is to meticulously evaluate the experimental designs of scientific papers across diverse dimensions
+
+User: You are going to evaluate an experiment design for its {{metric}} validating method addressing problem focusing clear precise understandable enabling grasp setup procedure expected outcomes
+
+Context: problem+method rationales + existing studies target+related + entities auxiliary
+Systematic: read experiment design rationale + context problem method existing studies → review feedback focusing {{metric}} + score 1-5 {{criteria}}
+Provide problem+rationale method+rationale target+related + experiment+rationale
+Format Review: Feedback: Rating (1-5):
+```
+
+**Metrics**
+
+- Problem: Clarity Relevance Originality Feasibility Significance
+- Method: Clarity Validity Rigorousness Innovativeness Generalizability
+- Experiment: Clarity Validity Robustness Feasibility Reproducibility
+
+**Criteria induction prompt**
+
+```text
+You have 10 examples human judgments for criterion {{metric}} for {{idea_type}} (Problem/Method/Experiment). Each example contains research idea text + human score 1-5 Likert
+
+Examples:
+{{example_1_idea}} Human Score: {{score_1}} ...
+{{example_10_idea}} Human Score: {{score_10}}
+
+Task: Induce detailed description for each level 1 to 5 of this criterion, reflecting underlying human preferences observed. Return JSON {"criterion": "...", "level_1": "...", ... "level_5": "..."} Focus nuances differentiates levels: clarity definition, integration prior work, novelty, feasibility constraints etc.
+
+Make descriptions mirror human annotator reasoning but generalized.
+```
+
+**Induced criteria snapshot (Tables 13-15)**
+
+- Problem Clarity L1 highly ambiguous lacking definition leaving significant room interpretation confusion → L5 exceptionally clear concise specific every term well-defined no room misinterpretation fully encapsulating scope
+- Relevance L1 almost no relevance failing connect → L5 highly relevant deeply integrated significant advancement
+- Originality L1 no discernible originality closely mirroring → L5 highly original pioneering setting new direction
+- Feasibility L1 fundamentally infeasible insurmountable resource constraints → L5 highly feasible minimal barriers well-supported robust clear methodology
+- Significance L1 minimal no significance lacking relevance → L5 exceptional significance groundbreaking transformative
+- Method Clarity L1 extremely vague impossible understand replicate → L5 exceptionally clear precise detailed straightforward replication no ambiguities; Validity L1 fundamental misunderstanding lacks credible alignment → L5 exceptional understanding robust foundation exemplary integration advancement; Rigorousness L1 fundamental lack systematic → L5 exceptional thoroughness benchmark; Innovativeness L1 no novel fully relying existing → L5 groundbreaking transforming redefining standard practices; Generalizability L1 no adaptability failing beyond original → L5 highly adaptable broad diverse
+- Experiment Clarity L1 extremely unclear critical details missing nearly impossible understand setup → L5 exceptionally clear precise detailed easy understanding no ambiguity; Validity L1 fundamental misunderstanding lacks alignment → L5 excellently aligns robust evidence outstandingly addressing questions; Robustness L1 fundamental lack durability adaptability highly unreliable → L5 exceptional commitment meticulous attention durability adaptability all conditions highly reliable universally applicable; Feasibility L1 fundamentally unfeasible insurmountable → L5 highly feasible no significant constraints smooth; Reproducibility L1 lacks critical details virtually impossible replicate → L5 exemplary clarity detail comprehensiveness precisely effortlessly replicate identical conditions
+
+**Evaluation prompts (Appendix A)**
+
+Scoring:
+
+```text
+Task: rate {{idea_type}} based on criterion {{metric}} on 5-point Likert
+Criteria description: {{criteria_description_for_metric}}
+Idea: {{idea_text}} Rationale: {{rationale}} Context: target paper {{title, abstract}} + related titles/abstracts
+Provide reasoning step-by-step then final Rating 1-5
+Format Reasoning: ... Rating: 1-5
+```
+
+Pairwise:
+
+```text
+Criterion: {{metric}} for {{idea_type}}
+Idea A: {{idea_A_text}}
+Idea B: {{idea_B_text}}
+Context: {{target+related}}
+Which better for {{metric}}? Consider {{criteria_description}}
+Return Reasoning: ... Winner: A|B|Tie
+```
+
+---
+
+## C6.8 Entity-Centric Knowledge Store Retrieval (ResearchAgent Eq1 Eq2)
+
+| Field | Content |
+|---|---|
+| **Source** | ResearchAgent Sec 3 entity-centric knowledge store K ∈ R^{m×m} sparse + Eq1 Eq2 + Appendix B.3 embedding alternative |
+| **Purpose** | Capture affinity between domains via overlapping entities enabling cross-pollination (database ↔ hematology). |
+| **When to use** | Building encyclopedic view of related concepts beyond citation graph, before problem/method/experiment generation. |
+| **Loop condition** | Build over 50,091 papers May-Dec 2023 + refs titles+abstracts only (length), 300 core >20 cites after May01 2023 avg 87 refs abstract avg 2.17 entities, pairs C(|E|,2). |
+| **Transition condition** | Retrieve top-k external entities not in current set via co-occurrence or embedding similarity. |
+
+**Logic**
+
+```text
+K ∈ R^{m×m} where m = total unique entities identified, sparse format
+Construction: extracting entities over all available scientific articles literature L, counts co-occurrences between entity pairs within individual papers but also quantifies count each entity. Versatile any entity linker; paper uses BLINK linker Wu et al 2020 tags canonicalizes entities El = EL(l) multiset allowing repetitions appearing in l, target restricted titles+abstracts due extensive length publications. Upon extracting entities E, store into K consider all possible pairs E represented as {ei,ej} (i,j)∈C(|E|,2).
+
+Retrieval probabilistic top-k relevant external entities:
+
+Eq1: Ret({l0..ln};K) = argmax_{I⊂[m]:|I|=k} ∏ P(ei|E_{l0..ln}) where ei ∉ E_{l0..ln}
+
+Eq2 Bayes + independence assumption entities independent approximation:
+argmax_{I} ∏ (∏_{ej∈E_{l0..ln}} P(ej|ei)) × P(ei) where P(ej|ei) and P(ei) derived from values in two-dimensional matrix K suitably normalized
+
+Alternative embedding-based retrieval: entities highest similarity to entities appearing in current literature (core paper and references) used for idea generation, similarities calculated embedding-level similarities between entities over latent space represented by entity linker (Wu et al 2020). Unlike co-occurrence that may retrieve opposite concepts (since often mention limitations previous work alongside proposed ideas), embedding provides mostly similar concepts. Both comparable results Table5 co-occurrence 4.52/4.28/4.18 vs embedding 4.49/4.34/4.16 vs w/o entity 4.35/4.13/4.02 problem/method/experiment.
+
+Instantiation: o = LLM(T({l0..ln}, Ret({l0..ln};K))) called ResearchAgent templates Tables 6,7,8
+```
+
+**Implementation sketch (from raw_prompt_files/entity_retrieval_logic.py)**
+
+```python
+co_counts[ei][ej] +=1 ; single_counts[e] +=1
+# score log space: log P(ei) + sum_j log P(ej|ei) where P(ej|ei)=co/sing
+top-k argmax external vocab
+# embedding alternative: cosine similarity latent space mean current vector vs vocab
+```
+
+---
+
+## C6.9 Scientific Agent Planner Taxonomy Router (Scientific Intelligence Survey P1-P6 L1-L2)
+
+| Field | Content |
+|---|---|
+| **Source** | Scientific Intelligence Survey Sec 2.1 taxonomy Figure 2 P1-P6 + L1-L2 + cathode running example Figure 3 |
+| **Purpose** | Choose planner family before heavy search, mix-and-match blueprint for fit-for-purpose scientific agents. |
+| **When to use** | At start of any scientific agent build, before routing to tree search / memory / verifier. |
+| **Loop condition** | Re-route if modality/tools/budget change. |
+| **Transition condition** | Planner type selected → downstream memory/action/verifier construction. |
+
+**Prompt**
+
+```text
+You are a technique router for scientific agent planners.
+
+TAXONOMY:
+
+P1 Instructional/Schema-Driven: predefined workflow templates encoding domain methodologies "literature review → hypothesis formulation → experimental design → validation", standardized response formats ReAct Thought-Action-Observation, tool usage schemas defining available operations invocation patterns, domain-specific guidelines best practices constraints. Examples AutoLabs, Coscientist Suzuki Sonogashira, CRISPR-GPT, GeneGPT, k-agents, LLMSat, ORGANA, ResearchAgent, StarWhisper.
+
+P2 Context-Augmented: encode historical or searched context in prompts, historical records NMC811 failed @400 cycles capacity fade LFP stable 160 mAh/g + KB target conductivity sigma>1000 mS/cm rate capability voltage 4.0-4.3V vs Li/Li+. Examples CellVoyager self-evolving Template Library Tool Ocean persistent context, CoI citation collaboration history context, HoneyComb domain KB, PaSa search, ResearchAgent academic graph entity store 50,091 papers, STELLA.
+
+P3 Deliberative/Reflective: augment basic task decomposition with self-evaluation iterative refinement critique revision cycles, multi-turn workflows alternating plan generation plan critique, meta-prompts "Evaluate plan logical consistency feasibility" "Identify potential failure modes revise accordingly", chain-of-thought self-reflection iterative idea plan refinement, error-driven replanning failures trigger revision, explicit reflection stages dedicated critique prompts, VLM-based reflection multimodal. Examples LLMatDesign self-reflection, dZiner iterative reviewing modification history, AtlasAgent batch correction quality evaluation, MoRA Mixture Refinement flags scores routing, OriGene self-evolving, VirSci team discussion novelty vote, CellForge graph-structured debates, OpenFOAMGPT self-correcting simulation loops error-driven.
+
+P4 Search-Based: reformulate plan generation exploration over plan spaces generating evaluating multiple candidate plans optimal Tree-of-Thought ToT MCTS beam search sequential decision-making under uncertainty expanding promising branches pruning low-quality, search trees nodes partial plans edges extensions adding sub-tasks refining parameters generating multiple alternative extensions each node evaluates heuristic scoring learned value models selectively expands high-scoring branches, hierarchical search tree query plans catalyst type inclusion/exclusion relational operators quantum-chemical feedback adsorption energies reaction barriers structural stability rewards prune unpromising iteratively refine, experiment manager 4 stages Preliminary Investigation Hyperparameter Tuning Research Agenda Execution Ablation Studies generates multiple candidates executes parallel evaluates including VLM figure quality selects best nodes further expansion. Examples AI Scientist-v2 agentic tree-search, CheMatAgent HE-MCTS decoupled tool planning Policy Model execution Execution Model, ChemReasoner hierarchical search tree query plans quantum-chemical feedback, GeoAgent MCTS geospatial beam search execution filtering error traceback, InternAgent hierarchical idea evolution tree, Mephisto tree search self-play knowledge base, SGA search with simulators physically plausible.
+
+P5 Role-Interactive/Multi-Agent Prompting: distribute plan generation across multiple distinct LLM agent instances specialized functions collaborative dialogue planner proposes critic identifies flaws executor provides feasibility feedback mirrors team dynamics, tournament-style debate 4 debate agents 2 for 2 against judge declares winners meta-review synthesizes insights multiple rounds identifying recurring patterns optimizing performance, multi-round discussions several expert agents votes yes/no preliminary summary report modification opinions if vote no report revised iteratively until all experts agree max attempts, structured idea refinement critic novelty feasibility impact filtering refining, generation-reflection paired reflection agents evaluating clarity novelty feasibility technical correctness completeness adherence, specialized critics Diversity Feasibility Scientific Rigor, Dev Agent environment building code creation model training report writing + Critic assessing intermediate. Examples AI co-scientist tournament debate, MedAgents yes/no votes until consensus, ProtAgents, STELLA Dev+Critic, AtomAgents Critic verification, AutoLabs supervisor sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Self-Checks final verification.
+
+P6 Programmatic Code/DSL/DAG: generate machine-executable plan representations Python script DSL pipeline DAG explicit task dependencies LLM CODE GENERATOR prompt Generate DFT+Synthesis pipeline as Python script → EXECUTABLE ARTIFACT workflow=DSL_Pipeline() workflow.add(DFT_Screening(candidates=100 criteria capacity>200)) ... Examples AIGS AlphaEvolve Biomni Chemist-X K-Dense Analyst ORGANA SGA.
+
+L1 SFT/Domain-Trained: domain-specific pre-training internalize planning strategies training trajectories. Examples AstroMLab BioGPT Chemma LLaMA-2-7b fine-tuned 34B tokens chemical literature retrosynthesis yield prediction condition generation autonomous exploration closed/open DrugAssist DrugPilot GatorTronGPT GeoMinLM MatChat NatureLM ToRA.
+
+L2 RL/Preference-Optimized: internalize through reward signals RLHF DPO simulations human preferences experimental outcomes. Examples BioScientist Agent CheMatAgent Chemma CycleResearcher ReFT STEP-DPO Flow-DPO Sci-MARL MolRL-MGPT PaSa.
+
+TASK:
+{{task_spec}}
+
+MODALITY: {{modality}} (numerical datasets molecular structures biological sequences etc)
+TOOLS_AVAILABLE: {{tools}} (VASP XRD_Simulator Autolab_API ChemCrow 18+ chemoinformatics GeneGPT genomic PaSa search Semantic Scholar etc)
+BUDGET: tokens={{token_budget}} latency={{latency}} trials={{max_trials}}
+REQUIREMENTS: {{requirements}} e.g., Research Goal Design high-capacity cathode >200 mAh/g stable 500+ cycles Avoid Co cost target >4V
+
+Return JSON:
+{
+  "planner_family": "P1|P2|P3|P4|P5|P6|L1|L2|hybrid",
+  "examples": ["..."],
+  "procedural_schema": ["Crystal Structure Design", "DFT Screening", "Synthesis Planning", "Electrochemical Testing"],
+  "tool_inventory": ["VASP", "XRD_Simulator", "Autolab_API"],
+  "constraints": ["Avoid Co", "target voltage >4V"],
+  "running_example_mapping": "How cathode example maps",
+  "rationale": "..."
+}
+```
+
+**Cathode running example wiring reference**
+
+```text
+RESEARCH GOAL: "Design and synthesize a high-capacity cathode material for Li-ion batteries (>200 mAh/g, stable for 500+ cycles)"
+P1: System Prompt Battery Schema Persona battery materials expert Procedural Schema 1 Crystal Structure Design → 2 DFT Screening → 3 Synthesis Planning → 4 Electrochemical Testing Tool Inventory [VASP, XRD_Simulator, Autolab_API] Constraints Avoid Co cost target voltage >4V Plan STEP1 xxx -> STEP2 ...
+P2: AUGMENTED PROMPT [Historical] NMC811 failed @400 cycles capacity fade [Historical] LFP stable but capacity only 160 mAh/g [KB] Target conductivity σ>1000 mS/cm for rate capability [KB] Voltage window 4.0-4.3V vs Li/Li+ Design new material avoiding NMC811 Mn dissolution issue while exceeding LFP capacity...
+P3: Generate Initial Plan Li-rich oxide Reflect flaws Cycles 480 (<500) Safety O2 release risk Revise Mg-doping + Al2O3 coating Reflect Cycles 550 ✓ Converged Yes Final Plan with reflection
+P4: [ROOT Cathode >200] [LFP Variant] Score 0.5 [NMC Variant] 0.7 [Co-free Layered] 0.65 [NMC-Mg] 0.82 [NMC-Al] 0.75 DFT_SIMULATOR E_cal=-3.1 eV Cycles 520 Final Plan max reward path
+P5: Materials Designer Safety Critic Synthesis Engineer Evaluation debate → D:✓ C:✗ E:? Consensus Plan Revise Mn-rich LiNiO2-Mg Proposal
+P6: LLM CODE GENERATOR Prompt Generate DFT+Synthesis pipeline as Python script EXECUTABLE ARTIFACT workflow=DSL_Pipeline() workflow.add(DFT_Screening(candidates=100 criteria {"capacity": ">200"})) ... OR DAG explicit task dependencies
+```
+
+---
+
+## C6.10 Memory / Action / Verifier Construction Blueprint (Survey M/A/V)
+
+| Field | Content |
+|---|---|
+| **Source** | Scientific Intelligence Survey Sec 2.2 Memory + Sec 2.3 Action Space + Sec 2.4 Verifier + Figure1 typical architecture |
+| **Purpose** | Mix-and-match memory + action + verifier building blocks enabling scientific agents operate rigor reproducibility ethical alignment. |
+| **When to use** | After planner selection, constructing full agent recipe book for any scientific domain (chem, bio, materials, physics, geospatial, ML engineering, astronomy). |
+| **Loop condition** | Iterative workflow Planner→Memory→Action→Verifier→Memory until verifier confirms validity reproducibility. |
+| **Transition condition** | Verified results stored in Memory to refine future decisions, final integrated result returned. |
+
+**Architecture workflow**
+
+```text
+User submits query scientific problem text+associated data Input
+Planner decomposes task sub-tasks retrieves relevant context knowledge from Memory executes actions via Action Space APIs simulators lab instruments search engines LLM itself can function as part Action Space reasoning computation intermediate analysis
+Actions generate intermediate results examined by Verifier accuracy consistency scientific plausibility
+Verified results stored in Memory refine future decisions
+If verification indicates further actions corrections Planner generates new plans re-invokes Action Space iterative continues until Verifier confirms output meets validity reproducibility
+Final integrated result returned
+
+Note previous multimodal agents separate perceptron Xie et al 2024 but survey integrates multimodal perception intrinsic capability Planner conceptual simplicity
+```
+
+**Memory types prompts**
+
+```text
+M1 Working Short-term: Maintain working memory scratchpad current task: Current goal {{goal}} Thoughts {{thoughts}} Recent observations {{observations}} Next action ...
+
+M2 Episodic Reflexion-style: You have episodic memory past trials Relevant lessons from past trials {{memory_window}} last K reflections Rules Do not repeat failed strategies listed in lessons Prefer smallest test falsifying approach early Reflection format after failure Task {{task}} Trajectory {{trajectory}} Environment/test/reviewer feedback {{feedback}} Reflection 2-5 sentences actionable What specifically went wrong? What signal did you ignore? What will you do differently next one concrete policy change?
+
+M3 Semantic Knowledge: Retrieve from knowledge store Domain KB HoneyComb / Vector DB / KG / Template Library Tool Ocean Query {{query}} Relevant facts {{retrieved_facts}} Use to inform planning. Examples CellVoyager self-evolving Template Library Tool Ocean expand knowledge skills, CoI person research interests citation history context, HoneyComb domain KB, STELLA.
+
+M4 Procedural Skill library Voyager: Write description following successful procedure/function Rules 1) Do not mention function/procedure name 2) Do not mention logging/print/debug helpers 3) If helpers exist describe only main procedure 4) At most 6 sentences 5) Response must be single block plain text Procedure {{code_or_steps}} Main procedure is {{name}} Description stored skill library future retrieve-by-similarity. STELLA self-evolving mechanisms dynamic Template Library expandable Tool Ocean.
+
+M5 Hybrid: Combination hierarchical working+episodic+semantic+procedural
+```
+
+**Action Space types prompts**
+
+```text
+A1 Internal Reasoning: LLM itself as part Action Space performing reasoning computation intermediate analysis Chain-of-thought Let's think step by step...
+
+A2 External Tool API: You have access to tools {{tools_list}} e.g., VASP XRD_Simulator Autolab_API ChemCrow 18+ chemoinformatics tools GeneGPT genomic APIs PaSa search Semantic Scholar Academic Graph API To use tool output Action ToolName[args] Observation returned Example Action VASP[structure=LiNiO2-Mg calculation=DFT]
+
+A3 Code Execution: Generate Python code perform task then execute Example ORGANA sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Code must be executable include imports handle errors
+
+A4 Simulation: Use simulation as verification/feedback DFT_SIMULATOR E_cal=-3.1 eV Cycles 520 adsorption energies reaction energy barriers structural stability GeoSim.AI OpenFOAMGPT Configuration Generation Automated Execution Management Error-Driven Refinement modules Simulate outcomes each branch expand only physically plausible plans using simulation feedback search guidance SGA
+
+A5 Physical Robotic Lab: Translate natural language instructions into executable protocols high-throughput liquid handlers AutoLabs self-correction robotic laboratory equipment designing executing synthesis procedures Suzuki Sonogashira cross-coupling minimal human intervention Coscientist engaging chemists natural language clarification updates experiments ORGANA Safety require human approval hazardous operations
+```
+
+**Verifier types prompts (see also C6.11 C6.12 for deep dives)**
+
+```text
+V1 Self-critique LLM as judge: Evaluate plan logical consistency feasibility Identify potential failure modes revise Current Plan {{plan}} Provide critique flags scores Chain-of-thought self-reflection iterative refinement VLM-based reflection multimodal plan evaluation figure quality LLMatDesign self-reflection previous decisions adapt rapidly zero-shot dZiner iterative reviewing history CoT stopping convergence criteria AtlasAgent CoT evaluation batch correction quality etc
+
+V2 Tool-based Rule-based: Use tool-based verification simulation feedback atomistic simulations adsorption energies reaction energy barriers structural stability assign rewards prune unpromising pathways iteratively refine ChemReasoner code tests heuristic scoring comprehensive error traceback analysis GeoAgent dynamic refine subtask If verification fails trigger error-driven replanning Return Verified Yes/No + evidence
+
+V3 Human-in-Loop (see C6.11 detailed) Approval gates safety-critical pause presentation synthesis procedures robotic control sequences hazardous awaiting explicit human approval Evaluation feedback research outputs human domain experts assess quality novelty validity qualitative critiques refinement Collaborative iteration multi-turn dialogues guidance constraints corrections Intervention debugging manual edit code adjust parameters redirect
+
+V4 Multi-Agent Critique (see C6.12) Role-interactive verification distributing across collaborative ensembles MedAgents role-playing multi-round yes/no votes modification iteratively until consensus max attempts VirSci structured idea refinement critic novelty feasibility impact low filtered high refined CellAgent Evaluator Executor hyperparameter tuning automated scRNA-seq Sparks generation-reflection paired clarity novelty feasibility technical correctness completeness adherence AccelMat specialized critics Diversity Feasibility Scientific Rigor STELLA Dev+Critic AtomAgents Critic verification completeness correctness AutoLabs supervisor sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Self-Checks final verification AI co-scientist tournament debate 4 debate 2 for 2 against judge meta-review synthesizes insights multiple rounds recurring patterns optimize
+```
+
+---
+
+## C6.11 Human-in-the-Loop Expert Oversight Gate (Survey V3)
+
+| Field | Content |
+|---|---|
+| **Source** | Scientific Intelligence Survey Sec 2.4.3 V3 HITL Expert Oversight + examples |
+| **Purpose** | Integrate human domain experts as authoritative evaluators at critical decision points for high-stakes scientific workflows where errors waste expensive resources compromise safety lead false claims. |
+| **When to use** | Safety-critical synthesis procedures robotic control sequences hazardous operations, evaluation of research outputs quality novelty validity, collaborative iteration guidance constraints corrections shaping exploration, debugging when automated self-correction fails. |
+| **Loop condition** | Spectrum continuous oversight to selective intervention to exception-based involvement. |
+| **Transition condition** | Human approve/reject/feedback/intervention → continue or edit. |
+
+**Prompt — HITL integration**
+
+```text
+You are integrating human expert oversight.
+
+At critical decision point: {{decision_point}}
+Agent output: {{agent_output}}
+
+Human expert role: authoritative evaluator reviewing outputs at critical decision points, providing binding approval/rejection decisions, qualitative feedback informing subsequent reasoning, intervening when automated verification fails resolve ambiguities or when stakes demand human judgment.
+
+Recognize limitations purely automated verification: LLMs lack genuine understanding physical reality cannot reliably detect all error classes particularly those requiring deep domain expertise tacit knowledge awareness subtle contextual factors. HITL particularly critical high-stakes scientific workflows where errors could waste expensive experimental resources compromise safety lead false scientific claims.
+
+Modalities:
+- Approval gates experimental protocols safety-critical procedures where agents pause execution present synthesis procedures robotic control sequences hazardous operations awaiting explicit human approval before proceeding (Mandal 2024 Boiko 2023 Zhou 2025 Wang 2025a StarWhisper)
+- Evaluation and feedback research outputs human domain experts assess scientific quality novelty validity hypotheses papers experimental designs qualitative critiques informing refinement (Xin, Bran, Ansari, Schmidgall, Lu, Gottweis, Tang, de Haan, Yin, Ghafarollahi Buehler, Mehandru, Roohani, Su, Li, Tang 2025d, Alber, Tang 2025b, Zhao, Weng, Team, Ghareeb, Su)
+- Collaborative human-AI iteration multi-turn dialogues humans guidance constraints corrections shaping exploration (Zhang 2025d Chemma active learning wet experiment results, Gottweis, Novikov, Pham, Ansari, Zou, Jin, He PaSa, Baek ResearchAgent)
+- Intervention debugging error resolution automated self-correction fails human experts manual edit code adjust parameters redirect workflows (Chen 2024a Cao 2024 Ni Buehler)
+
+Human action needed: approve/reject/feedback/intervention.
+If approved continue; if rejected provide guidance; if intervention edit code/parameters.
+Awaiting human: ...
+
+Examples:
+- Agent Laboratory Schmidgall assist human scientists ML research enabling users provide feedback guidance each stage high-level notes improvement deciding proceed
+- StarWhisper Wang integrates astronomers telescope operation workflows natural language observation requests generates specific telescope control sequences presents planned observations astronomers verification they match intended scientific goals executes only after plan revising approval humans
+- ORGANA Darvish engages chemists natural language clarify goals handle disambiguation provide updates ORGANA.REASONER prompts user investigate decide further actions if experimental outcomes mismatch expectations
+- BIA Xin incorporate human intervention critical junctures ensure accuracy relevance dynamic workflows subset segmentation manual indispensable precision tailoring
+- ChemCrow Bran evaluation panel 4 expert chemists Correctness Quality reasoning Degree task completion human interaction required fix invalid actions synthesis procedures before execution robotic platform if cannot autonomously adapt
+- dZiner Ansari supports closed-loop and human-in-loop chemist review proposed candidates reasoning offering feedback suggesting additional modifications constraints
+- Chemma Zhang active learning framework chemists interacting providing feedback collected wet experiment results crucial autonomously experimental exploration optimization open reaction spaces fine-tuning
+- MAPPS Zhou integrates scientists discovery loop hypotheses designs presents experts evaluation ranking incorporates feedback refining proposals requires explicit scientist approval before computationally expensive simulations syntheses
+- MatPilot Ni human-machine collaboration framework
+```
+
+---
+
+## C6.12 Multi-Agent Knowledge Debate Tournament (Survey V4/P5)
+
+| Field | Content |
+|---|---|
+| **Source** | Scientific Intelligence Survey Sec 2.4.4 V4 + Sec 2.1.1 P5 role-interactive + cathode example + AI co-scientist tournament |
+| **Purpose** | Distribute verification across diverse perspectives providing comprehensive error coverage supporting sophisticated collaborative reasoning patterns for knowledge tracking. |
+| **When to use** | Research proposal evaluation, novelty feasibility impact filtering, automated high-quality scRNA-seq, material hypothesis diversity checking. |
+| **Loop condition** | Message-passing until convergence or max attempts threshold, tournament rounds multiple. |
+| **Transition condition** | Consensus plan or verdict + revisions list; if not consensus continue until max. |
+
+**Prompt — General multi-agent critique**
+
+```text
+Role-interactive verification distributing verification across collaborative agent ensembles.
+
+You are assigned Role: {{role}} where role ∈ [Materials Designer, Safety Critic, Synthesis Engineer, Device Tester, Diversity Critic (evaluates whether proposed hypotheses explore sufficiently diverse regions materials space avoiding redundant similar proposals), Feasibility Critic (assessing whether hypotheses experimentally realizable given available equipment constraints), Scientific Rigor Critic (checking whether hypotheses grounded valid scientific principles clear testable predictions), Dev Agent (environment building code creation model training report writing), Critic Agent (assesses intermediate results flaws actionable feedback), Judge Agent (evaluates debate arguments declares winners), Meta-review Agent (synthesizes insights multiple rounds recurring patterns optimizing performance), Evaluator, Executor, Planner Critic]
+
+Task: Evaluate plan/proposal:
+Plan: {{plan}}
+
+Provide assessment per dimension:
+- Clarity, novelty, feasibility, technical correctness, completeness, adherence to system standards
+- For Diversity Critic: check diverse regions avoidance redundant
+- For Feasibility Critic: equipment constraints
+- For Scientific Rigor Critic: valid principles testable predictions
+- Vote: yes/no
+- Score: 1-5
+- Required revisions: numbered checklist
+
+If consensus reached (all yes) or max attempts threshold reached, finalize; else revise based on modifications iteratively.
+
+Mechanisms:
+- MedAgents Tang role-playing multi-round discussions several expert agents give votes yes/no preliminary summary report propose modification opinions if vote no report revised based modifications iteratively until all experts agree max attempts threshold
+- VirSci Su structured idea refinement through critic agents evaluate generated research ideas novelty feasibility impact potential low-scoring filtered out high-scoring refined targeted feedback
+- CellAgent Xiao multi-agent critique Evaluator assesses quality current results allows Executor optimize solutions hyperparameter tuning tool selection automated scRNA-seq
+- Sparks Ghafarollahi Buehler generation-reflection strategy each core agent paired corresponding reflection agent evaluate output clarity novelty feasibility technical correctness completeness adherence standards
+- AccelMat Kumbhar specialized critics Diversity Feasibility Scientific Rigor
+- STELLA Jin orchestrates multi-agent ecosystem Dev Agent focuses environment building code creation model training report writing Critic Agent assesses intermediate results flaws actionable feedback refine approach robust iterative problem-solving loop
+- AtomAgents Ghafarollahi Buehler incorporates Critic agent performing role-based verification evaluating plan proposed Planner ensuring completeness correctness
+- AutoLabs Panapitiya multi-agent architecture supervisor agent orchestrates workflow among specialized sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Self-Checks final verification step
+
+Example tournament-style debate (AI co-scientist Gottweis):
+- 4 debate agents (2 for and 2 against research proposal) engage structured argumentation
+- Judge agent evaluates arguments declares winners
+- Meta-review agent synthesizes insights multiple tournament rounds identify recurring patterns optimize performance subsequent iterations
+- Synthesizes insights optimizing agent performance
+
+Return verdict + revisions + consensus plan.
+
+Running example from Figure 3:
+Materials Designer: Proposes LiNiO2-Mg doped layered oxide Al2O3 coating
+Safety Critic: O2 release risk high C:✗
+Synthesis Engineer: D:✓ capacity feasible E:? equipment unknown
+Evaluation and debate → D:✓ C:✗ E:? Consensus Plan
+Revise: Mn-rich LiNiO2-Mg Proposal
+```
+
+---
+
+# CONSTITUTION QUICK MAP — UPDATED FOR PART 6
+
+| Need | Start with |
+|---|---|
+| Hard reasoning | C1.1 → C1.2 → (optional) C1.3–C1.5 |
+| Choose methods | C2.1 + C6.9 Planner Taxonomy Router |
+| Research idea | C2.2 → C2.3 → C2.4 → C6.4 → C6.5 → C6.6 (gap→problem→method→experiment) |
+| Track knowledge gaps explicit | C6.1 |
+| Infer implicit gaps | C6.2 → C6.3 (paragraph + full-paper) |
+| Cross-domain knowledge pollination | C6.8 Entity Store Retrieval |
+| Improve a draft | C3.1 ⇄ C3.2 + C6.7 ReviewingAgents |
+| Learn from failure | C3.3 → C3.4 + C6.10 M2 Episodic |
+| Improve the instruction | C3.5 |
+| Save a reusable skill | C3.6 + C6.10 M4 Procedural |
+| Make the repo pro | C4.1 → C4.2 → C4.3 |
+| Multi-expert project | C5.1 + C6.12 Multi-Agent Debate Tournament |
+| Human oversight high-stakes | C6.11 HITL Expert Gate |
+| Open-ended progress | C5.4 / C5.5 + C6.10 Memory/Action/Verifier blueprint |
+| Build any scientific agent | C6.9 → C6.10 (Planner Router → Memory/Action/Verifier blueprint) |
+| Search when uncertain knowledge gaps | C1.6 + C6.9 + C2.1 + C6.4 Search-Based Gap Exploration (P4) |
+| Ship end-to-end | C5.6 + C6.10 |
+
+---
+
+# GOVERNANCE NOTES — EXTENDED FOR PART 6
+
+1. **Universal ≠ vague.** Keep placeholders concrete when you instantiate.
+2. **Prefer small loops with gates** over one giant prompt.
+3. **Honesty rule:** if evidence is weak, force rebuttals/limits (C3.1 aspects + C2.5 + C6.2 Warrant coherence).
+4. **Budget rule:** route (C1.6, C2.1, C6.9) before expensive search/optimize.
+5. **Memory rule:** verbal lessons (C3.3) and procedural skills (C3.6) and entity store (C6.8) and semantic KB (C6.10 M3) are different—use all four when appropriate.
+6. **Knowledge tracking rule:** explicit gaps C6.1 require exact sentence grounding + cue list; implicit gaps C6.2 require Grounds quoted + Warrant single sentence + Bucket calibration; full-paper gaps C6.3 require evidence spans with section refs + feasibility notes + author survey if possible.
+7. **Cross-domain rule:** entity retrieval C6.8 may retrieve opposite concepts (limitations mentioned with proposals) — LLM must filter noise, gain incidental value from random inputs per ResearchAgent ablation — random entities still better than none.
+8. **Human-in-loop rule:** high-stakes experiments must have V3 approval gates (C6.11) — pause before hazardous robotic synthesis, telescope control, expensive simulations; require explicit human approval; human expertise indispensable for subset segmentation precision tailoring (BIA) and fixing invalid actions before robotic execution (ChemCrow).
+9. **Multi-agent rule:** diverse critics (Diversity Feasibility Scientific Rigor) avoid echo chambers — include 4 debate agents 2 for 2 against + judge + meta-review (AI co-scientist tournament) for comprehensive error coverage.
+10. **Construction rule:** any scientific agent = mix-and-match planner (P1-P6 L1-L2) + memory (M1-M5) + action (A1-A5) + verifier (V1-V4) — use cathode-design example as recipe book: Battery Schema → Augmented with historical failures + KB thresholds → Reflective revision cycles → Search-based max reward path → Role-interactive debate consensus → Programmatic DSL pipeline executable artifact.
+11. **This constitution is a control layer**, not a substitute for domain expertise, licenses, or ethics review. For scientific agents, ethics and reproducibility are design imperatives embedded in architecture and verification modules per Survey Sec 5, not peripheral concerns. Ethics checklist + reproducibility protocol mandatory.
+
+---
+
+*Maintained with the ARSENAL unified master pipeline.*  
+*Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
+*Updated 2026-07-11 with GAPMAP + ResearchAgent + Scientific Intelligence Survey extractions — Part 6 HOW TO TRACK KNOWLEDGE*

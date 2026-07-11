@@ -12,6 +12,9 @@
 | OPRO | `google-deepmind/opro` | `projects/opro/` | https://github.com/faresrafat3/opro-full-extraction | meta-prompt evolution, instruction scoring, LR/TSP, EN/AR graphs |
 | APE | `keirp/automatic_prompt_engineer` | `projects/ape/` | https://github.com/faresrafat3/ape-full-extraction | prompt generation templates, likelihood/bandit evaluation, logic flow, graphs, deep dive |
 | Prompt Report | `arxiv:2406.06608` | `projects/prompt-report/` | https://github.com/faresrafat3/prompt-report-full-extraction | 58 LLM techniques + 40 multimodal, 33 vocab terms, taxonomy graphs EN/AR, deep dive |
+| GAPMAP | `lhunter-lab/GAPMAP` `arxiv:2510.25055` | `projects/gapmap/` | https://github.com/faresrafat3/gapmap-full-extraction | explicit gap extraction JSON schema, TABI Claim/Grounds/Warrant/Bucket 3-shot, full-paper pilot GPT-4o multi-modal + author survey, ROUGE-L 0.55 / entailment 0.4, Stanza 1000-word chunking |
+| ResearchAgent | `JinheonBaek/ResearchAgent` `arxiv:2404.07738` | `projects/researchagent/` | https://github.com/faresrafat3/researchagent-full-extraction | problem/method/experiment generation Tables 6-8, ReviewingAgents Tables 9-11, criteria Tables 12-15 induced via 10 human pairs, entity store K sparse matrix Eq1 Eq2 co-occurrence vs embedding retrieval 50,091 papers, iterative refinement saturation after 3 steps |
+| Scientific Intelligence Survey | `arxiv:2503.24047` | `projects/scientific-intelligence-survey/` | https://github.com/faresrafat3/scientific-intelligence-survey-full-extraction | planner taxonomy P1-P6 L1-L2 with cathode running example Figure3, memory M1-M5, action space A1-A5, verifier V1-V4 HITL V3 approval gates evaluation feedback collaborative iteration intervention + V4 multi-agent critique tournament debate, >40 benchmarks >120 papers, applications map |
 
 ## Exact key file paths
 
@@ -65,7 +68,6 @@
 - Graph AR: `projects/lats/graph_arabic.md`
 - Deep dive: `projects/lats/deep_dive_task_matrix.md`
 - Completeness: `projects/lats/final_completeness_check_ar.md`
-
 - Final audit: `projects/lats/final_audit_review_ar.md`
 
 ### APE
@@ -78,7 +80,6 @@
 - Graph AR: `projects/ape/graph_arabic.md`
 - Deep dive: `projects/ape/deep_dive_task_matrix.md`
 - Completeness: `projects/ape/final_completeness_check_ar.md`
-
 - Final audit: `projects/ape/final_audit_review_ar.md`
 
 ### Prompt Report
@@ -91,16 +92,13 @@
 - Graph AR: `projects/prompt-report/graph_arabic.md`
 - Deep dive: `projects/prompt-report/deep_dive_task_matrix.md`
 - Completeness: `projects/prompt-report/final_completeness_check_ar.md`
-
 - Final audit: `projects/prompt-report/final_audit_review_ar.md`
-
-## Tree of Thoughts (ToT)
-- Folder: `projects/tot/`
-- Repo: https://github.com/faresrafat3/tot-full-extraction
-- Paper: https://arxiv.org/abs/2305.10601
 
 ### Tree of Thoughts (ToT)
 
+- Folder: `projects/tot/`
+- Repo: https://github.com/faresrafat3/tot-full-extraction
+- Paper: https://arxiv.org/abs/2305.10601
 - Prompts: `projects/tot/prompts_complete.md`
 - Raw prompts/scripts: `projects/tot/raw_prompt_files/`
 - Logic: `projects/tot/python_logic_flow_complete.md`
@@ -130,3 +128,45 @@
 - Graph AR: `projects/opro/graph_arabic.md`
 - Deep dive: `projects/opro/deep_dive_task_matrix.md`
 - Completeness: `projects/opro/final_completeness_check_ar.md`
+
+### GAPMAP
+
+- Folder: `projects/gapmap/`
+- Repo: https://github.com/faresrafat3/gapmap-full-extraction
+- Paper: https://arxiv.org/abs/2510.25055
+- Prompts: `projects/gapmap/prompts_complete.md`
+- Raw prompts: `projects/gapmap/raw_prompt_files/ex_gap_xtract.py + prompt_explicit_full.txt + prompt_implicit_TABI_3shot.txt + prompt_implicit_fullpaper.txt + chunking_logic.py`
+- Logic: `projects/gapmap/python_logic_flow_complete.md`
+- Inventory: `projects/gapmap/python_logic_inventory.json`
+- Graph EN: `projects/gapmap/graph_english.md` + `graph_english.mmd`
+- Graph AR: `projects/gapmap/graph_arabic.md` + `graph_arabic.mmd`
+- Deep dive: `projects/gapmap/deep_dive_task_matrix.md`
+- Samples: `projects/gapmap/raw_data_samples/ipbes_sample.json + covid_sample.json + implicit_paragraph_sample.json`
+- Completeness: `projects/gapmap/final_completeness_check_ar.md` + `QUALITY_REVIEW_AR.md`
+
+### ResearchAgent
+
+- Folder: `projects/researchagent/`
+- Repo: https://github.com/faresrafat3/researchagent-full-extraction
+- Paper: https://arxiv.org/abs/2404.07738 NAACL 2025
+- Prompts: `projects/researchagent/prompts_complete.md` (Tables 6-15)
+- Raw prompts: `projects/researchagent/raw_prompt_files/prompt_problem_identification.txt + prompt_method_development.txt + prompt_experiment_design.txt + prompt_reviewing_problem.txt + prompt_reviewing_method.txt + prompt_reviewing_experiment.txt + prompt_criteria_induction.txt + prompt_evaluation_scoring.txt + prompt_evaluation_pairwise.txt + entity_retrieval_logic.py`
+- Logic: `projects/researchagent/python_logic_flow_complete.md`
+- Inventory: `projects/researchagent/python_logic_inventory.json`
+- Graph EN/AR: `projects/researchagent/graph_english.md/.mmd + graph_arabic.md/.mmd`
+- Deep dive: `projects/researchagent/deep_dive_task_matrix.md`
+- Samples: `core_paper_sample.json + entity_store_sample.json + idea_example_drosophila.json`
+- Completeness: `final_completeness_check_ar.md` + `QUALITY_REVIEW_AR.md`
+
+### Scientific Intelligence Survey
+
+- Folder: `projects/scientific-intelligence-survey/`
+- Repo: https://github.com/faresrafat3/scientific-intelligence-survey-full-extraction
+- Paper: https://arxiv.org/abs/2503.24047
+- Prompts: `projects/scientific-intelligence-survey/prompts_complete.md` (P1-P6 L1-L2 M1-M5 A1-A5 V1-V4 cathode example)
+- Raw prompts: `planner_P1_schema_driven.txt + P2_context_augmented + P3_deliberative_reflective + P4_search_based + P5_role_interactive + P6_programmatic + L1_SFT + L2_RL + memory_types + action_space_types + verifier_V1_self_critique + V2_tool_based + V3_HITL_expert + V4_multi_agent_critique + cathode_design_running_example.md`
+- Logic: `python_logic_flow_complete.md`
+- Inventory: `python_logic_inventory.json`
+- Graph EN/AR: `graph_english.md/.mmd + graph_arabic.md/.mmd`
+- Deep dive: `deep_dive_task_matrix.md`
+- Samples: `benchmarks_list.json + applications_map.json + taxonomy_planner.json`
