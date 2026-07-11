@@ -214,3 +214,7 @@ archives/
 - `graph_english.md` / `graph_arabic.md` — root aliases of the master graphs.
 - `final_completeness_check_ar.md` — consolidated Arabic completeness check.
 - `QUALITY_REVIEW_AR.md` — consolidated Arabic quality review.
+
+## Constitution
+
+Universal reusable prompts distilled from all systems: [`CONSTITUTION.md`](./CONSTITUTION.md)
