@@ -1,0 +1,190 @@
+{
+  "project": "ResearchAgent",
+  "arxiv": "2404.07738",
+  "commit": "NAACL 2025 v2 Feb 9 2025",
+  "repo": "https://github.com/JinheonBaek/ResearchAgent",
+  "files": [
+    {
+      "file": "Tables 6-8 generation",
+      "prompts": {
+        "problem_identification": {
+          "system": "identify promising, new, and key scientific problems",
+          "placeholders": [
+            "paper['title']",
+            "paper['abstract']",
+            "relatedPaper['titles']",
+            "relatedPaper['abstracts']",
+            "Entities",
+            "len(references)",
+            "len(entities)"
+          ],
+          "output": "Problem: Rationale:"
+        },
+        "method_development": {
+          "system": "propose innovative, rigorous, and valid methodologies",
+          "placeholders": [
+            "researchProblem",
+            "researchProblemRationale",
+            "paper['title']",
+            "paper['abstract']",
+            "relatedPaper",
+            "Entities"
+          ],
+          "output": "Method: Rationale:"
+        },
+        "experiment_design": {
+          "system": "design robust, feasible, and impactful experiments",
+          "placeholders": [
+            "researchProblem",
+            "researchProblemRationale",
+            "scientificMethod",
+            "scientificMethodRationale",
+            "paper",
+            "relatedPaper",
+            "Entities"
+          ],
+          "output": "Experiment: Rationale:"
+        }
+      }
+    },
+    {
+      "file": "Tables 9-11 reviewing",
+      "prompts": {
+        "reviewing_problem": {
+          "system": "assess quality and validity of scientific problems",
+          "placeholders": [
+            "{metric}",
+            "paper['title']",
+            "paper['abstract']",
+            "relatedPaper",
+            "researchProblem",
+            "researchProblemRationale",
+            "{criteria}"
+          ],
+          "output": "Review:/Feedback:/Rating (1-5):"
+        },
+        "reviewing_method": {
+          "system": "assess quality and soundness of scientific methods",
+          "placeholders": [
+            "{metric}",
+            "researchProblem",
+            "researchProblemRationale",
+            "paper",
+            "relatedPaper",
+            "scientificMethod",
+            "scientificMethodRationale",
+            "{criteria}"
+          ],
+          "output": "Review:/Feedback:/Rating:"
+        },
+        "reviewing_experiment": {
+          "system": "meticulously evaluate experimental designs",
+          "placeholders": [
+            "{metric}",
+            "researchProblem",
+            "researchProblemRationale",
+            "scientificMethod",
+            "scientificMethodRationale",
+            "paper",
+            "relatedPaper",
+            "experimentDesign",
+            "experimentDesignRationale",
+            "{criteria}"
+          ],
+          "output": "Review:/Feedback:/Rating:"
+        }
+      }
+    },
+    {
+      "file": "Entity retrieval",
+      "equations": {
+        "Eq1": "Ret({l0..ln};K)=argmax_{I subset [m]:|I|=k} prod P(ei|E)",
+        "Eq2": "argmax prod (prod_{ej in E} P(ej|ei)) * P(ei) where P from normalized K"
+      },
+      "matrix": "K in R^{m x m} sparse co-occurrence counts + single counts, m unique entities, built from 50,091 papers May-Dec 2023 titles+abstracts via BLINK linker",
+      "alternatives": [
+        "co-occurrence-based retrieval Eq2",
+        "embedding-based retrieval cosine similarity in linker latent space",
+        "random entities",
+        "w/o entities"
+      ]
+    },
+    {
+      "file": "Criteria induction",
+      "prompt": "Collect 10 pairs idea+scores per criterion Likert 5 annotated by >=3 papers researchers, prompt LLM with pairs to induce level 1-5 descriptions (Lin et al 2024)",
+      "tables": {
+        "Table12": "base 1-sentence per metric",
+        "Table13": "Problem induced 5 levels Clarity/Relevance/Originality/Feasibility/Significance",
+        "Table14": "Method induced Clarity/Validity/Rigorousness/Innovativeness/Generalizability",
+        "Table15": "Experiment induced Clarity/Validity/Robustness/Feasibility/Reproducibility"
+      }
+    },
+    {
+      "file": "Evaluation",
+      "scoring_prompt": "rate idea based on criterion {metric} on 5-point Likert using induced description, provide Reasoning + Rating",
+      "pairwise_prompt": "compare Idea A vs B for {metric}, provide Reasoning + Winner A|B|Tie, compute win ratio",
+      "human": "10 experts >=3 papers judge only ideas based on own papers, 20% double-annotated Spearman and Cohen kappa",
+      "model": "GPT-4 Nov06 2023 judge, trained up to Apr2023"
+    }
+  ],
+  "loops": [
+    {
+      "loop": "core papers 300 sampled >20 cites after May01 2023",
+      "bound": 300
+    },
+    {
+      "loop": "references per core avg 87",
+      "bound": 87
+    },
+    {
+      "loop": "entity extraction 50,091 papers titles+abstracts avg 2.17 entities abstract",
+      "bound": 50091
+    },
+    {
+      "loop": "entity pairs per paper C(|E|,2)",
+      "bound": "combinatorial"
+    },
+    {
+      "loop": "retrieval top-k external",
+      "bound": "k"
+    },
+    {
+      "loop": "Problem->Method->Experiment sequential",
+      "bound": 3
+    },
+    {
+      "loop": "ReviewingAgents 5 criteria x3 idea types =15 reviewers per refinement",
+      "bound": 15
+    },
+    {
+      "loop": "refinement steps 0-4 saturation after 3",
+      "bound": 4
+    },
+    {
+      "loop": "evaluation scoring per criterion",
+      "bound": 5
+    },
+    {
+      "loop": "pairwise comparisons",
+      "bound": "pair models"
+    },
+    {
+      "loop": "human pairs for induction 10 per criterion",
+      "bound": 10
+    }
+  ],
+  "decisions": [
+    "D1 Naive vs w/o Entity vs Full",
+    "D2 co-occurrence vs embedding vs random vs w/o",
+    "D3 titles+abstracts only due length",
+    "D4 include references ablation",
+    "D5 human-induced vs vanilla alignment",
+    "D6 refinement steps saturation 3",
+    "D7 expert own papers only vs non-experts",
+    "D8 10 pairs per criterion",
+    "D9 scoring vs pairwise",
+    "D10 top five criteria most important",
+    "D11 core >20 cites 300 sample",
+    "D12 GPT-4 evaluator same family"
+  ]
+}

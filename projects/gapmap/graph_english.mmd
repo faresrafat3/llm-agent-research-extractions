@@ -1,0 +1,48 @@
+flowchart TD
+  %% GAPMAP — English Logic Graph — arXiv:2510.25055
+  START([Start CSV file]) --> LOAD[Load df = pd.read_csv + dropna Excerpt + drop_duplicates]
+  LOAD --> LOOP_DOC{For each row ID, Excerpt}
+  LOOP_DOC --> CHUNK[split_into_chunks_preserving_sentences max 1000 words\nStanza tokenizer pipeline lang=en tokenize\nif not available regex (?<=[.!?])\\s+(?=[A-Z])\nPreserve sentence boundaries\nIsolate >1000 word sentence alone]
+
+  CHUNK --> LOOP_CHUNK{For each chunk in chunks}
+  LOOP_CHUNK --> CALL[call_model(chunk)\nclient.responses.create model=gpt-5\nSystem: expert extraction Return ONLY JSON\nUser: PROMPT_TEMPLATE strict JSON array\nIgnorance Statement exact sentence\nsupport_sentence/s array\njustification brief\nIgnorance Cues array\nDOCUMENT <<<chunk>>> Return only [] if none]
+
+  CALL --> EXTRACT[extract_json_array\nstrip ```json fences + <think> tags\nregex \\[\\s*\\{.*?\\}\\]]
+  EXTRACT --> VALID{validate_payload?\nlist of dicts REQUIRED_KEYS types}
+  VALID -->|fail| ERROR[Write {file_id}__ERROR.txt repr(e)+Excerpt\nsleep 1.5 continue]
+  ERROR --> LOOP_DOC
+  VALID -->|pass| ACCUM[all_items.extend(items)\nsleep 1.5]
+  ACCUM --> MORE_CHUNK{more chunks?}
+  MORE_CHUNK -->|yes| LOOP_CHUNK
+  MORE_CHUNK -->|no| DEDUPE[dedupe_by_statement\nwhitespace-squashed exact match\nseen set]
+
+  DEDUPE --> SAVE[Save {file_id}.json indent 2\nsleep 1.0]
+  SAVE --> NEXT_DOC{more docs?}
+  NEXT_DOC -->|yes| LOOP_DOC
+  NEXT_DOC -->|no| EVAL_BRANCH{Eval branch?}
+
+  EVAL_BRANCH -->|Explicit IPBES| E_IPBES[IPBES Eval\n657 statements 286 paras\nROUGE-L F1 stemming one-to-one matching threshold 0.55\nTP if >0.55 unmatched FP unmatched gold FN\nP R F1 aggregate]
+  E_IPBES --> TABLE3[Table3 Results\nLlama-70B best F1 0.8307 no-limit\nGPT-4o-mini 0.8143 chunked\nGPT-5 0.7949\nGPT-4o conservative high P 0.8445 low R 0.4223\nChunking shift ~0.02 F1]
+
+  EVAL_BRANCH -->|Explicit COVID| E_COVID[COVID Eval\nSection up to 8K tokens\nSingle gold per section but many latent gaps\nFilter general non-research\nValidate vs ignorance-cue dict Boguslav\nMust have >=1 cue]
+  E_COVID --> TABLE4[Table4 Accuracy\nGPT-5 63.51% chunk 60.64% no-limit best\nAll Models union 80.37% chunk 75.03% no-limit]
+  TABLE4 --> VENN[Venn overlap top4 models\n~1.14k shared all four\nGPT-5 many unique\nSpider normalized 5 categories\nResearch Aim Levels Evidence Anomaly Barriers Future Opportunities\nGPT-5 outermost]
+
+  EVAL_BRANCH -->|Implicit Paragraph Manual| IMPL_MANUAL[Implicit Manual Dataset\n212 paras 137 PubMed articles\nGold future direction masked at end\nProvide pi masked]
+  IMPL_MANUAL --> TABI_PROMPT[TABI 3-shot Prompt\nSystem expert biomedical argumentation analyst\nUser Task infer implicit gap\nOUTPUT SCHEMA JSON Claim / Grounds quoted spans / Warrant 1 sentence Grounds->Claim / Bucket more vs least_probable / Category 5 types / Justification\n3-shot examples:\n- Compound E mice biomarker F humans outcome unknown\n- Synthetic 95% vs real missing shift 200 labels\n- Study A European benefit vs Study B East Asian no effect conflict\nReturn 1-3 candidates]
+
+  TABI_PROMPT --> LLM_TABI[LLM Generation\nGPT-5 GPT-4o Llama etc\nZero-shot degenerates vague\n3-shot essential precise future-direction]
+
+  LLM_TABI --> EVAL_TABI[Evaluation via RoBERTa-large bi-directional entailment\nClaim vs Gold + Warrant vs Premises threshold 0.4\nSuccess if any candidate matches gold\nAccuracy + Bucket distribution log]
+  EVAL_TABI --> TABLE5[Table5 Implicit Paragraph\nGPT-5 84.43% 179 FD Count\nGPT-4o 80.66% 171\nLlama-70B 77.89% 163\nGemma-2-9B 22.64% struggle\nBucket 10-24% correct least_probable calibration]
+
+  EVAL_BRANCH -->|Implicit Full-Text Pilot| IMPL_FULL[Full-Text Pilot\n24 full-texts 19 domains STEM\nGPT-4o multi-modal long context]
+  IMPL_FULL --> FULL_PROMPT[Full-paper prompt\nSystem senior reviewer\nUser Identify 5-10 implicit gaps\nFor each: Implied Gap + Evidence Spans section ref + Warrant 1 sentence + Gap Category + Future Direction concrete + Feasibility Notes tech/budget + Bucket\nReturn strict JSON array]
+  FULL_PROMPT --> AUTHOR_SURVEY[Author Survey 18 corresponding authors\nReview gaps + future directions agree/disagree + justification irrelevance misinterpretation outdated]
+  AUTHOR_SURVEY --> SURVEY_RES[Results\nFactual true 83.3% agree\nRemain open 56% fully +25.9% partial\nImpact 67% of partial advance field\nImplementation valid 65% invalid 35% feasibility tech limits budget relevance other groups]
+
+  TABLE3 --> TAKEAWAY
+  TABLE5 --> TAKEAWAY
+  SURVEY_RES --> TAKEAWAY
+
+  TAKEAWAY([Takeaways\nScale helps larger>smaller but open-weight competitive\nChunking 1K sentence-aligned safe often boosts recall\nTABI interpretable scorable\n3-shot essential\nMixture-of-LLMs recommended\nHuman-in-loop needed for feasibility])

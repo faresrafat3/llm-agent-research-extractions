@@ -1,0 +1,10 @@
+{
+  "ID": "COVID_SECTION_123",
+  "Section_words": 8200,
+  "Excerpt": "SARS-CoV-2 has been declared a pandemic that causes COVID-19. While vaccines show 90% efficacy in trial, real-world effectiveness against Delta variant remains inconsistent (Study A 85% vs Study B 62%, p=0.03). Further mechanisms of immune evasion are still debated...",
+  "gold_single": "real-world effectiveness against Delta variant remains inconsistent",
+  "latent_gaps_found_by_GPT5": [
+    "Further mechanisms of immune evasion are still debated"
+  ],
+  "ignored_non_research": "SARS-CoV-2 has been declared a pandemic that causes COVID-19"
+}

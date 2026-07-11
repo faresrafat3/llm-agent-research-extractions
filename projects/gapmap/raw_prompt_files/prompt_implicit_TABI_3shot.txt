@@ -1,0 +1,68 @@
+SYSTEM: You are an expert biomedical argumentation analyst. Infer implicit knowledge gaps using Toulmin structure.
+
+USER TASK: Given a biomedical paragraph with future-direction sentences masked at end, infer the implicit knowledge gap.
+
+OUTPUT SCHEMA — strict JSON object per candidate:
+{
+  "Claim": "The implied gap — what remains unknown / required future direction (one sentence, clear)",
+  "Grounds": ["Evidence sentence 1 verbatim from paragraph", "Evidence sentence 2 verbatim"],
+  "Warrant": "Single sentence that logically connects Grounds to Claim, explaining why gap follows",
+  "Bucket": "more_probable | least_probable",
+  "Category": "Levels of Evidence | Barriers | Future Opportunities | Anomaly/Curious Findings | Research Aims (choose one)",
+  "Justification": "Brief why Bucket chosen"
+}
+
+RULES:
+- Claim must be a defeasible abductive inference, not a copy of explicit cue.
+- Grounds must be quoted spans from input paragraph.
+- Warrant must be one sentence, generalizable reasoning pattern.
+- Bucket: more_probable if gap central to paper's argument, least_probable if peripheral/speculative.
+- Return JSON array of 1-3 candidates, ordered most probable first.
+
+EXAMPLES (3-shot):
+
+Example 1 Paragraph: "Compound E improves biomarker F in mice. Biomarker F correlates poorly with clinical outcomes in humans."
+Gold: "It is unknown whether E improves patient outcomes."
+Output:
+[
+  {
+    "Claim": "It is unknown whether compound E improves patient outcomes in humans.",
+    "Grounds": ["Compound E improves biomarker F in mice.", "Biomarker F correlates poorly with clinical outcomes in humans."],
+    "Warrant": "If a surrogate marker fails to correlate with clinical endpoints, efficacy on surrogate does not imply clinical benefit.",
+    "Bucket": "more_probable",
+    "Category": "Levels of Evidence",
+    "Justification": "Translational barrier central"
+  }
+]
+
+Example 2 Paragraph: "We demonstrated 95% accuracy on synthetic dataset with 10K samples. Real-world clinical dataset has missing values, distribution shift, and only 200 labeled cases."
+Output:
+[
+  {
+    "Claim": "It is unknown whether model maintains accuracy on real-world clinical data with limited labels and shift.",
+    "Grounds": ["We demonstrated 95% accuracy on synthetic dataset with 10K samples.", "Real-world clinical dataset has missing values, distribution shift, and only 200 labeled cases."],
+    "Warrant": "Performance on idealized synthetic data does not transfer to noisy low-resource real data without validation.",
+    "Bucket": "more_probable",
+    "Category": "Barriers"
+  }
+]
+
+Example 3 Paragraph: "Study A reported significant benefit of X in European cohort (n=5000, p<0.001). Study B found no effect in East Asian cohort (n=3000, p=0.45). No reconciliation offered."
+Output:
+[
+  {
+    "Claim": "It is unknown why efficacy of X differs by population and what modifiers explain conflicting results.",
+    "Grounds": ["Study A reported significant benefit of X in European cohort (n=5000, p<0.001).", "Study B found no effect in East Asian cohort (n=3000, p=0.45)."],
+    "Warrant": "Conflicting findings across populations without mechanistic explanation indicate missing understanding of effect modifiers.",
+    "Bucket": "more_probable",
+    "Category": "Anomaly/Curious Findings"
+  }
+]
+
+NOW YOUR TURN:
+Paragraph (future directions masked):
+<<<
+{paragraph}
+>>>
+
+Return only valid JSON array (1-3 candidates). No extra text.

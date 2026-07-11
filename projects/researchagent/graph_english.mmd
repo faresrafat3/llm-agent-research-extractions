@@ -1,0 +1,170 @@
+
+flowchart TD
+  START([Start Semantic Scholar API]) --> FILTER[Filter papers after May01 2023 LLM cutoff Apr2023
+Training data GPT-4 Nov06 2023
+Select high-impact >20 citations
+Sample 300 core benchmark
+Avg 87 refs per core
+Abstract avg 2.17 entities
+Distribution disciplines Fig7]
+
+  FILTER --> STORE_DATA[Entity Store Data
+50,091 papers May01-Dec31 2023 + refs
+Semantic Scholar API]
+
+  STORE_DATA --> EL[Entity Extraction
+BLINK linker Wu et al 2020 off-the-shelf
+Target titles+abstracts only footnote length
+Multiset El = EL(l) allowing repetitions
+Consider all pairs {ei,ej} C(|E|,2) e∈E]
+
+  EL --> BUILD_K[Build K ∈ R^{m×m} sparse
+m unique entities
+Count co-occurrences entity pairs within individual papers + single counts
+K implemented sparse]
+
+  BUILD_K --> CORE_GROUP{For each core group l0..ln
+l0 core + l1..ln references}
+
+  CORE_GROUP --> UNION_E[E_{l0..ln}=Union EL(li)
+Entities from group]
+
+  UNION_E --> RETRIEVAL[Retrieval Ret({l0..ln};K)
+Eq1: argmax I⊂[m]:|I|=k prod P(ei|E) ei∉E
+Eq2 Bayes + independence approx:
+ argmax prod (prod ej∈E P(ej|ei)) × P(ei)
+P(ej|ei),P(ei) normalized K
+Alternative embedding-based retrieval cosine similarity latent space linker
+Both comparable Table5 co 4.52 vs embed 4.49 vs w/o 4.35 problem]
+
+  RETRIEVAL --> GEN_PROBLEM[Problem Identification Table6
+System: identify promising new key scientific problems
+User: generate research problem original clear feasible relevant significant based on {len refs} related papers + {len entities} entities
+Understanding target primary focus + related cited relevance + entities auxiliary inspiration
+Systematic: read target title abstract core focus → read related titles abstracts broader perspective → explore entities diverse pool
+Provide target paper title abstract + related titles abstracts + Entities
+Revisit target title abstract focal point before crafting
+Output Problem: Rationale:]
+
+  GEN_PROBLEM --> GEN_METHOD[Method Development Table7
+System: propose innovative rigorous valid methodologies
+User: propose method clear innovative rigorous valid generalizable based on research problem+rationale + existing studies + entities
+Understanding: problem cornerstone + existing studies target+related foundational + entities auxiliary
+Systematic: read problem rationale focus → review titles abstracts existing studies broader → explore entities
+Revisit research problem focal point
+Output Method: Rationale:]
+
+  GEN_METHOD --> GEN_EXP[Experiment Design Table8
+System: design robust feasible impactful experiments
+User: design experiment validating method addressing problem clear robust reproducible valid feasible based on problem+method rationales + existing studies + entities
+Understanding: problem formulated + method proposed informed existing studies + existing studies target+related foundational + entities auxiliary
+Systematic: read problem rationale + method rationale pinpoint focus → review titles abstracts → explore entities
+Revisit problem+method center
+Output Experiment: Rationale:]
+
+  GEN_EXP --> REVIEWERS{ReviewingAgents Tables9-11
+Per idea 5 criteria
+Problem: Clarity Relevance Originality Feasibility Significance
+Method: Clarity Validity Rigorousness Innovativeness Generalizability
+Experiment: Clarity Validity Robustness Feasibility Reproducibility}
+
+  REVIEWERS --> REVIEW_PROBLEM[Table9 Problem Validation
+System: assess quality validity problems across dimensions aid researchers refining
+User: evaluate problem for {metric} focusing clear precise understandable manner
+Refer existing studies related to problem comprehensive assessment target+related
+Systematic: read problem rationale + context existing studies → generate review feedback constructive helpful concise focusing {metric} → score 1-5 Likert discerning critical avoid uniform 4-5 unless justified {criteria induced Table13}
+Provide target+related titles abstracts + problem+rationale
+Format Review: Feedback: Rating 1-5:]
+
+  REVIEWERS --> REVIEW_METHOD[Table10 Method Validation
+System: assess quality soundness methods
+User: evaluate method for {metric} addressing problem focusing clear precise understandable allows replication comprehension
+Refer research problem + existing studies context
+Systematic: read method rationale + context problem+existing studies → review feedback focusing {metric} + score 1-5 {criteria Table14}
+Provide problem+rationale + target+related + method+rationale
+Format Review: Feedback: Rating:]
+
+  REVIEWERS --> REVIEW_EXP[Table11 Experiment Validation
+System: meticulously evaluate experimental designs
+User: evaluate experiment for {metric} validating method addressing problem focusing clear precise understandable grasp setup procedure expected outcomes
+Refer problem method existing studies context
+Systematic: read experiment design rationale + context problem method existing studies → review feedback focusing {metric} + score 1-5 {criteria Table15}
+Provide problem+rationale method+rationale target+related + experiment+rationale
+Format same]
+
+  REVIEW_PROBLEM --> FEEDBACK_AGG[Aggregate Feedback per idea
+Reviews + Feedback + Ratings]
+
+  REVIEW_METHOD --> FEEDBACK_AGG
+
+  REVIEW_EXP --> FEEDBACK_AGG
+
+  FEEDBACK_AGG --> REFINE_LOOP{Refinement Steps 0-4
+Figure4}
+
+  REFINE_LOOP --> REVISE[ResearchAgent iterative updates refines generation based on reviews feedback]
+
+  REVISE --> MORE_REFINE{more steps < max?
+Saturation after 3 Du et al 2023}
+
+  MORE_REFINE -->|yes| REVIEWERS
+
+  MORE_REFINE -->|no| EVAL
+
+  EVAL[Evaluation Setup Sec4.3
+No ground truth open-ended many valid ideas exhaustive suboptimal time expertise
+Combination model-based + human]
+
+  EVAL --> MODEL_EVAL[Model-based Evaluation
+GPT-4 Nov06 2023 as judge
+Each idea 5 criteria
+Ask to either rate 5-point Likert per criterion or pairwise comparisons between two ideas different models
+Prompts Appendix A
+Scoring prompt Reasoning + Rating
+Pairwise Reasoning + Winner A|B|Tie → win ratio Figure3]
+
+  EVAL --> HUMAN_EVAL[Human Evaluation
+10 expert researchers authored ≥3 papers
+Judge only ideas generated based on own papers relevant field high reliable
+Ideas knowledge-intensive select annotators well-versed field expertise
+Provide ideas highly relevant
+Score each criterion + pairwise
+20% double-annotated inter-annotator agreements Table1 Spearman scoring + Cohen kappa pairwise]
+
+  MODEL_EVAL --> ALIGN[Human Alignment for Evaluation Sec 3
+Collect 10 pairs ideas + scores per criterion Likert annotated researchers ≥3 papers
+Prompt LLM with pairs induce detailed descriptions criteria Lin et al 2024 Tables13-15 reflecting human preferences used as evaluation criteria ReviewingAgents
+5 annotators judge quality induced 2 strongly agree 3 moderately]
+
+  ALIGN --> DIST_FIG[Figure5 Distributions model-based eval without alignment skewed different human vs with alignment calibrated resembles human
+Figure6 citation buckets low middle high high-impact papers higher quality likely ability identify gaps propose feasible methods connect other works
+Computer Science vs All scores increase when citation increases generalizability criteria despite induced mainly CS
+Figure9 breakdown domains high-resource CS Medicine Eng Environmental Science superior to low-resource Bio Materials Physics Chem Math due LLM training predominance high-resource domains]
+
+  HUMAN_EVAL --> AGREE_TBL[Table1 Agreements
+Human-Human Scoring 0.83 Problem 0.76 Method 0.67 Experiment Pairwise 0.62/0.62/0.41
+Human-Model Scoring 0.64/0.58/0.49 Pairwise 0.71/0.62/0.52 high reliable proxy reasonable]
+
+  DIST_FIG --> ABLATION[ Ablation Table2
+ResearchAgent 4.52/4.28/4.18
+-w/o Entities 4.35/4.13/4.02
+-w/ Random Entities 4.41/4.19/4.13
+-w/o References 4.26/4.08/3.97
+-w/ Random Ref 4.35/4.16/4.02
+-w/o Both 4.20/4.03/3.92
+Each source contributes relevant refs especially helpful random > none LLM filters noise incidental value
+Table5 Retrieval co-occurrence 4.52 vs embedding 4.49 vs w/o 4.35 comparable]
+
+  ABLATION --> COMPARISON[Comparisons hypothesis generation Table3
+SciMON 4.04/4.37/4.56/3.98/4.15
+Hypothesis Proposer 3.97/4.14/4.07/4.01/4.11
+ResearchAgent 4.11/4.88/4.77/4.05/4.81
+Outperforms baselines large margins clarity relevance originality significance]
+
+  COMPARISON --> EXAMPLES[Examples Table16
+1) Knowledge-Augmented LM Prompting Zero-Shot KG QA + entities Natural language QA Wikipedia etc → Problem Developing Multimodal Knowledge-Aware Prompting System for Multilingual Zero-Shot QA Structured Unstructured + Method IMKO LIRE PLON C-MILS UCAPF
+2) Whole-brain annotation Drosophila connectome 130k neurons + entities Virtual Fly Brain etc → Problem Investigating Functional Implications Connectome Variability Learning Memory Circuits Environmental Genetic Contexts + Method multi-tiered connectomics behavioral assays genetic perturbations CRISPR transcriptomic spatial computational modeling]
+
+  EXAMPLES --> END([End Full ResearchAgent Outperforms baselines creativity Originality Innovativeness via entities cross-domain pollination
+Refinement saturation after 3 steps
+Human-aligned criteria])

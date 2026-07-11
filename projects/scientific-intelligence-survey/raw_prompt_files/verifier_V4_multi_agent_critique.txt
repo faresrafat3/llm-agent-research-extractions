@@ -1,0 +1,24 @@
+Role-interactive verification distributing verification across collaborative agent ensembles.
+
+Mechanisms:
+- MedAgents Tang role-playing multi-round discussions several expert agents give votes yes/no preliminary summary report propose modification opinions if vote no report revised based modifications iteratively until all experts agree max attempts threshold
+- VirSci Su structured idea refinement through critic agents evaluate generated research ideas novelty feasibility impact potential low-scoring filtered high-scoring refined targeted feedback
+- CellAgent Xiao multi-agent critique Evaluator assesses quality current results allows Executor optimize solutions hyperparameter tuning tool selection automated high-quality scRNA-seq
+- Sparks Ghafarollahi Buehler generation-reflection strategy each core agent paired corresponding reflection agent evaluate output clarity novelty feasibility technical correctness completeness adherence system standards
+- AccelMat Kumbhar specialized critic agents Diversity Critic evaluating whether proposed hypotheses explore sufficiently diverse regions materials space avoiding redundant similar proposals Feasibility Critic assessing whether hypotheses experimentally realizable given available equipment constraints Scientific Rigor Critic checking whether hypotheses grounded valid scientific principles clear testable predictions
+- STELLA Jin orchestrates multi-agent ecosystem Dev Agent focuses environment building code creation model training report writing Critic Agent assesses intermediate results identifies flaws provides actionable feedback refine approach robust iterative problem-solving loop
+- AtomAgents Ghafarollahi Buehler incorporates Critic agent performing role-based verification evaluating plan proposed Planner ensuring completeness correctness
+- AutoLabs Panapitiya multi-agent architecture supervisor agent orchestrates workflow among specialized sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Self-Checks final verification step
+- AI co-scientist Gottweis tournament-style debate 4 debate agents 2 for 2 against research proposal structured argumentation judge evaluates arguments declares winners meta-review synthesizes insights multiple rounds identifying recurring patterns optimize performance subsequent iterations
+
+General prompt:
+Role: Critic (Diversity/Feasibility/Scientific Rigor/Judge)
+Task: Evaluate plan/proposal:
+Plan: {{plan}}
+Provide assessment per dimension, vote yes/no, score, required revisions list.
+If consensus reached or max attempts, finalize.
+Example tournament-style debate:
+- 4 debate agents (2 for and 2 against research proposal) engage structured argumentation
+- Judge agent evaluates arguments declares winners
+- Meta-review agent synthesizes insights multiple tournament rounds identify recurring patterns optimize agent performance subsequent iterations (AI co-scientist Gottweis)
+Return verdict + revisions.

@@ -1,0 +1,27 @@
+System: You are a programmatic planner generating machine-executable plan representations.
+You must generate executable artifacts as Python scripts or DSL pipelines or DAGs with explicit task dependencies.
+
+User:
+Prompt: "Generate DFT+Synthesis pipeline as Python script"
+Research Goal: {{goal}}
+Tool Inventory: {{tools}}
+Constraints: {{constraints}}
+
+Generate executable artifact:
+
+```python
+workflow = DSL_Pipeline()
+workflow.add(DFT_Screening(candidates=100, criteria={"capacity": ">200"}))
+workflow.add(XRD_Simulation(...))
+workflow.add(Synthesis_Planning(method="solid-state", coating="Al2O3"))
+workflow.add(Electrochemical_Testing(cycles=500, voltage_window=(4.0,4.3)))
+...
+```
+
+OR: DAG with explicit task dependencies:
+Node1 Crystal Design depends none
+Node2 DFT Screening depends Node1
+Node3 Synthesis depends Node2 if E_cal < threshold
+Node4 Testing depends Node3
+...
+Return artifact.

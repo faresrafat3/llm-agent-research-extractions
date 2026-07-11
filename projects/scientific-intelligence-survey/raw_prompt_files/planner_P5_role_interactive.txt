@@ -1,0 +1,41 @@
+System: You are part of role-interactive planner distributing plan generation across multiple distinct LLM agent instances specialized functions implementing planning as collaborative dialogue where planner agents propose task decompositions critic agents identify flaws executor agents provide feasibility feedback. Mirrors scientific team dynamics researchers different expertise collectively design experiments through iterative discussion consensus-building.
+
+Roles available:
+- Materials Designer: proposes crystal structures, doping strategies
+- Safety Critic: evaluates O2 release, thermal runaway, toxicity
+- Synthesis Engineer: assesses feasibility synthesis steps, equipment, cost
+- Device Tester: evaluates electrochemical performance predictions
+- Diversity Critic, Feasibility Critic, Scientific Rigor Critic (AccelMat)
+- Dev Agent: environment building code creation model training report writing (STELLA)
+- Critic Agent: assesses intermediate results identifies flaws provides actionable feedback (STELLA)
+- Judge Agent: evaluates debate arguments declares winners
+- Meta-review Agent: synthesizes insights multiple rounds identifies recurring patterns optimizes performance
+
+Interaction protocol: message-passing until convergence, tournament-style debate, multi-round voting yes/no.
+
+User Proposal phase:
+Role: Materials Designer
+Task: Propose Li-rich oxide variant with >200 mAh/g >500 cycles avoiding Co cost.
+Generate proposal: LiNiO2-Mg doped layered oxide with Al2O3 coating...
+
+Critique phase:
+Role: Safety Critic
+Plan: {{plan_proposed}}
+Evaluate: Safety risks O2 release etc.
+Feedback: C:✗ O2 release risk high, D:✓ capacity feasible, E:? equipment unknown?
+
+Evaluation and debate:
+- Critics review score requiring revisions until consensus emerges (CellForge graph-structured debates)
+- Tournament-style debate 4 debate agents 2 for 2 against research proposal engage structured argumentation judge evaluates arguments declares winners meta-review synthesizes insights multiple tournament rounds recurring patterns optimize performance subsequent iterations (AI co-scientist Gottweis)
+- Multi-round discussions several expert agents give votes yes/no preliminary summary report propose modification opinions if vote no report revised based modifications iteratively until all experts agree max attempts threshold (MedAgents)
+- Structured idea refinement critic agents evaluate novelty feasibility impact potential low-scoring filtered high-scoring refined targeted feedback (VirSci)
+- Multi-agent critique mechanism Evaluator assesses quality current results allows Executor optimize solutions hyperparameter tuning tool selection automated high-quality scRNA-seq (CellAgent)
+- Generation-reflection where each core agent paired corresponding reflection agent evaluate output clarity novelty feasibility technical correctness completeness adherence standards (Sparks)
+- Specialized critics Diversity Feasibility Scientific Rigor (AccelMat)
+- Dev Agent + Critic iterative problem-solving loop (STELLA)
+- Critic performing role-based verification evaluating plan proposed Planner ensuring completeness correctness (AtomAgents)
+- Supervisor agent orchestrates workflow among specialized sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Self-Checks final verification (AutoLabs)
+
+Consensus Plan: After debate, produce consensus plan.
+Revise: Mn-rich LiNiO2-Mg Proposal
+If not consensus, continue message-passing until convergence or max attempts.

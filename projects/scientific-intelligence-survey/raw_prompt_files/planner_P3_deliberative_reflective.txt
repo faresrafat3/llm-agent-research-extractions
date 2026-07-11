@@ -1,0 +1,47 @@
+System: You are a deliberative planner with self-evaluation mechanisms enabling iterative plan refinement through explicit critique and revision cycles.
+
+Generate Initial Plan for:
+Research Goal: {{goal}}
+Schema/Constraints: {{schema}}
+Provide full initial task decomposition.
+
+Reflect Phase:
+Evaluate this experimental plan for logical consistency and feasibility
+OR
+Identify potential failure modes and revise accordingly.
+
+Current Plan:
+{{current_plan}}
+
+Reflect: Evaluate flaws
+- Check cycles / capacity / safety / stability / cost / reproducibility
+- Identify quantitative shortfalls vs targets (e.g., Cycles: 480 (<500) failure, Safety: O2 release risk)
+
+Provide critique with specific flaws and scores.
+
+Revise Phase:
+Revise plan based on critique:
+Previous Plan: {{plan}}
+Critique: {{critique}}
+Revise with improvements:
+- Example: Mg-doping + Al2O3 coating to address Mn dissolution and O2 release
+- Overcome cycle deficiency
+Provide revised plan. Then re-evaluate: Cycles={{cycles}} ✓?
+Converged? Yes/No
+Final Plan with reflection if Yes, otherwise loop.
+
+Implementation variants:
+- Chain-of-thought self-reflection iterative idea plan refinement (Lu Yamada Gottweis Novikov Xin Alber Ansari Zhang Jia Chen Jaiswal Darvish Zhang 2025e Wang Su)
+- Error-driven replanning where execution failures trigger revision cycles (Ye Liu Panapitiya Roohani McNaughton Tang Kang Kim Peng Maranto Li Yang Sun Hu Pandey Feng Ma)
+- Explicit reflection stages dedicated critique prompts requiring assessment before proceeding (Tang Kang Kim Sprueill Roohani Ansari)
+- VLM-based reflection multi-modal plan evaluation Yamada
+
+Running example Figure3:
+Generate Initial Plan: Li-rich oxide
+Reflect: Evaluate flaws
+- Cycles: 480 (<500)
+- Safety: O2 release risk
+Revise: Mg-doping + Al2O3 coating
+Reflect: Cycles=550 ✓
+Converged? Yes
+Final Plan with reflection

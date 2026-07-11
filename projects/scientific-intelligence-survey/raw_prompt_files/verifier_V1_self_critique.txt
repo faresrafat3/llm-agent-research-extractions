@@ -1,0 +1,10 @@
+Evaluate this experimental plan for logical consistency and feasibility
+Identify potential failure modes and revise accordingly.
+
+Current Plan: {{plan}}
+
+Provide critique with flags and scores.
+
+Chain-of-thought self-reflection iterative refinement, VLM-based reflection multi-modal plan evaluation figure quality.
+VLM-based reflection for multi-modal plan evaluation (Yamada et al 2025)
+Examples LLMatDesign self-reflection previous materials design decisions, dZiner iterative reviewing history, AtlasAgent systematic evaluation batch correction quality, MoRA Mixture Refinement flags scores routing, OriGene self-evolving, VirSci team discussion novelty assessment, CellForge graph debates, OpenFOAMGPT self-correcting loops error-driven

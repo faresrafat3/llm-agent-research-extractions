@@ -1,0 +1,47 @@
+flowchart TD
+  START([بداية تحميل CSV]) --> LOAD[تحميل df pd.read_csv + حذف NaN المقتطف + حذف تكرار المقتطف]
+  LOAD --> LOOP_DOC{لكل صف معرف ومقتطف}
+  LOOP_DOC --> CHUNK[تقسيم مع الحفاظ على الجمل ≤1000 كلمة\nم pipeline Stanza تقطيع tokenizer لغة en\nإذا غير متوفر regex (?<=[.!?])\\s+(?=[A-Z])\nالحفاظ على حدود الجملة\nعزل الجملة الطويلة >1000 وحدها]
+
+  CHUNK --> LOOP_CHUNK{لكل chunk}
+  LOOP_CHUNK --> CALL[call_model chunk\nclient.responses.create نموذج gpt-5\nنظام خبير استخراج أرجع JSON فقط\nالمستخدم PROMPT_TEMPLATE مصفوفة JSON صارمة\nجملة الجهل حرفية\nsupport_sentence/s مصفوفة\njustification مختصر\nIgnorance Cues مصفوفة\nالمستند <<<chunk>>> أرجع [] فقط إن لم يوجد]
+
+  CALL --> EXTRACT[extract_json_array\nإزالة ```json وأسوار الكود + وسوم <think>\nregex \\[\\s*\\{.*?\\}\\]]
+  EXTRACT --> VALID{التحقق validate_payload؟\nقائمة قواميس المفاتيح المطلوبة وأنواع}
+  VALID -->|فشل| ERROR[كتابة {file_id}__ERROR.txt repr(e)+المقتطف\nنوم 1.5 استمرار]
+  ERROR --> LOOP_DOC
+  VALID -->|نجاح| ACCUM[تجميع all_items.extend(items)\nنوم 1.5]
+  ACCUM --> MORE_CHUNK{هل بقي chunks؟}
+  MORE_CHUNK -->|نعم| LOOP_CHUNK
+  MORE_CHUNK -->|لا| DEDUPE[إزالة التكرار dedupe_by_statement\nضغط مسافات مطابقة حرفية\nمجموعة seen]
+
+  DEDUPE --> SAVE[حفظ {file_id}.json بمسافة 2\nنوم 1.0]
+  SAVE --> NEXT_DOC{هل بقي مستندات؟}
+  NEXT_DOC -->|نعم| LOOP_DOC
+  NEXT_DOC -->|لا| EVAL_BRANCH{فرع التقييم؟}
+
+  EVAL_BRANCH -->|صريح IPBES| E_IPBES[تقييم IPBES\n657 عبارة 286 فقرة\nROUGE-L F1 مع stemming مطابقة واحد لواحد عتبة 0.55\nTP إذا >0.55 غير مطابق FP غير مطابق ذهب FN\nP R F1 مجمع]
+  E_IPBES --> TABLE3[جدول3 نتائج\nLlama-70B أفضل F1 0.8307 بلا حد\nGPT-4o-mini 0.8143 مقسم\nGPT-5 0.7949\nGPT-4o متحفظ دقة عالية 0.8445 استدعاء منخفض 0.4223\nالتقسيم يغير ~0.02 F1]
+
+  EVAL_BRANCH -->|صريح COVID| E_COVID[تقييم COVID\nقسم حتى 8K رمز\nذهبي واحد لكل قسم لكن فجوات كامنة كثيرة\nتصفية غير بحثي\nتحقق مقابل قاموس إشارات جهل Boguslav\nيجب أن تحتوي ≥1 إشارة]
+  E_COVID --> TABLE4[جدول4 الدقة\nGPT-5 63.51% مقسم 60.64% بلا حد أفضل\nكل النماذج اتحاد 80.37% مقسم 75.03% بلا حد]
+  TABLE4 --> VENN[تداخل Venn أفضل 4 نماذج\n~1.14k مشترك كل الأربعة\nGPT-5 فريد كثير\nعنكبوت 5 فئات\nهدف بحث مستويات أدلة شذوذ حواجز فرص مستقبلية\nGPT-5 خارجي دائما]
+
+  EVAL_BRANCH -->|ضمني فقرة يدوي| IMPL_MANUAL[مجموعة يدوية ضمنية\n212 فقرة 137 مقال PubMed\nذهب اتجاه مستقبلي مخفي في النهاية\nتقديم الفقرة مخفية]
+  IMPL_MANUAL --> TABI_PROMPT[موجه TABI 3-shot\nنظام خبير تحليل جدلي طبي حيوي\nالمستخدم مهمة استنتاج فجوة ضمنية\nهيكل الإخراج JSON Claim / Grounds مقتبسة / Warrant جملة واحدة / Bucket أكثر مقابل أقل احتمالا / Category 5 أنواع / Justification\n3 أمثلة:\n- مركب E فئران مؤشر F بشر نتائج غير معروفة\n- اصطناعي 95% مقابل حقيقي مفقود تحول 200 ملصق\n- دراسة A أوروبي فائدة مقابل B آسيوي لا تأثير صراع\nإرجاع 1-3 مرشحين]
+
+  TABI_PROMPT --> LLM_TABI[توليد LLM\nGPT-5 GPT-4o Llama إلخ\nZero-shot يتحول غامض\n3-shot أساسي دقيق]
+
+  LLM_TABI --> EVAL_TABI[تقييم عبر RoBERTa-large ثنائي الاستدلال\nClaim مقابل ذهب + Warrant مقابل مقدمات عتبة 0.4\nنجاح إذا طابق أي مرشح الذهب\nدقة + توزيع Bucket]
+  EVAL_TABI --> TABLE5[جدول5 فقرة ضمنية\nGPT-5 84.43% 179 عدد\nGPT-4o 80.66% 171\nLlama-70B 77.89% 163\nGemma-2-9B 22.64% struggle\nBucket 10-24% صحيح أقل احتمالا معايرة]
+
+  EVAL_BRANCH -->|ضمني نص كامل تجريبي| IMPL_FULL[تجريبي نص كامل\n24 نص كامل 19 مجال STEM\nGPT-4o متعدد وسائط سياق طويل]
+  IMPL_FULL --> FULL_PROMPT[موجه ورقة كاملة\nنظام مراجع كبير\nالمستخدم حدد 5-10 فجوات ضمنية\nلكل: فجوة ضمنية + مقاطع دليل مرجع قسم + Warrant + فئة فجوة + اتجاه مستقبلي ملموس + ملاحظات جدوى تقنية/ميزانية + Bucket\nإرجاع مصفوفة JSON صارمة]
+  FULL_PROMPT --> AUTHOR_SURVEY[استبيان مؤلفين 18 مؤلف مراسل\nمراجعة فجوات + اتجاهات موافقة/غير موافقة + تبرير عدم صلة سوء تفسير قديم]
+  AUTHOR_SURVEY --> SURVEY_RES[نتائج\nحقيقي صحيح 83.3% موافقة\nبقي مفتوح 56% كامل +25.9% جزئي\nتأثير 67% من جزئي تقدم مجال\nتنفيذ صالح 65% غير صالح 35% جدوى قيود تقنية ميزانية صلة مجموعات أخرى]
+
+  TABLE3 --> TAKEAWAY
+  TABLE5 --> TAKEAWAY
+  SURVEY_RES --> TAKEAWAY
+
+  TAKEAWAY([دروس\nالحجم يساعد أكبر>أصغر لكن مفتوح منافس\nتقسيم 1K محاذاة جمل آمن غالبا يعزز استدعاء\nTABI قابل للتفسير وقابل للتسجيل\n3-shot أساسي\nمزيج LLMs موصى به\nبشر في الحلقة مطلوب للجدوى])

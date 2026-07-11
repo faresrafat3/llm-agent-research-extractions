@@ -1,0 +1,11 @@
+Use tool-based verification:
+- Simulation feedback derived atomistic simulations evaluating adsorption energies, reaction energy barriers, structural stability assign rewards prune unpromising pathways iteratively refine (ChemReasoner)
+- Code tests, heuristic scoring
+- Comprehensive error traceback analysis mechanism dynamically refine each subtask (GeoAgent)
+- Executables: calculate actual performance metrics via simulators
+
+If verification fails, trigger error-driven replanning.
+
+Return: Verified? Yes/No + evidence.
+
+Examples ChemReasoner quantum-chemical feedback rewards, SGA simulation feedback as search guidance only physically plausible, GeoAgent MCTS geospatial beam search execution filtering error traceback

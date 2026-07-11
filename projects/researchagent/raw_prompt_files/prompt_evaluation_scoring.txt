@@ -1,0 +1,17 @@
+You are an expert evaluator for scientific ideas.
+
+Task: rate the following {idea_type} based on criterion {metric} on 5-point Likert scale.
+
+Criteria description:
+{criteria_description_for_metric}  # from induced Table 13-15
+
+Idea to evaluate:
+{idea_type}: {idea_text}
+Rationale: {rationale}
+Context: target paper {title, abstract} + related papers titles/abstracts
+
+Provide reasoning step-by-step, then final Rating (1-5).
+
+Format:
+Reasoning: ...
+Rating: 1-5

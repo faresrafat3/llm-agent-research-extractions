@@ -1,0 +1,8 @@
+{
+  "K_matrix": "R^{m x m} sparse m unique entities, 50,091 papers May-Dec2023 + refs",
+  "EL": "BLINK linker Wu et al 2020 off-the-shelf, titles+abstracts only",
+  "example_build": "Consider all pairs {ei,ej} C(|E|,2) counts co-occurrence + single counts",
+  "retrieval_Eq1": "Ret({l0..ln};K)=argmax_{I subset [m]:|I|=k} prod P(ei|E_{l0..ln}) ei not in E",
+  "retrieval_Eq2": "argmax prod (prod_{ej in E} P(ej|ei)) * P(ei) from normalized K",
+  "alternative_embedding": "cosine similarity in linker latent space, highest similarity to current literature entities, comparable results Table5"
+}

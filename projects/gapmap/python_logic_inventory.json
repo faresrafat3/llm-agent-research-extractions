@@ -1,0 +1,131 @@
+{
+  "project": "GAPMAP",
+  "arxiv": "2510.25055",
+  "repo": "lhunter-lab/GAPMAP",
+  "commit": "b0145b4",
+  "files": [
+    {
+      "file": "scripts/ex_gap_xtract.py",
+      "functions": [
+        {
+          "name": "build_stanza_pipeline",
+          "args": ["lang=en"],
+          "desc": "Build Stanza tokenizer pipeline; download if missing"
+        },
+        {
+          "name": "regex_sentence_split",
+          "args": ["text:str"],
+          "desc": "Fallback conservative sentence splitter using regex (?<=[.!?])\\s+(?=[A-Z\"“(]) and merging short buffers"
+        },
+        {
+          "name": "stanza_sentence_tokens",
+          "args": ["text:str", "nlp"],
+          "desc": "Return list of (sentence_text, token_count) using Stanza doc.sentences"
+        },
+        {
+          "name": "split_into_chunks_preserving_sentences",
+          "args": ["text:str", "max_tokens:int=1000", "lang:str=en"],
+          "desc": "Chunk text <=max_tokens preserving sentences, isolate too-long sentence alone"
+        },
+        {
+          "name": "extract_json_array",
+          "args": ["text:str"],
+          "desc": "Strip code fences and <think> tags, regex extract [ {..}, {..} ] array"
+        },
+        {
+          "name": "validate_payload",
+          "args": ["payload"],
+          "desc": "Check list of dicts contains REQUIRED_KEYS and correct types"
+        },
+        {
+          "name": "call_model",
+          "args": ["chunk:str"],
+          "desc": "Call OpenAI Responses API with system+user template, extract and validate JSON"
+        },
+        {
+          "name": "dedupe_by_statement",
+          "args": ["items"],
+          "desc": "Deduplicate by whitespace-squashed Ignorance Statement exact match"
+        }
+      ],
+      "constants": {
+        "REQUIRED_KEYS": ["Ignorance Statement", "support_sentence/s", "justification", "Ignorance Cues"],
+        "MODEL_NAME": "gpt-5",
+        "MAX_TOKENS_PER_CHUNK": 1000,
+        "STANZA_LANG": "en"
+      },
+      "prompts": {
+        "system_explicit": "You are an expert scientific information extraction model. Return ONLY valid JSON.",
+        "user_explicit_template": "You are an expert scientific information extraction model.\\n\\nTASK\\nExtract every scientific knowledge gap... OUTPUT FORMAT STRICT JSON array... DOCUMENT <<< {chunk} >>> Return only JSON array. If no gaps [], double quotes."
+      }
+    }
+  ],
+  "implicit_prompts": {
+    "TABI_3shot": {
+      "components": ["Claim (implied gap)", "Grounds (evidence spans quoted)", "Warrant (single sentence reasoning)", "Bucket (more_probable|least_probable)", "Category (5 gap types)", "Justification"],
+      "shots": 3,
+      "example_grounding": "Compound E improves biomarker F in mice + biomarker F correlates poorly with human outcomes => It is unknown whether E improves patient outcomes",
+      "note": "0-shot degenerates to vague restatements; 3-shot essential"
+    },
+    "full_paper_pilot": {
+      "model": "GPT-4o multi-modal",
+      "input": "full manuscript text/tables/figures",
+      "output": "5-10 implicit gaps + Evidence Spans + Warrant + Gap Category + Future Direction + Feasibility Notes + Bucket",
+      "survey": "18 corresponding authors agree/disagree + justification categories"
+    }
+  },
+  "evaluation": {
+    "explicit_IPBES": {
+      "metric": "ROUGE-L F1 with stemming, one-to-one matching threshold 0.55",
+      "tp": "score>0.55",
+      "fp": "unmatched predictions",
+      "fn": "unmatched gold",
+      "aggregate": "P,R,F1 across documents"
+    },
+    "explicit_COVID": {
+      "metric": "Accuracy + ignorance cue dictionary validation (Boguslav et al)",
+      "filter": "Exclude general non-research gaps, require at least one cue from dictionary",
+      "notes": "Single gold per section but many latent gaps; leads to extra valid predictions"
+    },
+    "implicit_paragraph": {
+      "metric": "Accuracy via bi-directional entailment RoBERTa-large threshold 0.4",
+      "pairs": "(Claim vs Gold) & (Warrant vs Premises)",
+      "success": "any candidate matches gold",
+      "bucket_calibration": "10-24% correct bucketed least_probable"
+    },
+    "full_text_pilot": {
+      "metrics": {
+        "factual_true": "83.3% agree",
+        "remain_open_fully": "56%",
+        "remain_open_partially": "25.9%",
+        "impact_among_partial": "67% might advance field",
+        "implementation_valid": "65% valid, 35% invalid due feasibility"
+      }
+    }
+  },
+  "chunking": {
+    "strategy": "sentence-aligned ≤1000 words",
+    "stanza": "Pipeline lang=en processors=tokenize, token_count=sum words",
+    "fallback": "regex (?<=[.!?])\\s+(?=[A-Z\"“(])",
+    "behavior_long_sentence": "isolate alone in chunk",
+    "effect": "Preserves semantic coherence, safe preprocessing, often boosts recall"
+  },
+  "models_benchmarked": ["GPT-5", "gpt-4o", "GPT-4o mini", "Gemma-2-9B", "Llama-3.3-70B", "Llama-4-17B MoE 16 experts", "Llama-3.1-8B"],
+  "decisions": ["D1 dataset choice", "D2 chunking no limit vs 1K", "D3 model family", "D4 zero-shot explicit vs 3-shot implicit", "D5 eval thresholds", "D6 dedupe", "D7 validation", "D8 bucket", "D9 filter non-research", "D10 cue dictionary check"],
+  "loops": [
+    {"loop": "df rows documents", "bound": "N"},
+    {"loop": "chunks per excerpt", "bound": "len(excerpt)/1000"},
+    {"loop": "items accumulation", "bound": "chunks"},
+    {"loop": "dedupe", "bound": "all_items"},
+    {"loop": "ROUGE matching", "bound": "pred x gold"},
+    {"loop": "TABI candidates", "bound": "1-3 per paragraph"},
+    {"loop": "entailment scoring", "bound": "candidates"},
+    {"loop": "benchmark matrix", "bound": "7 models x2 settings"},
+    {"loop": "author survey", "bound": "18 authors"}
+  ],
+  "outputs": {
+    "per_file_json": "{file_id}.json list of gaps",
+    "error_file": "{file_id}__ERROR.txt",
+    "metrics": ["P,R,F1 IPBES", "Correct Acc COVID + Venn unique/shared", "FD Count Acc implicit", "Author agreement % full-text"]
+  }
+}

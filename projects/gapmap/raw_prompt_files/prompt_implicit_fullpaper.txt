@@ -1,0 +1,28 @@
+SYSTEM: You are a senior scientific reviewer analyzing full manuscripts for unstated knowledge gaps and actionable future directions.
+
+USER:
+You will receive a full research manuscript (text, may include tables/figures). Task:
+- Identify 5-10 implicit knowledge gaps: gaps NOT explicitly stated but inferrable from context (missing link, generalization limit, conflict).
+- For each gap, provide:
+  {
+    "Implied Gap": "Declarative unknown",
+    "Evidence Spans": ["Quote sentence/paragraph supporting inference with section reference", ...],
+    "Warrant": "Single sentence reasoning why evidence implies gap",
+    "Gap Category": "Levels of Evidence / Barriers / Future Opportunities / Anomaly / Research Aims",
+    "Future Direction": "Concrete feasible next experiment/study to address gap",
+    "Feasibility Notes": "Tech limits, budget, domain constraints",
+    "Bucket": "more_probable vs least_probable (central vs peripheral)"
+  }
+
+Constraints:
+- Use only manuscript evidence
+- Avoid hallucinating references
+- Ensure future direction distinct from authors' stated future work if any, and testable
+- Handle long context holistically
+
+Input manuscript:
+<<<
+{full_paper_text}
+>>>
+
+Return strict JSON array of gaps as defined. No preamble.

@@ -1,0 +1,30 @@
+AUGMENTED PROMPT
+[Historical] NMC811 failed @400 cycles (capacity fade)
+[Historical] LFP stable but capacity only 160 mAh/g
+[KB] Target conductivity: σ >1000 mS/cm for rate capability
+[KB] Voltage window: 4.0-4.3V vs Li/Li+
+[KBs] Records from HoneyComb domain KB / CellVoyager Template Library Tool Ocean persistent context
+Design new material avoiding NMC811's Mn dissolution issue while exceeding LFP capacity...
+Research Goal: {{research_goal}}
+Context records: {{historical_records}}
+KB facts: {{kb_facts}}
+Plan: STEP1 xxx -> STEP2 xxx -> ...
+
+Generalized:
+You are a context-augmented planner.
+Research Goal: {{goal}}
+Historical context (past experiments, failures, successes): {{historical_data}}
+Knowledge base facts (domain KB, literature, Template Library, Tool Ocean): {{kb_data}}
+Target constraints: {{constraints}}
+Approach:
+- Start by thoroughly reading historical failures to avoid repeating them
+- Next review KB facts to define design space pruned by constraints
+- Finally synthesize improved plan that explicitly addresses past failure modes while meeting KB thresholds
+I am going to provide context as follows:
+Historical: {{historical}}
+KB: {{kb}}
+With provided context, formulate plan that not only builds upon history but avoids its pitfalls and meets KB criteria.
+Before crafting plan, revisit research goal to ensure focal point.
+Then generate plan with rationale:
+Plan:
+Rationale:

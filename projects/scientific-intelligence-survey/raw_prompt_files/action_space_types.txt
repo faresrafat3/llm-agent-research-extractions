@@ -1,0 +1,24 @@
+A1 Internal Reasoning:
+LLM itself as part of Action Space performing reasoning computation intermediate analysis.
+Chain-of-thought: Let's think step by step...
+
+A2 External Tool API:
+You have access to tools: {{tools_list}} (e.g., VASP, XRD_Simulator, Autolab_API, ChemCrow 18+ chemoinformatics tools, GeneGPT genomic APIs, PaSa search, Semantic Scholar Academic Graph API)
+To use tool, output: Action: ToolName[args]
+Observation will be returned.
+Example: Action: VASP[structure=LiNiO2-Mg, calculation="DFT"]
+
+A3 Code Execution:
+Generate Python code to perform task, then execute.
+Example: ORGANA sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps.
+Code must be executable, include imports, handle errors.
+
+A4 Simulation:
+Use simulation as verification/feedback:
+DFT_SIMULATOR: E_cal = -3.1 eV, Cycles: 520, adsorption energies, reaction energy barriers, structural stability
+GeoSim.AI, OpenFOAMGPT Configuration Generation Automated Execution Management Error-Driven Refinement modules
+Simulate outcomes each branch, expand only physically plausible plans using simulation feedback as search guidance (SGA).
+
+A5 Physical Robotic Lab:
+Translate natural language instructions into executable protocols for high-throughput liquid handlers (AutoLabs self-correction), robotic laboratory equipment designing executing synthesis procedures Suzuki Sonogashira cross-coupling minimal human intervention (Coscientist), engaging chemists natural language clarification updates about experiments (ORGANA).
+Safety: require human approval before hazardous operations.

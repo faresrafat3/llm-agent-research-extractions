@@ -1,0 +1,14 @@
+{
+  "core": {
+    "title": "Language Models are Few-Shot Learners",
+    "abstract": "Here we show that scaling up language models greatly improves task-agnostic, few-shot performance, sometimes even reaching..."
+  },
+  "related": [
+    {"title": "GPT-3 paper referencing", "abstract": "..."},
+    {"title": "Physics of ...", "abstract": "..."}
+  ],
+  "entities_example": ["GPT-3", "Physics", "CoT", "RLHF", "LLaMA", "database", "hematology"],
+  "avg_refs": 87,
+  "avg_entities_abstract": 2.17,
+  "sampling": "300 papers >20 citations after May01 2023, cutoff Apr2023"
+}

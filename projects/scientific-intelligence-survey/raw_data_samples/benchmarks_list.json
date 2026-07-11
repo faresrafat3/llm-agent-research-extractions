@@ -1,0 +1,13 @@
+{
+  "benchmarks": [
+    {"name": "MLE-bench", "domain": "Machine learning engineering", "focus": "training models datasets running experiments", "source": "Chan et al 2024"},
+    {"name": "RAS-Eval", "domain": "Security robustness", "focus": "security robustness assessment", "source": "Fu et al 2025b"},
+    {"name": "Core-bench", "domain": "Computational reproducibility", "focus": "validating published results fostering credibility", "source": "Siegel et al 2024"},
+    {"name": "SciTrust 2.0", "domain": "Trustworthiness scientific", "focus": "truthfulness adversarial robustness scientific safety ethics exploration capabilities", "source": "Herron et al 2025"},
+    {"name": "Tool-augmented geospatial", "domain": "Remote sensing geospatial analysis", "focus": "tool-augmented agents for remote sensing and geospatial analysis", "source": "Singh et al 2024"},
+    {"name": "SciBench", "domain": "Foundational reasoning", "focus": "general reasoning scientific research performance"},
+    {"name": "SciMON", "domain": "Hypothesis generation", "focus": "scientific hypothesis generation exploration"}
+  ],
+  "limitations": "static datasets pre-defined tasks may not fully capture dynamic iterative nature real-world scientific research, focus end-to-end performance obscuring nuanced failures individual steps, diversity domains challenges standardizing metrics fairly compare",
+  "future": "adaptive continuously updated benchmarks mimic authentic workflows dynamic benchmarks multi-turn interactions agents iteratively refine hypotheses based experimental feedback akin real lab, domain-specific metrics cross-disciplinary tasks"
+}

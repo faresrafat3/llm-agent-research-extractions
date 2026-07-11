@@ -1,0 +1,12 @@
+{
+  "paragraph": "Compound E improves biomarker F in mice. Biomarker F correlates poorly with clinical outcomes in humans. Future direction masked.",
+  "masked_future": "It is unknown whether E improves patient outcomes.",
+  "TABI_example_output": {
+    "Claim": "It is unknown whether compound E improves patient outcomes in humans.",
+    "Grounds": ["Compound E improves biomarker F in mice.", "Biomarker F correlates poorly with clinical outcomes in humans."],
+    "Warrant": "Surrogate marker poor correlation breaks translational inference.",
+    "Bucket": "more_probable",
+    "Category": "Levels of Evidence"
+  },
+  "eval": "RoBERTa-large bi-directional entailment threshold 0.4"
+}

@@ -1,0 +1,76 @@
+{
+  "project": "Scientific Intelligence Survey",
+  "arxiv": "2503.24047v3",
+  "scope": ">120 papers >40 benchmarks",
+  "planner": {
+    "prompt_native": {
+      "P1_Instructional_Schema": {
+        "examples": ["AutoLabs Panapitiya", "Coscientist Boiko Suzuki Sonogashira", "CRISPR-GPT Huang", "GeneGPT Jin", "k-agents Cao", "LLMSat Maranto", "ORGANA Darvish", "ResearchAgent Baek", "StarWhisper Wang"],
+        "mechanism": "predefined workflow templates ReAct Thought-Action-Observation tool schemas domain guidelines procedural schema 1 Crystal Design -> 2 DFT -> 3 Synthesis -> 4 Testing, single LLM explicit instructions system prompts",
+        "running_example": "Battery Schema Persona battery materials expert Procedural Schema 1-4 Tool Inventory VASP XRD_Simulator Autolab_API Constraints Avoid Co target >4V"
+      },
+      "P2_Context_Augmented": {
+        "examples": ["CellVoyager Alber Template Library Tool Ocean self-evolving", "CoI Li person research interests", "Coscientist Boiko", "GeoSim.AI Bekele", "HoneyComb Zhang", "IR-Agent Noh", "PaSa He", "ResearchAgent Baek academic graph entity store 50,091 papers", "SciMON Wang", "STELLA Jin", "VirSci Su"],
+        "mechanism": "encode historical records NMC811 failed 400 cycles LFP stable 160 mAh/g + KB Target conductivity sigma>1000 voltage 4.0-4.3V custom context",
+        "challenge": "information selection coherence management large noisy windows dilute focus"
+      },
+      "P3_Deliberative_Reflective": {
+        "examples": ["AtlasAgent Yin", "CellForge Tang graph-structured debates", "dZiner Ansari iterative reviewing history CoT", "k-agents Cao", "MoRA Jaiswal Mixture Refinement flags scores routing", "LLMatDesign Jia self-reflection zero-shot", "OriGene Zhang self-evolving", "VirSci Su team discussion novelty vote", "OpenFOAMGPT 2.0 Feng self-correcting loops error-driven"],
+        "mechanism": "multi-turn generate->critique->revision meta-prompts Evaluate plan logical consistency feasibility Identify failure modes revise, chain-of-thought self-reflection, error-driven replanning, explicit reflection stages, VLM-based reflection",
+        "running_example": "Generate Initial Li-rich oxide Reflect cycles 480 fail safety O2 risk Revise Mg-doping Al2O3 coating Reflect cycles 550 ok Converged Final"
+      },
+      "P4_Search_Based": {
+        "examples": ["AI Scientist-v2 Yamada tree-search 4 stages Preliminary Investigation Hyperparameter Tuning Research Agenda Execution Ablation Studies parallel VLM figure quality", "CheMatAgent Wu HE-MCTS Policy Model Execution Model", "ChemReasoner Sprueill hierarchical search tree query plans catalyst type inclusion/exclusion relational operators quantum-chemical feedback adsorption energies", "GeoAgent Chen MCTS geospatial beam search execution filtering error traceback", "InternAgent Team hierarchical idea evolution tree", "Mephisto Sun tree search self-play knowledge base", "SGA Ma search with simulators physically plausible"],
+        "mechanism": "search trees nodes partial plans edges extensions generate multiple alternative evaluators heuristic learned value models quantum-chemical feedback VLM figure quality selectively expand high-scoring prune low-quality",
+        "running_example": "ROOT Cathode >200 5 variants scores 0.5 0.7 0.65 0.82 0.75 DFT E_cal -3.1 eV cycles 520 max reward path"
+      },
+      "P5_Role_Interactive_MultiAgent": {
+        "examples": ["AI co-scientist Gottweis tournament debate 4 debate 2 for 2 against judge meta-review", "AIGS Liu", "AtomAgents Ghafarollahi Critic verification", "El Agente Zou", "Foam-Agent Yue", "InternAgent Team", "IR-Agent Noh", "LLM-RDF Ruan", "MechAgents Ni", "MedAgents Tang role-playing yes/no votes until consensus", "ProtAgents", "Robin Ghareeb", "STELLA Jin Dev+Critic", "TAIS Liu", "VirSci Su", "xChemAgents Polat"],
+        "mechanism": "distribute planning across collaborative ensembles specialized functions proposal flaw feasibility feedback scientific team dynamics iterative discussion consensus-building tournament debate multi-round voting generation-reflection paired specialized critics Diversity Feasibility Scientific Rigor",
+        "challenge": "coordination overhead synthesizing conflicting feedback increased costs echo chambers share underlying biases"
+      },
+      "P6_Programmatic": {
+        "examples": ["AIGS Liu", "AlphaEvolve Novikov", "Biomni Huang", "Chemist-X Chen", "K-Dense Analyst Li", "ORGANA Darvish", "SGA Ma"],
+        "mechanism": "generate machine-executable plan representations Python script DSL_Pipeline workflow.add DFT_Screening candidates 100 criteria capacity >200 OR DAG explicit task dependencies"
+      }
+    },
+    "learned": {
+      "L1_SFT": ["AstroMLab de Haan", "BioGPT Luo", "Chemma Zhang LLaMA-2-7b 34B tokens", "DrugAssist Ye", "DrugPilot Li", "GatorTronGPT Peng", "GeoMinLM Fu", "MatChat Chen", "NatureLM Xia", "ToRA Gou"],
+      "L2_RL": ["BioScientist Agent Zhang", "CheMatAgent Wu", "Chemma Zhang", "CycleResearcher Weng", "ReFT Luong", "STEP-DPO Lai", "Flow-DPO Deng", "Sci-MARL Bae", "MolRL-MGPT Hu", "PaSa He"]
+    }
+  },
+  "memory": {
+    "M1_Working": "context window scratchpad Thought-Action-Observation",
+    "M2_Episodic": "Reflexion verbal reflections trial history lessons last K window reflection format Task trajectory feedback 2-5 actionable what wrong signal ignored policy change",
+    "M3_Semantic": "vector DB KG HoneyComb domain KB STELLA Template Library Tool Ocean self-evolving expand knowledge skills CoI person interests",
+    "M4_Procedural": "Voyager skill description Rules no name no logging helpers only main procedure max 6 sentences single block plain text stored skill library retrieve-by-similarity",
+    "M5_Hybrid": "combination hierarchical"
+  },
+  "action_space": {
+    "A1_Internal": "LLM itself reasoning computation intermediate analysis chain-of-thought",
+    "A2_Tool_API": "18+ chemoinformatics ChemCrow VASP XRD_Simulator Autolab_API GeneGPT genomic PaSa search Semantic Scholar etc Action ToolName[args] Observation",
+    "A3_Code": "Python executor DSL pipelines ORGANA sub-agents Understand Refine Chemical Calculations Vial Arrangement",
+    "A4_Simulation": "DFT simulator quantum-chemical feedback battery simulations adsorption energies reaction barriers stability GeoSim.AI OpenFOAMGPT Configuration Generation Automated Execution Management Error-Driven Refinement",
+    "A5_Physical_Lab": "Coscientist robotic lab Suzuki Sonogashira AutoLabs high-throughput liquid handlers self-correction ORGANA natural language chemist clarification safety human approval hazardous"
+  },
+  "verifier": {
+    "V1_SelfCritique": "chain-of-thought self-reflection explicit critique stages VLM figure quality",
+    "V2_ToolBased": "simulation feedback atomistic adsorption energies barriers stability rewards prune code tests heuristic scoring comprehensive error traceback GeoAgent",
+    "V3_HITL": {
+      "patterns": "continuous oversight selective intervention exception-based",
+      "modalities": ["approval gates experimental protocols safety-critical pause presentation synthesis procedures robotic control sequences hazardous awaiting explicit human approval", "evaluation feedback research outputs human domain experts assess quality novelty validity qualitative critiques refinement", "collaborative human-AI iteration multi-turn dialogues guidance constraints corrections shaping exploration", "intervention debugging error resolution automated self-correction fails manual edit code adjust parameters redirect"],
+      "examples": ["Agent Laboratory Schmidgall ML research feedback guidance each stage high-level notes deciding proceed", "StarWhisper Wang astronomers telescope operation natural language requests specific control sequences presenting planned observations verification approval", "ORGANA REASONER prompts user investigate decide further actions if outcomes mismatch", "BIA Xin human intervention critical junctures subset segmentation indispensable", "ChemCrow Bran panel 4 expert chemists Correctness Quality reasoning Degree completion fix invalid actions before robotic", "dZiner closed-loop human-in-loop chemist review proposed candidates reasoning feedback suggesting modifications", "Chemma active learning chemists feedback wet experiment results fine-tuning", "MAPPS Zhou scientists evaluation ranking refinement explicit approval before expensive simulations syntheses", "MatPilot human-machine collaboration"]
+    },
+    "V4_MultiAgentCritique": {
+      "mechanisms": ["MedAgents role-playing multi-round yes/no votes modification iteratively until consensus max attempts", "VirSci structured idea refinement critic novelty feasibility impact low filtered high refined", "CellAgent Evaluator Executor hyperparameter tuning tool selection automated scRNA-seq", "Sparks generation-reflection paired clarity novelty feasibility technical correctness completeness adherence", "AccelMat specialized critics Diversity Feasibility Scientific Rigor", "STELLA Dev Agent environment building code creation model training report writing Critic assesses intermediate flaws actionable feedback", "AtomAgents Critic role-based verification completeness correctness", "AutoLabs supervisor sub-agents Understand Refine Chemical Calculations Vial Arrangement Processing Steps Final Steps Self-Checks final verification", "AI co-scientist tournament debate 4 debate 2 for 2 against judge meta-review synthesizes insights multiple rounds recurring patterns optimize"],
+      "challenge": "coordination overhead synthesizing conflicting feedback increased costs echo chambers share biases motivating human oversight external tools"
+    }
+  },
+  "benchmarks": ">40 MLE-bench ML engineering, remote sensing geospatial tool-augmented Singh, RAS-Eval security robustness, Core-bench computational reproducibility, SciTrust 2.0 truthfulness adversarial robustness scientific safety ethics exploration, limitations static datasets not capture dynamic iterative real-world lab, end-to-end obscures nuanced failures individual steps, diversity domains challenges standardizing metrics, future adaptive continuously updated multi-turn interactions agents iteratively refine hypotheses experimental feedback lab processes domain-specific metrics cross-disciplinary",
+  "applications": {
+    "chem_mats": ["Chemical Synthesis Reaction Optimization AutoLabs ChemCrow 18+ Coscientist Suzuki Sonogashira Chemma LLaMA-2-7b 34B tokens retrosynthesis OSDA zeolite ChemReasoner catalytic GNN feedback LLM-RDF GPT-4 multi-agent ChemAgents Literature Reader Experiment Designer Computation Performer Robot Operator xChemAgents Selector Validator quantum", "Molecular Design dZiner inverse design ChemDFM 34B tokens free-form dialogue MolRL-MGPT", "Materials Discovery AccelMat AILA AtomAgents ChatMOF MOF HoneyComb LLMatDesign self-reflection MatChat MatPilot MatterChat MAPPS scientists evaluation ranking explicit approval PriM"],
+    "life_bio": ["Drug Discovery AI co-scientist BioScientist Agent DrugAgent DrugPilot DrugAssist GatorTronGPT MedAgents role-playing yes/no OriGene self-evolving Robin STELLA", "Genomics Bioinformatics AtlasAgent chain-of-thought batch correction quality BIA human intervention critical BioAgents BioDiscoveryAgent BioMaster BiomedRAG Biomni CellAgent Evaluator Executor scRNA-seq CellVoyager Template Library Tool Ocean GeneGPT K-Dense Analyst TAIS TransAgent", "Protein Engineering CRISPR ADAM CellForge graph-structured debates CRISPR-GPT ProtAgents Sparks generation-reflection"]
+  },
+  "decisions": ["D1 Instructional vs Context-Augmented vs Reflective vs Search vs Role-Interactive vs Programmatic", "D2 SFT vs RL preference optimization", "D3 Working vs Episodic vs Semantic vs Procedural vs Hybrid memory", "D4 Internal vs Tool API vs Code vs Simulation vs Physical lab action", "D5 Self-critique vs Tool-based vs HITL vs Multi-Agent critique verifier", "D6 HITL continuous vs selective vs exception-based", "D7 Search tree evaluation function heuristic vs learned value vs quantum-chemical vs VLM figure quality"],
+  "loops": ["Planner decomposition sub-tasks", "Memory retrieval relevant context knowledge", "Action Space tool invocation", "Verifier accuracy consistency scientific plausibility", "Verified results stored Memory refine future decisions", "If verification indicates further actions corrections Planner generates new plans re-invokes Action Space iterative until Verifier confirms validity reproducibility"]
+}

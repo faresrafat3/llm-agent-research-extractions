@@ -1,0 +1,12 @@
+{
+  "Chemistry_Materials": {
+    "Chemical_Synthesis_Reaction_Optimization": ["AutoLabs self-correction high-throughput liquid handlers", "ChemCrow 18+ chemoinformatics tools synthesis planning drug design materials", "Chemist-X RAG molecular literature DB + CAD + wet-lab", "Coscientist autonomous chemical experimentation Suzuki Sonogashira", "Chemma LLaMA-2-7b 34B tokens retrosynthesis yield prediction condition generation autonomous exploration", "OSDA Agent zeolite", "ChemReasoner process-supervised reasoning catalytic search GNN feedback", "LLM-RDF GPT-4 multi-agent literature search design optimization purification", "ChemAgents Literature Reader Experiment Designer Computation Performer Robot Operator", "xChemAgents Selector Validator physical constraints quantum chemistry"],
+    "Molecular_Design": ["CACTUS", "CheMatAgent HE-MCTS", "ChemDFM 34B tokens free-form dialogue", "ChemGraph", "ChemOrch", "dZiner inverse design iterative reviewing history domain guidelines", "El Agente", "IR-Agent", "MolRL-MGPT supervised+RL"],
+    "Materials_Discovery": ["AccelMat Diversity Feasibility Scientific Rigor critics", "AILA", "AtomAgents Critic verification", "ChatMOF", "HoneyComb", "LLMatDesign self-reflection zero-shot", "MatChat", "MatPilot", "MatterChat", "MAPPS scientists evaluation ranking explicit approval", "PriM"]
+  },
+  "Life_Biomedical": {
+    "Drug_Discovery": ["AI co-scientist tournament debate", "BioScientist Agent", "DrugAgent", "DrugPilot", "DrugAssist", "GatorTronGPT", "MedAgents role-playing yes/no votes until consensus", "OriGene self-evolving", "Robin", "STELLA Dev+Critic"],
+    "Genomics_Bioinformatics": ["AtlasAgent chain-of-thought batch correction quality", "BIA human intervention critical subset segmentation", "BioAgents", "BioDiscoveryAgent", "BioMaster", "BiomedRAG", "Biomni", "CellAgent Evaluator Executor hyperparameter tuning automated scRNA-seq", "CellVoyager Template Library Tool Ocean self-evolving", "GeneGPT genomic APIs", "K-Dense Analyst", "TAIS", "TransAgent"],
+    "Protein_Engineering_CRISPR": ["ADAM", "CellForge graph-structured debates Design proposes Critics review score revisions until consensus", "CRISPR-GPT", "ProtAgents", "Sparks generation-reflection paired"]
+  }
+}

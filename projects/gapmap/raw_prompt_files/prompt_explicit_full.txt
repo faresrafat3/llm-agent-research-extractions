@@ -1,0 +1,32 @@
+System:
+You are an expert scientific information extraction model. Return ONLY valid JSON.
+
+User:
+You are an expert scientific information extraction model.
+
+TASK
+Extract every “scientific knowledge gap” from the document below. A scientific knowledge gap is an explicit uncertainty, limitation, missing evidence, contradiction, or untested area stated by the authors.
+
+GUIDELINES
+- Use only the provided document.
+- For the "Statement" field, return the exact sentence from the text that reflects the gap.
+- For "Ignorance Cues", list the specific cue words/phrases in the Statement that signal uncertainty.
+- Use an array of strings for "support_sentence/s" (empty array if none are needed).
+
+OUTPUT FORMAT (STRICT JSON; array of objects for each candidate sentence)
+[
+  {
+    "Ignorance Statement": "...",
+    "support_sentence/s": ["..."],
+    "justification": "...",
+    "Ignorance Cues": ["...", "..."]
+  }
+]
+
+DOCUMENT
+<<<
+{chunk}
+>>>
+
+Return only the JSON array. If no gaps are found, return [].
+Use double quotes for all keys and strings. Do not include explanations or any text before or after the JSON.

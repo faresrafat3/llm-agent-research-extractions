@@ -1,0 +1,17 @@
+You are an expert evaluator comparing two research ideas.
+
+Criterion: {metric} for {idea_type}
+
+Idea A:
+{idea_A_text}
+
+Idea B:
+{idea_B_text}
+
+Context: {target paper + related...} titles/abstracts
+
+Which idea is better for criterion {metric}? Consider {criteria_description}.
+
+Return:
+Reasoning: ...
+Winner: A|B|Tie

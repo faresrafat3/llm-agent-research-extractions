@@ -1,0 +1,46 @@
+M1 Working Short-term:
+Maintain working memory scratchpad of current task:
+Current goal: {{goal}}
+Thoughts: {{thoughts}}
+Recent observations: {{observations}}
+Next action: ...
+
+M2 Episodic (Reflexion-style):
+You have episodic memory of past trials:
+Relevant lessons from past trials:
+{{memory_window}} last K reflections
+Rules:
+- Do not repeat failed strategies listed in lessons
+- Prefer smallest test falsifying approach early
+Reflection format after failure:
+Task: {{task}}
+Trajectory: {{trajectory}}
+Environment/test/reviewer feedback: {{feedback}}
+Reflection (2-5 sentences actionable):
+- What specifically went wrong?
+- What signal did you ignore?
+- What will you do differently next (one concrete policy change)?
+
+M3 Semantic Knowledge:
+Retrieve from knowledge store:
+Domain KB (HoneyComb) / Vector DB / KG / Template Library / Tool Ocean
+Query: {{query}}
+Relevant facts: {{retrieved_facts}}
+Use to inform planning.
+
+M4 Procedural Skill library (Voyager):
+Write a description of following successful procedure/function.
+Rules:
+1) Do not mention function/procedure name
+2) Do not mention logging/print/debug helpers
+3) If helpers exist describe only main procedure
+4) At most 6 sentences
+5) Response must be single block plain text
+Procedure:
+{{code_or_steps}}
+Main procedure is {{name}}
+Description stored in skill library → future retrieve-by-similarity.
+
+STELLA self-evolving mechanisms: dynamic Template Library and expandable Tool Ocean enabling continuously expand knowledge skills.
+
+M5 Hybrid combination hierarchical working+episodic+semantic+procedural

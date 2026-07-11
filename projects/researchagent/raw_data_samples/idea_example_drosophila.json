@@ -1,0 +1,10 @@
+{
+  "Input": {
+    "Title": "Whole-brain annotation and multi-connectome cell typing quantifies circuit stereotypy in Drosophila",
+    "Abstract": "The fruit fly Drosophila melanogaster combines sophisticated behaviour with tractable nervous system...",
+    "Entities": ["Virtual Fly Brain", "Central nervous system", "Kenyon cell", "CRISPR", "PINK1", "Parkin", "..."]
+  },
+  "Problem": "Investigating the Functional Implications of Connectome Variability in Drosophila’s Learning and Memory Circuits Across Different Environmental and Genetic Contexts",
+  "Method": "Multi-tiered approach integrates connectomics, behavioral assays, genetic manipulation CRISPR-Cas9 PINK1 Parkin, transcriptomic single-cell RNA sequencing spatial transcriptomics, computational modeling network analysis simulation of variability",
+  "Experiment": "7 steps: Pre-experimental Setup breeding program standardized rearing CRISPR constructs training; Connectome Mapping Variability Analysis random assignment control/treatment high-resolution imaging mushroom body ML quantification; Behavioral Assays olfactory conditioning visual pattern recognition baseline; Environmental Genetic Perturbations varied learning paradigms sensory inputs gene editing; Transcriptomic Spatial Analysis scRNA sequencing spatial transcriptomics correlate; Computational Modeling Network Analysis simulate information flow olfactory projection; Synthesis Validation iterative experimentation refinement"
+}

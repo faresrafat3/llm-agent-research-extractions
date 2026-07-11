@@ -1,0 +1,27 @@
+You are an expert evaluator aligning model judgments with human preferences.
+
+You have 10 examples of human judgments for criterion {metric} for {idea_type} (Problem/Method/Experiment). Each example contains:
+- Research idea text
+- Human score 1-5 on Likert
+
+Examples:
+{example_1_idea}
+Human Score: {score_1}
+...
+{example_10_idea}
+Human Score: {score_10}
+
+Task: Induce a detailed description for each level 1 to 5 of this criterion, reflecting underlying human preferences observed in examples. Each level description should be specific, distinguishable, and actionable for future evaluators.
+
+Return JSON:
+{
+  "criterion": "{metric}",
+  "level_1": "Description when score is 1...",
+  "level_2": "...",
+  "level_3": "...",
+  "level_4": "...",
+  "level_5": "..."
+}
+
+Focus on nuances that differentiate levels: clarity of definition, integration with prior work, novelty, feasibility constraints, etc.
+Make descriptions mirror human annotator reasoning but generalized.

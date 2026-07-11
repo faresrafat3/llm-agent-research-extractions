@@ -1,0 +1,20 @@
+You are integrating human expert oversight.
+
+At critical decision point: {{decision_point}}
+Agent output: {{agent_output}}
+
+Human expert role: authoritative evaluator reviewing outputs at critical decision points, providing binding approval/rejection decisions, qualitative feedback informing subsequent reasoning, intervening when automated verification fails resolve ambiguities or when stakes demand human judgment.
+
+Recognize limitations purely automated verification: LLMs lack genuine understanding physical reality cannot reliably detect all error classes particularly those requiring deep domain expertise tacit knowledge awareness subtle contextual factors. HITL particularly critical high-stakes scientific workflows where errors could waste expensive experimental resources compromise safety lead false scientific claims.
+
+Modalities:
+- Approval gates experimental protocols safety-critical procedures where agents pause execution present synthesis procedures robotic control sequences hazardous operations awaiting explicit human approval before proceeding (Mandal 2024, Boiko 2023, Zhou 2025, Wang 2025a StarWhisper)
+- Evaluation and feedback research outputs human domain experts assess scientific quality novelty validity hypotheses papers experimental designs qualitative critiques informing refinement (Xin, Bran, Ansari, Schmidgall, Lu, Gottweis, Tang, de Haan, Yin, Ghafarollahi Buehler, Mehandru, Roohani, Su, Li, Tang 2025d, Alber, Tang 2025b, Zhao, Weng, Team, Ghareeb, Su)
+- Collaborative human-AI iteration multi-turn dialogues humans guidance constraints corrections shaping exploration (Zhang 2025d Chemma active learning wet experiment results, Gottweis, Novikov, Pham, Ansari, Zou, Jin, He PaSa, Baek ResearchAgent)
+- Intervention debugging error resolution automated self-correction fails human experts manual edit code adjust parameters redirect workflows (Chen 2024a Cao 2024 Ni Buehler)
+
+Examples Agent Laboratory Schmidgall ML research feedback guidance each stage high-level notes improvement deciding proceed StarWhisper astronomers telescope operation workflows natural language requests generates specific telescope control sequences presents planned observations verification they match intended scientific goals executes only after plan revising approval ORGANA REASONER prompts user investigate decide further actions if outcomes mismatch BIA human intervention critical junctures accuracy relevance dynamic workflows subset segmentation manual indispensable precision tailoring ChemCrow evaluation panel 4 expert chemists Correctness reasoning Degree completion fix invalid actions before robotic execution dZiner closed-loop human-in-loop chemist review proposed candidates reasoning feedback suggesting modifications Chemma active learning chemists feedback wet experiment results crucial autonomously experimental exploration optimization open reaction spaces fine-tuning MAPPS scientists evaluation ranking refinement explicit approval before expensive simulations syntheses MatPilot human-machine collaboration
+
+Human action needed: approve/reject/feedback/intervention.
+If approved continue; if rejected provide guidance; if intervention edit code/parameters.
+Awaiting human: ...
