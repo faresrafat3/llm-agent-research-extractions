@@ -15,6 +15,8 @@
 | GAPMAP | `lhunter-lab/GAPMAP` `arxiv:2510.25055` | `projects/gapmap/` | https://github.com/faresrafat3/gapmap-full-extraction | explicit gap extraction JSON schema, TABI Claim/Grounds/Warrant/Bucket 3-shot, full-paper pilot GPT-4o multi-modal + author survey, ROUGE-L 0.55 / entailment 0.4, Stanza 1000-word chunking |
 | ResearchAgent | `JinheonBaek/ResearchAgent` `arxiv:2404.07738` | `projects/researchagent/` | https://github.com/faresrafat3/researchagent-full-extraction | problem/method/experiment generation Tables 6-8, ReviewingAgents Tables 9-11, criteria Tables 12-15 induced via 10 human pairs, entity store K sparse matrix Eq1 Eq2 co-occurrence vs embedding retrieval 50,091 papers, iterative refinement saturation after 3 steps |
 | Scientific Intelligence Survey | `arxiv:2503.24047` | `projects/scientific-intelligence-survey/` | https://github.com/faresrafat3/scientific-intelligence-survey-full-extraction | planner taxonomy P1-P6 L1-L2 with cathode running example Figure3, memory M1-M5, action space A1-A5, verifier V1-V4 HITL V3 approval gates evaluation feedback collaborative iteration intervention + V4 multi-agent critique tournament debate, >40 benchmarks >120 papers, applications map |
+| STORM | `stanford-oval/storm` `arxiv:2402.14207` | `projects/storm/` | https://github.com/faresrafat3/storm-full-extraction | perspective discovery GenRelatedTopics + GenPerspectives N=5 + p0 basic fact writer, simulated conversations GenQn + GenQueries + GenAnswer M=5 rounds N+1=6 perspectives total ~30 Q/A, search_and_sift YouRM You.com search API search_top_k 10, draft OD + refine O # ## ###, section-by-section generation Sentence-BERT retrieval citations + polish + lead, FreshWiki top100 per month Feb2022-Sep2023 B-class ORES, heading soft recall paraphrase-MiniLM-L6-v2 cosine + entity recall FLAIR NER, Prometheus 13B Interest Coherence Organization Relevance Focus Coverage trimmed 2000 words, citation recall precision Gao Mistral 7B, expert organized +25% broad +10% vs RAG, source bias transfer over-association challenges, Co-STORM collaborative discourse protocol mind map hierarchical shared conceptual space |
+| SciMON / SciPIP | `eaglew/clbd` `arxiv:2305.14259` `arxiv:2410.23166` | `projects/scimon-scipip/` | https://github.com/faresrafat3/scimon-scipip-full-extraction | background context M problems motivations experimental settings constraints + seed term v focus point, inspiration retrieval semantic neighbors KG neighbors citation neighbors Table8 Example Zhou et al 2022 underlined similar ground truth, idea generation Given [context] a [new idea] Δ vs prior work, iterative novelty boosting compare I with prior {(Background_i, idea_i)} if overlapping update more novel like good researcher Iteration1 Iteration2 ASUBD attention RL Ground Truth monotonic segmentation, in-context contrastive CL SN KG CT Table9 R-L BERT T5+SN+CL 0.228 best, human evaluation relevance utility novelty technical depth Table10 Irish language learning helpful/unhelpful Table8, biomedical 80% positive PubTator 3 KG extraction sentence classifier, quintuple keywords backgrounds ideas concise methods references ~78K papers top-tier AI individually encoded vectors, entity extraction τ2 ≤5 words ≥2 words ≤5 entities nouns, summary problem main idea format The problem of [problem] can be addressed by [main idea/approach], motivations details, concise methods τ3 example style transform, background transformation teacher student, multi-granularity retrieval SE semantic-entity CC citation co-occurrence CL clustering Table4 Recall10 0.381 SCIMON-like 0.377 ResearchAgent-like 0.419 SciPIP Ours 0.544 0.615 0.657 0.684 more thorough, dual-path idea generation ~10 ideas clear innovative valid comprehensive cue words summaries backgrounds contributions methods integrating content retrieved papers + internal knowledge avoiding stacking, non-matching ideas more valuable novel not appear human, error analysis generic suggestions woven specifics copied directly context Data preprocessing Clean text etc simple logical modifications high latency→low latency |
 
 ## Exact key file paths
 
@@ -170,3 +172,31 @@
 - Graph EN/AR: `graph_english.md/.mmd + graph_arabic.md/.mmd`
 - Deep dive: `deep_dive_task_matrix.md`
 - Samples: `benchmarks_list.json + applications_map.json + taxonomy_planner.json`
+
+### STORM
+
+- Folder: `projects/storm/`
+- Repo: https://github.com/faresrafat3/storm-full-extraction
+- Paper: https://arxiv.org/abs/2402.14207
+- Prompts: `projects/storm/prompts_complete.md` (GenRelatedTopics + GenPerspectives N=5 + GenQn M=5 + GenQueries + GenAnswer + DirectGenOutline + RefineOutline + section generation + polish + lead)
+- Raw prompts: `GenRelatedTopicsPrompt.txt + GenPerspectivesPrompt.txt + GenQnPrompt.txt + GenQueriesPrompt.txt + GenAnswerPrompt.txt + DirectGenOutlinePrompt.txt + RefineOutlinePrompt.txt + algorithm1_pseudocode.py + prewriting_vs_writing_stage.md`
+- Logic: `python_logic_flow_complete.md`
+- Inventory: `python_logic_inventory.json`
+- Graph EN/AR: `graph_english.md/.mmd + graph_arabic.md/.mmd`
+- Deep dive: `deep_dive_task_matrix.md`
+- Samples: `freshwiki_sample.json + outline_eval_metrics.json + conversation_example.json`
+- Completeness: `final_completeness_check_ar.md` + `QUALITY_REVIEW_AR.md`
+
+### SciMON / SciPIP
+
+- Folder: `projects/scimon-scipip/`
+- Repo: https://github.com/faresrafat3/scimon-scipip-full-extraction
+- Papers: https://arxiv.org/abs/2305.14259 + https://arxiv.org/abs/2410.23166
+- Prompts: `projects/scimon-scipip/prompts_complete.md` (SciMON problem setting + inspiration retrieval semantic KG citation Table8 Example Zhou et al 2022 underlined + idea generation Given [context] a [new idea] Δ vs prior work + iterative novelty boosting compare I with prior literature + in-context contrastive CL + SciPIP quintuple keywords backgrounds ideas concise methods references ~78K papers + entity extraction τ2 + summary problem main idea format The problem of [problem] can be addressed by [main idea/approach] + background motivations details + concise methods τ3 example style transform + background transformation teacher student + multi-granularity retrieval SE CC CL Table4 Recall10 + dual-path idea proposer ~10 ideas clear innovative valid comprehensive)
+- Raw prompts: `scimon_problem_setting.txt + scimon_inspiration_retrieval.txt + scimon_iterative_novelty_boosting.txt + scipip_entity_extraction_tau2.txt + scipip_idea_proposer_dual_path.txt + ...`
+- Logic: `python_logic_flow_complete.md`
+- Inventory: `python_logic_inventory.json`
+- Graph EN/AR: `graph_english.md/.mmd + graph_arabic.md/.mmd`
+- Deep dive: `deep_dive_task_matrix.md`
+- Samples: `scimon_background_context_example.json + scipip_quintuple_example.json + quintuple retrieval results + idea examples`
+- Completeness: `final_completeness_check_ar.md` + `QUALITY_REVIEW_AR.md`

@@ -1,0 +1,48 @@
+{
+  "topic": "2022 Winter Olympics opening ceremony",
+  "perspectives": [
+    "basic fact writer focusing on broadly covering the basic facts about the topic",
+    "event planner who focuses on preparation of opening ceremony",
+    "transportation coordinator focusing on transportation arrangements",
+    "budget analyst focusing on budget"
+  ],
+  "example_conversation": [
+    {
+      "perspective": "event planner who focuses on preparation of opening ceremony",
+      "rounds": [
+        {
+          "question": "Can you provide me with a list of the participating countries in the 2022 Winter Olympics opening ceremony?",
+          "queries": ["2022 Winter Olympics opening ceremony participating countries list", "2022 Winter Olympics Parade of Nations countries"],
+          "sources": ["You.com search results 10 docs ground truth excluded", "BingSearch alternative"],
+          "answer": "The 2022 Winter Olympics featured a diverse group of countries participating in the opening ceremony. These included ... Athletes from over 90 countries will enter the stadium in a specific order."
+        },
+        {
+          "question": "How is the order of participating countries in the 2022 Winter Olympics opening ceremony determined?",
+          "queries": ["2022 Winter Olympics opening ceremony country order determination", "Parade of Nations order rule"],
+          "sources": ["..."],
+          "answer": "The order is determined by stroke count of first character in Chinese... etc."
+        },
+        {
+          "question": "Can you provide any information about the transportation arrangements for the opening ceremony?",
+          "queries": ["2022 Winter Olympics opening ceremony transportation arrangements", "Beijing 2022 opening ceremony transport logistics"],
+          "sources": ["..."],
+          "answer": "Transportation arrangements involved shuttle buses, closed-loop system..."
+        },
+        {
+          "question": "Can you provide any information about the budget for the 2022 Winter Olympics opening ceremony?",
+          "queries": ["2022 Winter Olympics opening ceremony budget cost", "Beijing 2022 opening ceremony budget"],
+          "sources": ["..."],
+          "answer": "Budget reported ... etc."
+        }
+      ]
+    }
+  ],
+  "direct_prompting_baseline": {
+    "prompt": "Ask 30 questions about the given topic.",
+    "questions": ["When was the opening ceremony held?", "Where was the opening ceremony held?", "How many countries participated in the opening ceremony?", "... basic What When Where only surface-level facts"]
+  },
+  "outcome_outline": {
+    "draft_OD": "# Introduction\n## Background\n## Overview\n# Opening ceremony\n## Date and venue\n# Conclusion - general but organized framework internal knowledge",
+    "refined_O": "# Background\n## Bidding process\n## Venue Beijing National Stadium\n## Preparation\n### Transportation arrangements\n### Budget\n### Security\n# Opening ceremony\n## Parade of Nations\n### Order determination stroke count Chinese\n## Artistic program\n## Oath and speeches\n# Cultural significance\n# Broadcasting and viewership\n# Reception\n- more comprehensive based on conversations transportation budget etc"
+  }
+}

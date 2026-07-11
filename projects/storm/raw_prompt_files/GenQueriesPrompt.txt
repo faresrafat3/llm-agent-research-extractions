@@ -1,0 +1,11 @@
+class GenQueriesPrompt(dspy.Signature):
+    """
+    You want to answer the question using Google search. What do you type in the
+    search box?
+
+    Write the queries you will use in the following format:- query 1\n- query 2\n...
+    """
+
+    topic = dspy.InputField(prefix='Topic you are discussing about: ', format=str)
+    question = dspy.InputField(prefix='Question you want to answer: ', format=str)
+    queries = dspy.OutputField()

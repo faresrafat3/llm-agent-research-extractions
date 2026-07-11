@@ -1,0 +1,34 @@
+{
+  "heading_soft_recall": {
+    "definition": "soft count inverse sum similarity, cardinality via soft count, recall card(G∩P)/card(G) intersection via union",
+    "formulas": [
+      "count(Ai)=1 / sum_j Sim(Ai,Aj)",
+      "Sim(Ai,Aj)=cos(embed(Ai),embed(Aj))",
+      "embed=paraphrase-MiniLM-L6-v2 Sentence-Transformers https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L6-v2",
+      "card(A)=sum_i count(Ai)",
+      "soft heading recall = card(G∩P)/card(G)",
+      "card(G∩P)=card(G)+card(P)-card(G∪P)"
+    ],
+    "source": "Fränti and Mariescu-Istodor 2023"
+  },
+  "heading_entity_recall": {
+    "definition": "percentage named entities in human-written article headings covered by O",
+    "extraction": "FLAIR NER Akbik et al 2019"
+  },
+  "prometheus_evaluator": {
+    "model": "Prometheus Kim et al 2023 13B open-source evaluator LLM assess long-form text customized 1-5 scale rubric",
+    "aspects": ["Interest level", "Coherence and Organization", "Relevance and Focus", "Coverage"],
+    "grading_rubric": "Table8 in paper",
+    "trimming": "omit reference to avoid exceeding context limit, trim input article within 2000 words iteratively removing contents from shortest section to ensure fit",
+    "correlation": "ratings without reference also correlate well with human preferences"
+  },
+  "citation_quality": {
+    "metrics": "citation recall and precision based definition Gao et al 2023",
+    "model": "Mistral 7B etc"
+  },
+  "expert_evaluation": {
+    "findings": "more of STORM's articles deemed organized by 25% absolute increase and broad in coverage by 10% vs outline-driven RAG baseline",
+    "editors": "experienced Wikipedia editors",
+    "challenges": ["bias on Internet affects generated articles - source bias transfer", "LLMs fabricate connections between unrelated facts - over-association"]
+  }
+}

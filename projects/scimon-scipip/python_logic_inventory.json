@@ -1,0 +1,38 @@
+{
+  "project": "SciMON / SciPIP",
+  "arxiv": [
+    "2305.14259 SciMON ACL 2024",
+    "2410.23166 SciPIP",
+    "2305.14579 typo idling vehicles actual SciMON 2305.14259"
+  ],
+  "repos": [
+    "eaglew/clbd CLBD SciMON 67,408 ACL + 5,708 PubMed PubTator 3",
+    "SciPIP 78K papers top-tier AI quintuple"
+  ],
+  "scimon": {
+    "background": "Context M problems motivations experimental settings constraints + seed term v optional focus e.g. speech unit boundaries Irish language learning data augmentation low-resource continual learning Not merely paraphrase novel w.r.t B broader corpus",
+    "inspiration_retrieval": [
+      "Semantic Neighbors",
+      "KG Neighbors via PubTator 3 scientific KG",
+      "Citation Neighbors Contextual Augmentation Data Augmentation Words Paradigmatic Relations etc Ground Truth ELM Table8 Example from Zhou et al 2022 underlined similar ground truth"
+    ],
+    "idea_generation": "Given [context], a [new idea], \u0394 vs prior work... Initial pause prediction etc",
+    "iterative_novelty_boosting": "Compare Idea_t with Prior Literature {(Background_i, idea_i)} If strongly overlapping update more novel like good researcher would do Iteration1 leverages acoustic linguistic features dynamically Iteration2 ASUBD attention mechanisms reinforcement learning Ground Truth efficient monotonic segmentation module",
+    "in_context_contrastive": "CL SN KG CT T5+CL etc Table9 R-L BERT GPT4ZS 0.120 0.581 GPT4FS 0.143 0.618 T5 0.223 0.672\u2020 T5+SN+CL 0.228\u2020 0.671\u2020 best etc differences not statistically significant p\u22640.05",
+    "human_evaluation": "Relevance utility novelty technical depth Seed Term Prompt Irish language learning is done by using Method Context Irish minority language limited opportunities etc Table10 Model Output Label helpful unhelpful etc annotation interface Figure5 Is output trivially overlap with context IE sufficient quality not generic correct context contains relevant information Conservative filter only flag highly irrelevant Relation is part main idea",
+    "error_analysis": "Generic suggestions woven specifics copied directly context e.g. NLP ML algorithms sentiment analysis Data preprocessing Clean text remove unnecessary characters tokenization etc simple logical modifications high latency\u2192low latency"
+  },
+  "scipip": {
+    "quintuple": "keywords backgrounds ideas concise methods references individually encoded vectors stored database ~78K papers top-tier AI conferences LLM re-summarize",
+    "prompts": {
+      "entity_extraction_tau2": "\u22645 words \u22652 words \u22645 entities nouns noun phrases entity1, entity2...",
+      "summary_problem_main_idea": "The problem of [problem] can be addressed by [main idea/approach] Title Abstract Introduction",
+      "background_motivations_details": "Motivations:1. 2. Details:1. 2. 3.",
+      "concise_methods_tau3_example_style_transform": "Example Summarized Methods style focus Methodology Section transform",
+      "background_transformation_teacher_student": "teacher in field AI skilled at clearly explaining AI concepts to students undergraduate unfamiliar technical terms",
+      "idea_proposer_dual_path_10_ideas": "Now you are researcher field AI with innovative pioneering abilities good using innovative original methods solve cutting-edge problems brainstorm ~10 ideas clear innovative valid comprehensive cue words summaries backgrounds contributions methods related papers Avoid merely stacking integrate relevant aspects own insights Idea1 Idea2..."
+    },
+    "retrieval": "multi-granularity keywords semantic embeddings citation relations thorough exhaustive SE semantic-entity based retrieval CC citation co-occurrence CL clustering Table4 Recall10 0.381 SCIMON-like 0.377 ResearchAgent-like 0.419 SciPIP Ours 0.544 0.615 0.657 0.684 more thorough Non-matching ideas more valuable novel ideas not appear human",
+    "dual_path": "Path1 content retrieved papers + Path2 internal knowledge LLM boosts novelty feasibility practical value NLP CV domains multitude innovative useful ideas"
+  }
+}

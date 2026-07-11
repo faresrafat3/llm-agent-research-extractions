@@ -1,0 +1,97 @@
+
+flowchart TD
+  TOPIC([Topic t e.g., 2022 Winter Olympics Opening Ceremony]) --> GEN_REL[GenRelatedTopicsPrompt dspy
+I'm writing Wikipedia page for topic mentioned below Please identify recommend Wikipedia pages on closely related subjects insights interesting aspects commonly associated typical content structure included in Wikipedia pages similar topics List urls separate lines
+Input topic Output related_topics URLs list]
+
+  GEN_REL --> TOC_LOOP{For each related_t in related_topics}
+  TOC_LOOP --> GET_WIKI[get_wiki_article via Wikipedia-API https://pypi.org/project/Wikipedia-API/
+extract_toc article]
+  GET_WIKI --> TOC_APPEND[tocs.append extract_toc]
+  TOC_APPEND --> MORE_REL{more related_t?}
+  MORE_REL -->|yes| TOC_LOOP
+  MORE_REL -->|no| GEN_PERSP[GenPerspectivesPrompt dspy
+You need select group Wikipedia editors who will work together create comprehensive article on topic Each represents different perspective role affiliation related to topic You can use other Wikipedia pages related topics inspiration For each editor add description what they will focus on Format 1. short summary editor1: description...
+Input topic + examples wiki outlines related topics for inspiration tocs concatenated context
+Output perspectives P={p1..pN} N=5]
+
+  GEN_PERSP --> ADD_P0[Add P0 = basic fact writer focusing broadly covering basic facts about topic
+P = [P0] + P[:N] N+1=6 perspectives basic + 5 diverse
+To ensure basic information coverage]
+
+  ADD_P0 --> CONVO_INIT[convos=[] R=[] References list]
+
+  CONVO_INIT --> PERS_LOOP{For each perspective p in P N+1 perspectives}
+
+  PERS_LOOP --> HIST_INIT[convo_history=[]]
+
+  HIST_INIT --> ROUND_LOOP{For i=1..M M=5 rounds per perspective}
+
+  ROUND_LOOP --> GEN_QN[GenQnPrompt dspy
+You are experienced Wikipedia writer want edit specific page Besides identity as Wikipedia writer you have specific focus when researching topic Now chatting with expert to get information Ask good questions to get more useful information When no more question say Thank you so much for your help! to end conversation Please only ask one question at a time don't ask what you have asked before Your questions related to topic you want to write
+Input topic t + persona perspective p + conv history dlg_history
+Output question q=gen_qn t p dlg_history
+Perspective-guided question asking Figure1B varied transportation arrangements budget cultural broadcasting security vs direct prompting What When Where basic surface Figure1A]
+
+  GEN_QN --> HIST_Q[convo_history.append q]
+
+  HIST_Q --> GEN_QUERIES[GenQueriesPrompt dspy
+You want answer question using Google search What do you type search box? Write queries format - query1 - query2...
+Input topic t + question q
+Output queries - query1 - query2 ...]
+
+  GEN_QUERIES --> SEARCH_SIFT[search_and_sift queries
+YouRM You.com search API https://documentation.you.com/api-reference/search search_top_k 10 ground truth Wikipedia article excluded trusted sources
+Compatible other search engines BingSearch VectorRM SerperRM BraveRM SearXNG DuckDuckGoSearchRM TavilySearchRM GoogleSearch AzureAISearch
+Search_and_sift filters]
+
+  SEARCH_SIFT --> GEN_ANS[GenAnswerPrompt dspy
+You are expert who can use information effectively chatting with Wikipedia writer who wants write Wikipedia page on topic you know You have gathered related information will now use information to form response Make response as informative as possible make sure every sentence is supported by gathered information
+Input topic t + conv Question q + gathered info sources
+Output answer a=gen_ans t q sources informative every sentence supported
+Expert grounded trustworthy Internet sources Figure2 ⑥ Synthesize]
+
+  GEN_ANS --> HIST_A[convo_history.append a]
+
+  HIST_A --> R_APPEND[R.append sources Collect references]
+
+  R_APPEND --> MORE_ROUNDS{more rounds i<M?}
+  MORE_ROUNDS -->|yes| ROUND_LOOP
+  MORE_ROUNDS -->|no| CONVO_APPEND[convos.append convo_history Gather conversations {C0..CN} each M Q/A pairs total ~30 Q/A
+Figure1C conversational follow-up in-depth transportation budget iterative research grounded Internet]
+
+  CONVO_APPEND --> MORE_PERSP{more perspectives p in P?}
+  MORE_PERSP -->|yes| PERS_LOOP
+  MORE_PERSP -->|no| DIRECT_OUTLINE[DirectGenOutlinePrompt dspy
+Write outline for Wikipedia page Format Use # Title to indicate section title ## Title subsection ### subsubsection etc Do not include other information
+Input topic t
+Output draft outline OD general but organized framework leveraging internal knowledge LLMs Figure2 ⑦ Direct Generate]
+
+  DIRECT_OUTLINE --> REFINE_OUTLINE[RefineOutlinePrompt dspy
+Improve outline for Wikipedia page You already have draft outline covering general info Now you want improve based on information learned from information-seeking conversation to make more comprehensive Format same # ## ### Input topic t + Conversation history {C0..CN} + Current outline OD Output improved outline O comprehensive used for producing full-length article Figure2 ⑧ Refine]
+
+  REFINE_OUTLINE --> WRITING_STAGE[Writing stage Building upon references R collected outline O developed during prewriting full-length article composed section by section]
+
+  WRITING_STAGE --> SEC_LOOP{For each section title + subheadings in O}
+
+  SEC_LOOP --> RETRIEVE_SEC[Retrieve relevant docs from R based semantic similarity Sentence-BERT embeddings using section title + subheadings as query]
+
+  RETRIEVE_SEC --> GEN_SECTION[Generate section with citations LLM prompted section text with citations Every claim supported references Format [1][2] etc]
+
+  GEN_SECTION --> MORE_SEC{more sections in O?}
+  MORE_SEC -->|yes| SEC_LOOP
+  MORE_SEC -->|no| CONCAT[Concatenate all sections form draft full-length article]
+
+  CONCAT --> POLISH[Polish Delete repeated information Improve coherence LLM prompted delete repeated information across sections preserving coverage citations Return polished article]
+
+  POLISH --> LEAD[Lead summary synthesis Wikipedia stylistic norms LLM utilized synthesize summary entire article forming lead section beginning Lead 2-3 paragraphs concise overview main points Return lead section + polished article Final S = s1 s2 ... sn each si cites list documents in R plus organizational elements section subsection titles no citations]
+
+  LEAD --> EVAL_FRESH[FreshWiki dataset creation To mitigate leakage seeking recent articles created heavily edited after training cutoff LLMs test Process repeated future dates new LLMs emerge Focus top 100 most-edited pages per month Feb2022-Sep2023 via https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits Filter B-class quality ORES Exclude list articles no subsections plain text only Resources https://github.com/stanford-oval/storm]
+
+  EVAL_FRESH --> EVAL_OUTLINE[Outline evaluation heading soft recall Given set A={Ai} soft count inverse sum similarity count(Ai)=1/sum_j Sim(Ai,Aj) Sim=cos embed(Ai) embed(Aj) embed paraphrase-MiniLM-L6-v2 Sentence-Transformers cardinality card(A)=sum_i count(Ai) soft heading recall card(G∩P)/card(G) intersection via union card(G∩P)=card(G)+card(P)-card(G∪P) + heading entity recall percentage named entities covered FLAIR NER Akbik et al 2019]
+
+  EVAL_OUTLINE --> EVAL_ARTICLE[Article evaluation Prometheus Kim 2023 13B open-source evaluator LLM assess long-form text based customized 1-5 scale rubric Interest Coherence Organization Relevance Focus Coverage Table8 grading rubric without reference trimmed 2000 words iterative removing shortest section ensure fit context window + citation recall precision Gao et al Mistral 7B + expert Wikipedia editors organized +25% absolute broad coverage +10% vs outline-driven RAG baseline Challenges source bias transfer bias Internet affects articles over-association unrelated facts fabricate connections new frontiers]
+
+  EVAL_ARTICLE --> COSTORM[Co-STORM extension collaborative discourse protocol turn management policy Co-STORM LLM experts generates answers grounded external knowledge sources and/or raises follow-up questions based discourse history Moderator generates thought-provoking questions inspired information discovered retriever but not directly used previous turns Question generation grounded Human user initiative either observe discourse gain deeper understanding topic or actively engage conversation injecting utterances steer discussion focus dynamic updated mind map organize collected information hierarchical concept structure aiming build shared conceptual space between human user system mind map proven help reduce mental load when discourse long in-depth highly modular dspy litellm integration language models embedding models pip install knowledge-storm]
+
+  COSTORM --> END([End STORM Full-length grounded Wikipedia-like article from scratch with citations breadth depth comparable Wikipedia pages via perspective-guided question asking simulated conversations outline curation section-by-section generation])

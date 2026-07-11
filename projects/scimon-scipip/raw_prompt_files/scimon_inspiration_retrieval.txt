@@ -1,0 +1,21 @@
+Given background context B and seed term v, retrieve inspirations from past scientific papers:
+
+Task: Retrieve 3 types:
+
+1. Semantic Neighbors: semantically similar problems and solutions via semantic similarity graphs (e.g., low-resource tagging tasks, end-to-end speech translation, visual question answering etc)
+
+2. KG Neighbors: knowledge graph neighbors via scientific knowledge graph from PubTator 3 etc (e.g., task-oriented dialog systems, low-resource languages LRL, clinical semantic textual similarity etc)
+
+3. Citation Neighbors: citation co-occurrence neighbors (e.g., Contextual Augmentation: Data Augmentation by Words with Paradigmatic Relations, etc)
+
+Collection: 67,408 ACL Anthology papers 1952-2022 via Semantic Scholar Academic Graph API non-commercial, plus 5,708 PubMed papers 1988-2024 via Entrez Programming Utilities API, IE system PubTator 3 extracts KG from abstracts, sentence classifier trained annotated abstracts selects background context.
+
+For each retrieved inspiration, provide: Title, Background context, Idea summary.
+
+Return list inspirations similar to ground truth underlined.
+
+Example Input context data augmentation effective solution data scarcity low-resource however token-level tasks ner suffer token-label misalignment unsatisfactory performance
+Semantic Neighbors: [low-resource tagging, end-to-end speech translation, VQA...]
+KG Neighbors: [nmt-based text normalization, task-oriented dialog...]
+Citation Neighbors: [Contextual Augmentation...]
+Ground Truth: ELM: Data Augmentation with Masked Entity Language Modeling for Low-Resource NER

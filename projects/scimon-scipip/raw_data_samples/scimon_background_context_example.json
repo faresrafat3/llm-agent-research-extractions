@@ -1,0 +1,9 @@
+{
+  "background": "Continual learning (CL) aims to enable information systems to learn from a continuous data stream across time. A method that combines continual learning with dynamic knowledge distillation approach for efficient knowledge acquisition. This approach is more efficient than exhaustive pre-training on all existing data. Knowledge acquisition is done by using Method Current pre-trained...",
+  "seed_term": "speech unit boundaries",
+  "context_abridged": "generate partial sentence translation given a streaming speech input. existing approaches break acoustic units in speech, as boundaries between acoustic units in speech are not even.",
+  "initial_idea": "A pause prediction model to identify speech unit boundaries",
+  "iteration1": "A method that leverages acoustic and linguistic features to predict speech unit boundaries dynamically, ensuring smooth transitions ... differs from existing research as it combines both acoustic properties and linguistic context ...",
+  "iteration2": "A novel method called Adaptive Speech Unit Boundary Detection (ASUBD) ... combination of attention mechanisms to focus on relevant acoustic and linguistic features and reinforcement learning to guide system to make optimal predictions of unit boundaries based on previous decisions",
+  "ground_truth": "an efficient monotonic segmentation module accumulate acoustic information incrementally and detect proper speech unit boundaries"
+}

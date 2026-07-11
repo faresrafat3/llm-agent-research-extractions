@@ -1908,3 +1908,491 @@ Revise: Mn-rich LiNiO2-Mg Proposal
 *Maintained with the ARSENAL unified master pipeline.*  
 *Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
 *Updated 2026-07-11 with GAPMAP + ResearchAgent + Scientific Intelligence Survey extractions — Part 6 HOW TO TRACK KNOWLEDGE*
+
+---
+
+## C6.13 STORM Perspective Discovery — Related Topics + TOCs + Editors (GenRelatedTopics & GenPerspectives)
+
+| Field | Content |
+|---|---|
+| **Source** | STORM Listing 1 GenRelatedTopicsPrompt + GenPerspectivesPrompt + Algorithm 1 Lines 4,11 + Figure 2 overview survey related Wikipedia articles |
+| **Purpose** | Discover diverse perspectives multifaceted information by surveying similar topics TOCs, ensuring breadth coverage beyond basic facts. |
+| **When to use** | Pre-writing research stage for any long-form grounded article requiring breadth (Wikipedia-like, technical reports, literature surveys). |
+| **Loop condition** | Generate related topics list → extract TOCs via Wikipedia-API → concatenate TOCs → prompt LLM identify N perspectives + p0 basic fact writer. N=5. |
+| **Transition condition** | Perspectives P = [P0] + P[:N] where P0 = basic fact writer focusing broadly covering basic facts about topic, each p ∈ P will be utilized to guide question asking in parallel. |
+
+**Prompt — GenRelatedTopics**
+
+```text
+class GenRelatedTopicsPrompt(dspy.Signature):
+    """
+    I'm writing a Wikipedia page for a topic mentioned below. Please identify and
+    recommend some Wikipedia pages on closely related subjects. I'm looking for
+    examples that provide insights into interesting aspects commonly associated
+    with this topic , or examples that help me understand the typical content and
+    structure included in Wikipedia pages for similar topics.
+
+    Please list the urls in separate lines.
+    """
+
+    topic = dspy.InputField(prefix=" Topic of interest:", format=str)
+    related_topics = dspy.OutputField()
+```
+
+**Prompt — GenPerspectives**
+
+```text
+class GenPerspectivesPrompt(dspy.Signature):
+    """
+    You need to select a group of Wikipedia editors who will work together to create
+    a comprehensive article on the topic. Each of them represents a different
+    perspective , role , or affiliation related to this topic. You can use other
+    Wikipedia pages of related topics for inspiration. For each editor , add
+    description of what they will focus on.
+
+    Give your answer in the following format: 1. short summary of editor 1:
+    description\n2. short summary of editor 2: description\n...
+    """
+
+    topic = dspy.InputField(prefix='Topic of interest:', format=str)
+    examples = dspy.InputField(prefix='Wiki page outlines of related topics for\ninspiration :\n', format=str)
+    perspectives = dspy.OutputField()
+```
+
+**Implementation note**
+
+```text
+related_topics ← gen_related_topics(t) via GenRelatedTopicsPrompt
+tocs ← []
+foreach related_t in related_topics:
+    article ← get_wiki_article(related_t) via Wikipedia-API https://pypi.org/project/Wikipedia-API/
+    if article then tocs.append(extract_toc(article))
+P ← gen_perspectives(t, tocs) via GenPerspectivesPrompt with concatenated TOCs
+P ← [P0] + P[:N] where P0 = basic fact writer focusing broadly covering basic facts about topic
+```
+
+**Running example 2022 Winter Olympics Opening Ceremony**
+
+Related topics: Winter Olympics history, opening ceremonies other Olympics, Beijing National Stadium etc. TOCs concatenated provide insights interesting aspects commonly associated typical content structure. Perspectives example: event planner focusing preparation opening ceremony, transportation coordinator, budget analyst, cultural significance, broadcasting etc. + p0 basic fact writer ensuring basic information.
+
+---
+
+## C6.14 STORM Simulated Conversations — Perspective-Guided Question Asking + Search & Answer
+
+| Field | Content |
+|---|---|
+| **Source** | STORM Listing 1 GenQnPrompt + GenQueriesPrompt + GenAnswerPrompt + Listing 2 DirectGenOutline + RefineOutline + Algorithm 1 Lines 19,22,24,31,32 + Figure 1A direct prompting vs 1B perspective-guided vs 1C conversational |
+| **Purpose** | Iterative research via multi-turn conversations writer perspective asks, expert grounded on Internet answers, enabling follow-up in-depth questions beyond surface What/When/Where. |
+| **When to use** | After perspective discovery, needing depth breadth questions grounded on trusted sources, N+1 perspectives * M rounds ~30 Q/A pairs. |
+| **Loop condition** | For each p ∈ P, for i=1..M (M=5): q=gen_qn(t,p,dlg_history) → queries=gen_queries(t,q) → sources=search_and_sift(queries) via YouRM You.com search API search_top_k 10 ground truth excluded → a=gen_ans(t,q,sources) → R append sources, convo_history append q+a. |
+| **Transition condition** | convos = {C0..CN} collected, R references collection, then OD=direct_gen_outline(t) draft general framework # ## ### then O=refine_outline(t,OD,convos) comprehensive final outline. |
+
+**Prompts**
+
+**GenQnPrompt — Question Asking**
+
+```text
+class GenQnPrompt(dspy.Signature):
+    """
+    You are an experienced Wikipedia writer and want to edit a specific page.
+    Besides your identity as a Wikipedia writer , you have a specific focus when
+    researching the topic.
+
+    Now , you are chatting with an expert to get information. Ask good questions to
+    get more useful information.
+
+    When you have no more question to ask , say "Thank you so much for your help!" to
+    end the conversation.
+
+    Please only ask one question at a time and don't ask what you have asked before.
+    Your questions should be related to the topic you want to write.
+    """
+
+    topic = dspy.InputField(prefix='Topic you want to write: ', format=str)
+    persona = dspy.InputField(prefix='Your specific perspective: ', format=str)
+    conv = dspy.InputField(prefix='Conversation history :\n', format=str)
+    question = dspy.OutputField()
+```
+
+**GenQueriesPrompt — Search Query Generation**
+
+```text
+class GenQueriesPrompt(dspy.Signature):
+    """
+    You want to answer the question using Google search. What do you type in the
+    search box?
+
+    Write the queries you will use in the following format:- query 1\n- query 2\n...
+    """
+
+    topic = dspy.InputField(prefix='Topic you are discussing about: ', format=str)
+    question = dspy.InputField(prefix='Question you want to answer: ', format=str)
+    queries = dspy.OutputField()
+```
+
+**GenAnswerPrompt — Grounded Answer**
+
+```text
+class GenAnswerPrompt(dspy.Signature):
+    """
+    You are an expert who can use information effectively. You are chatting with a
+    Wikipedia writer who wants to write a Wikipedia page on topic you know. You
+    have gathered the related information and will now use the information to
+    form a response.
+
+    Make your response as informative as possible and make sure every sentence is
+    supported by the gathered information.
+    """
+
+    topic = dspy.InputField(prefix='Topic you are discussing about:', format=str)
+    conv = dspy.InputField(prefix='Question :\n', format=str)
+    info = dspy.InputField(prefix='Gathered information :\n', format=str)
+    answer = dspy.OutputField(prefix='Now give your response :\n')
+```
+
+**DirectGenOutlinePrompt — Draft from intrinsic knowledge**
+
+```text
+class DirectGenOutlinePrompt(dspy.Signature):
+    """
+    Write an outline for a Wikipedia page.
+
+    Here is the format of your writing:
+
+    1. Use "#" Title" to indicate section title , "##" Title" to indicate
+    subsection title , "###" Title" to indicate subsubsection title , and so
+    on.
+
+    2. Do not include other information.
+    """
+
+    topic = dspy.InputField(prefix=" Topic you want to write: ", format=str)
+    outline = dspy.OutputField(prefix=" Write the Wikipedia page outline :\n")
+```
+
+**RefineOutlinePrompt — Improve with conversations**
+
+```text
+class RefineOutlinePrompt(dspy.Signature):
+    """
+    Improve an outline for a Wikipedia page. You already have a draft outline that
+    covers the general information. Now you want to improve it based on the
+    information learned from an information -seeking conversation to make it more
+    comprehensive.
+
+    Here is the format of your writing:
+
+    1. Use "#" Title" to indicate section title , "##" Title" to indicate
+    subsection title , "###" Title" to indicate subsubsection title , and so
+    on.
+
+    2. Do not include other information.
+    """
+
+    topic = dspy.InputField(prefix=" Topic you want to write: ", format=str)
+    conv = dspy.InputField(prefix=" Conversation history :\n", format=str)
+    old_outline = dspy.OutputField(prefix=" Current outline :\n", format=str)
+    outline = dspy.OutputField(prefix='Write the Wikipedia page outline :\n')
+```
+
+**Writing stage reconstruction**
+
+```text
+Given topic t, outline O, references R collected pre-writing stage, full-length article composed section by section:
+- Section title + subheadings used retrieve relevant documents from R based semantic similarity Sentence-BERT embeddings
+- LLM prompted generate section with citations [1][2] every sentence supported
+- Concatenate all sections form draft full-length article
+- LLM prompted delete repeated information improve coherence polished article
+- In alignment Wikipedia stylistic norms LLM utilized synthesize summary entire article forming lead section beginning lead 2-3 paragraphs concise overview
+```
+
+**Evaluation**
+
+- FreshWiki: top 100 most-edited pages per month Feb2022-Sep2023 filter B-class ORES exclude list no subsections plain text only avoid leakage
+- Heading soft recall: count(Ai)=1/sum_j Sim(Ai,Aj) Sim=cos embed paraphrase-MiniLM-L6-v2 card(A)=sum count recall=card(G∩P)/card(G) intersection via union card(G∩P)=card(G)+card(P)-card(G∪P) + heading entity recall FLAIR NER
+- Article: Prometheus 13B evaluator Interest Coherence Organization Relevance Focus Coverage trimmed 2000 words iterative removing shortest section + citation recall precision Gao et al Mistral 7B + expert Wikipedia editors organized +25% absolute broad coverage +10% vs outline-driven RAG baseline challenges source bias transfer over-association
+
+**Algorithm 1 pseudocode**
+
+```text
+P0 = basic fact writer focusing broadly covering basic facts about the topic
+R = []
+related_topics = gen_related_topics(t)
+tocs = []
+foreach related_t in related_topics: article = get_wiki_article(related_t) if article then tocs.append(extract_toc(article))
+P = gen_perspectives(t, tocs)
+P = [P0] + P[:N]
+convos = []
+foreach p in P:
+  convo_history = []
+  for i=1..M:
+    q = gen_qn(t,p,dlg_history) convo_history.append(q)
+    queries = gen_queries(t,q) sources = search_and_sift(queries) a = gen_ans(t,q,sources) convo_history.append(a) R.append(sources)
+  convos.append(convo_history)
+OD = direct_gen_outline(t)
+O = refine_outline(t, OD, convos)
+return O,R
+```
+
+Hyperparams N=5 M=5 search_top_k 10 max_thread_num 1 device cpu vector_db_mode offline do_research do_generate_outline do_generate_article do_polish_article
+
+---
+
+## C6.15 SciMON Background + Inspiration Retrieval + Iterative Novelty Boosting
+
+| Field | Content |
+|---|---|
+| **Source** | SciMON 2305.14259 problem setting Sec 2.1 + inspiration retrieval Table8 + iterative novelty boosting Figure1 + in-context contrastive + evaluation Table9 Table10 |
+| **Purpose** | Generate novel scientific directions grounded in literature with explicit novelty optimization via comparing to prior literature and updating, plus in-context contrastive reducing copying. |
+| **When to use** | Background context problems motivations experimental settings constraints + optional seed term v focus point, need novelty not merely paraphrasing background. |
+| **Loop condition** | Retrieve inspirations semantic KG citation → generate initial idea Given [context] a [new idea] Δ vs prior work → iterative novelty boosting compare I with prior literature {(Background_i, idea_i)} if strongly overlapping update more novel like good researcher until sufficient novelty achieved. |
+| **Transition condition** | Novelty achieved, human evaluation relevance utility novelty technical depth, automated ROUGE-L BERTScore BARTScore, challenging gold subsets, error analysis generic suggestions woven specifics copied directly context etc. |
+
+**Prompt — Problem Setting**
+
+```text
+You are a scientific inspiration machine optimized for novelty (SciMON). AI-based assistant suggests ideas natural language.
+
+Input: Background context B consisting of:
+- M: current problems, motivations, experimental settings and constraints (e.g., Continual learning aims enable information systems learn from continuous data stream...)
+- Optionally seed term v focus point of generated idea I (e.g., speech unit boundaries, Irish language learning, data augmentation effective solution to data scarcity low-resource scenarios...).
+
+Goal: Generate natural language idea I novel w.r.t B and broader literature corpus not merely paraphrasing background, grounded in literature inspirations retrieved.
+
+Approach systematic:
+- Step1 Read background B understand problems motivations experimental settings constraints.
+- Step2 Consider seed term v if provided limit hypothesis space.
+- Step3 Review inspirations past scientific papers retrieved: semantic neighbors, KG neighbors, citation neighbors related problems solutions contexts scientific KG ground ideas.
+- Step4 Generate initial idea: "Given [context], a [new idea], Δ vs prior work..." Focus novelty vs B and broader literature.
+- Step5 Avoid generic suggestions woven specifics copied directly context (e.g., NLP with ML algorithms sentiment analysis problem X, data augmentation transfer learning Y, BERT RoBERTa Z, Data preprocessing Clean text remove unnecessary characters tokenization...). Reduce copying rephrasing directly from context. Apply logical modifications beyond simple flipping high latency→low latency or efficiency limitations→highly efficient.
+
+Output:
+Idea: [Natural language description proposed method/idea]
+Novelty Δ: [How differs from prior work and background]
+Grounding: [Which inspirations support idea]
+```
+
+**Prompt — Inspiration Retrieval**
+
+```text
+Given background context B and seed term v, retrieve inspirations from past scientific papers:
+
+3 types:
+
+1. Semantic Neighbors: semantically similar problems and solutions via semantic similarity graphs (e.g., low-resource tagging tasks, end-to-end speech translation, visual question answering)
+
+2. KG Neighbors: knowledge graph neighbors via scientific knowledge graph from PubTator 3 etc (e.g., task-oriented dialog systems, low-resource languages LRL, clinical semantic textual similarity)
+
+3. Citation Neighbors: citation co-occurrence neighbors (e.g., Contextual Augmentation: Data Augmentation by Words with Paradigmatic Relations etc)
+
+Collection: 67,408 ACL Anthology papers 1952-2022 via Semantic Scholar Academic Graph API non-commercial + 5,708 PubMed 1988-2024 Entrez, IE system PubTator 3 extracts KG from abstracts, sentence classifier trained annotated abstracts selects background context.
+
+For each retrieved inspiration provide Title, Background context, Idea summary.
+
+Return list inspirations similar to ground truth underlined.
+
+Example Input context data augmentation effective solution data scarcity low-resource however token-level tasks ner suffer token-label misalignment unsatisfactory performance
+Semantic Neighbors list, KG Neighbors list, Citation Neighbors list
+Ground Truth ELM: Data Augmentation with Masked Entity Language Modeling for Low-Resource NER
+```
+
+**Prompt — Iterative Novelty Boosting**
+
+```text
+You are AI-based assistant suggests ideas iteratively boosting novelty.
+
+You have background context B and idea I generated at step t.
+
+Task: Compare I with existing research literature: Prior Literature {(Background_i, idea_i)}.
+
+If you find strongly overlapping research, update idea to be more novel relative to prior work, much like a good researcher would do.
+
+Steps:
+1. Take idea I at step t.
+2. Compare I with existing research in literature: Check semantic overlap with prior papers (Background_i, idea_i) from inspiration retrieval.
+3. If strongly overlapping, identify overlapping concepts and propose update that increases Δ vs prior work.
+4. Output updated Idea I_{t+1} more novel relative prior work still grounded.
+
+Example Initial Idea pause prediction model to identify speech unit boundaries...
+Prior includes existing pause prediction...
+If overlap high update Iteration1 leverages acoustic linguistic features dynamically ensuring smooth transitions differs combining acoustic properties linguistic context
+Iteration2 ASUBD attention mechanisms focus relevant acoustic linguistic features reinforcement learning guide optimal predictions
+
+Goal sufficient novelty achieved. Continue iterations until threshold met.
+
+Return Updated Idea + Novelty Δ explanation + which prior literature compared.
+```
+
+**Data Example**
+
+```text
+Seed Term: speech unit boundaries
+Context abridged: generate partial sentence translation given streaming speech input existing approaches break acoustic units in speech as boundaries between acoustic units in speech are not even
+Initial idea: A pause prediction model to identify speech unit boundaries
+Iteration1: A method that leverages acoustic and linguistic features to predict speech unit boundaries dynamically ensuring smooth transitions ... differs as combines both acoustic properties and linguistic context ...
+Iteration2: Adaptive Speech Unit Boundary Detection (ASUBD) ... combination attention mechanisms focus relevant acoustic linguistic features reinforcement learning guide system make optimal predictions unit boundaries based previous decisions
+Ground Truth: efficient monotonic segmentation module accumulate acoustic information incrementally detect proper speech unit boundaries
+```
+
+---
+
+## C6.16 SciPIP Quintuple + Multi-Granularity Retrieval + Dual-Path Idea Generation
+
+| Field | Content |
+|---|---|
+| **Source** | SciPIP 2410.23166 quintuple construction ~78K papers + entity extraction τ2 + summary problem main idea + background motivations details + concise methods τ3 example style transform + background transformation teacher student + multi-granularity retrieval SE CC CL Table4 Recall10 + dual-path idea proposer 10 ideas |
+| **Purpose** | Enhance LLM-based proposal scientific ideas through improvements both literature retrieval (semantic + citation awareness precise efficient) and idea generation (dual-path content retrieved papers + internal knowledge). |
+| **When to use** | Literature retrieval phase keyword-based neglects semantic incomplete, even semantic vector entire sections multifaceted difficult capture key points, idea generation relies internal knowledge metadata overlooking full texts. |
+| **Loop condition** | Collect ~78K papers top-tier AI conferences → LLM re-summarize each paper into structured quintuple keywords backgrounds ideas concise methods references individually encoded vectors stored database → multi-granularity retrieval leveraging keywords semantic embeddings citation relations thorough exhaustive SE CC CL → dual-path framework ~10 ideas clear innovative valid comprehensive. |
+| **Transition condition** | Retrieval Recall10 0.419 Recall20 0.544 etc vs SCIMON-like 0.381 vs ResearchAgent-like 0.377 more thorough, non-matching ideas more valuable novel ideas not appear human, novelty feasibility practical value boosted. |
+
+**Prompt — Entity Extraction τ2**
+
+```text
+System: Now you are an expert in extracting key entities from research contents. You are good at identifying the most important keywords or phrases that summarize the main topics or concepts discussed in the content.
+
+User: Task Description: I will provide you with a content from a research paper. Your task is to extract the key entities from this content. These entities are the most important keywords or phrases that summarize the main topics or concepts discussed in the content.
+Instruction: Content is key focus extracted entities should be based content concrete manifestations main themes topics systematic reading main themes topics identify list key entities central content ensure relevant meaningful representative content Each entity ≤5 words ≥2 words ≤5 entities nouns noun phrases examples {examples} Your turn: Given following content: {content} Your answer format entity1, entity2, entity3, ......
+
+Constraints: Each entity ≤5 words, ≥2 words, ≤5 entities, nouns or noun phrases.
+```
+
+**Prompt — Summary Problem Main Idea Format**
+
+```text
+Task Description: You are provided with title, abstract, and introduction of research paper. Your task generate concise summary what kind of problem does paper aim to solve and what methods proposed address it. Summary should follow format: The problem of [problem] can be addressed by [main idea/approach].
+Instructions: Title read title understand general topic Abstract read abstract get concise summary research including problem addressed methods used main findings Introduction read introduction gain deeper understanding background significance specific problem paper addresses as well as proposed approach solution Based on provided information generate single sentence captures essence paper following format specified Your Turn: Given following paper info Title title Abstract abstract Introduction introduction Output The problem of [problem] can be addressed by [main idea/approach].
+```
+
+**Prompt — Background Motivations Details**
+
+```text
+Please read title, abstract, introduction again as well as summary you provided. Complete two tasks:
+1. Briefly provide two most critical motivations behind proposing these methods to address problems.
+2. Briefly provide three most critical innovative details of paper that were not mentioned in summary It's best if these details are new methods techniques adopted in this paper.
+Output: Motivations:1.[motivation1]. 2.[motivation2]. Details:1.[detail1]. 2.[detail2]. 3.[detail3].
+```
+
+**Prompt — Concise Methods τ3 Example Style Transform**
+
+```text
+# Task Description: You are AI researcher conducting studies specific domain Someone provided methodology section task transform into another style I will give example begins Example 1 includes Example Summarized Methods Then your task starts Your Task containing Your Methodology Section Your job transform Your Methodology Section into Summarized Methods by referring to Example1 Note ideas in Example1 unrelated to your idea so key focus should be style of Example Summarized Methods You should directly start response and do not start with section title like ## Your Summarized Methods
+# Example1
+## Example Summarized Methods
+{Example Summarized Methods}
+# Your Task
+## Your Methodology Section
+{methodology}
+## Your Summarized Methods
+```
+
+**Prompt — Background Transformation Teacher Student**
+
+```text
+System: You are teacher in field AI skilled at clearly explaining AI concepts to students Your student is undergraduate AI basic understanding deep learning
+
+User: You are teaching your undergraduate about specific subfield AI research You have brief description research background and now need explain its meaning purpose detail to undergraduate Keep in mind undergraduate may be completely unfamiliar technical terms research background Example begin...
+
+Task: Explain meaning and purpose of background in detail for undergraduate unfamiliar technical terms example-based style.
+```
+
+**Prompt — Idea Proposer Dual-Path 10 Ideas**
+
+```text
+System: Now you are researcher in field AI with innovative pioneering abilities You are good at using innovative original methods to solve cutting-edge problems in field AI
+
+User: Task Description: You will be provided with research problem along with rationales Your task brainstorm ideas clear innovative valid comprehensive address problem Additionally some cue words along with summaries backgrounds contributions methods of related papers will be provided as sources inspiration for generating novel ideas.
+Information Provided:
+1. Research Problem & Rationales: key issues aspects problem need addressed These form foundation generating ideas
+2. Related Papers: Draw inspiration abstracts backgrounds methods these papers Delve deeply methods understand motivations behind them think critically how they might inform approach Avoid merely stacking existing methods integrate relevant aspects with own insights create original solutions
+Approach systematic:
+- Step1 Thoroughly read research problem understand primary focus
+- Step2 Review summaries backgrounds contributions methods related papers gain broader perspective insights relevant problem
+- Step3 Based on provided information propose ideas clear innovative valid comprehensive
+Specific Information: I will provide specific info now please use them according instructions above:
+1. Research Problem & Rationales: {problem}
+2. Related Papers: {related__papers__information}
+Format Your Response ensure final ideas include about 10 entries presented format:
+**Idea 1**: [The first method idea]
+**Idea 2**: [The second method idea]
+**Idea 3**: [The third method idea]
+...
+```
+
+**Multi-Granularity Retrieval**
+
+```text
+Comprehensively leverages keywords semantic embeddings citation relations enabling thorough literature retrieval
+
+Three granularity:
+
+- Keywords retrieval exact keyword match entity extraction τ2 output entities
+
+- Semantic embeddings semantic-entity based retrieval SE proposed semantic-entity based retrieval encode quintuple components individually into vectors vs encoding entire sections e.g. abstracts into vectors entire sections typically contains multifaceted information such approach makes difficult capture key points effectively This impacts both encoding quality retrieval performance
+
+- Citation relations citation co-occurrence CC and clustering CL
+
+Multi-granularity retrieval algorithm comprehensive leverages keywords semantic embeddings citation relations enabling thorough literature retrieval
+
+Literature retrieval results Table4 groundtruth real citations tested papers Recall10 recall rate top10 ranked among retrieved literature compared ground truth citations Recall10 means recall rate top10 ranked papers among retrieved literature compared ground truth citations Table5 ablation SE means proposed semantic-entity based retrieval CC means citation co-occurrence CL means clustering Since AI Scientist does not perform literature retrieval when generating ideas results primarily on SCIMON and ResearchAgent for generating scientific paper ideas differ from those in this study
+
+Results AI Scientist Not Applicable SCIMON-like Recall10 0.381 0.481 0.548 0.587 0.616 ResearchAgent-like 0.377 0.484 0.550 0.598 0.622 SciPIP Ours 0.419 0.544 0.615 0.657 0.684 demonstrating more thorough exhaustive retrieval Ablation SE CC CL combinations Non-matching ideas may be more valuable because SciPIP generate novel ideas not appear or even not put forward by human
+```
+
+**Dual-Path**
+
+```text
+Path1 content retrieved papers summaries backgrounds contributions methods + Path2 extensive internal knowledge LLM Integration significantly boosts novelty feasibility practical value
+
+Experiments conducted various domains NLP CV demonstrate capability generate multitude innovative useful ideas Findings underscore potential valuable tool researchers seeking advance fields groundbreaking concepts Novelty experiments non-matching ideas may be more valuable because SciPIP generate novel ideas not appear or even not put forward by human
+```
+
+---
+
+# CONSTITUTION QUICK MAP — UPDATED FOR PART 6 EXPANDED (15 SYSTEMS)
+
+| Need | Start with |
+|---|---|
+| Hard reasoning | C1.1 → C1.2 → (optional) C1.3–C1.5 |
+| Choose methods | C2.1 + C6.9 Planner Taxonomy Router |
+| Research idea | C2.2 → C2.3 → C2.4 → C6.4 → C6.5 → C6.6 (gap→problem→method→experiment) + C6.15 SciMON + C6.16 SciPIP dual-path 10 ideas |
+| Track knowledge gaps explicit | C6.1 |
+| Infer implicit gaps | C6.2 → C6.3 (paragraph + full-paper) + C6.15 SciMON background context problems motivations |
+| Cross-domain knowledge pollination | C6.8 Entity Store Retrieval + C6.15 Inspiration Retrieval semantic KG citation + C6.16 Quintuple keywords backgrounds ideas methods refs + multi-granularity SE CC CL |
+| Improve a draft | C3.1 ⇄ C3.2 + C6.7 ReviewingAgents |
+| Learn from failure | C3.3 → C3.4 + C6.10 M2 Episodic |
+| Improve the instruction | C3.5 |
+| Save a reusable skill | C3.6 + C6.10 M4 Procedural |
+| Make the repo pro | C4.1 → C4.2 → C4.3 |
+| Multi-expert project | C5.1 + C6.12 Multi-Agent Debate Tournament + C6.15 Iterative Novelty Boosting + C6.16 Dual-Path |
+| Human oversight high-stakes | C6.11 HITL Expert Gate + V3 approval gates |
+| Open-ended progress | C5.4 / C5.5 + C6.10 Memory/Action/Verifier blueprint + C6.13 Perspective Discovery + C6.14 Simulated Conversations |
+| Build any scientific agent | C6.9 → C6.10 (Planner Router → Memory/Action/Verifier blueprint) |
+| Search when uncertain knowledge gaps | C1.6 + C6.9 + C2.1 + C6.4 Search-Based Gap Exploration (P4) + C6.15 Inspiration Retrieval + C6.16 Multi-Granularity |
+| Long-form grounded writing | C6.13 → C6.14 (Related Topics → TOCs → Perspectives P=[P0]+P[:N] → Simulated Conversations M rounds question queries search sift answer → Draft OD + Refine O → Section generation Sentence-BERT retrieval + citations + polish + lead) + STORM FreshWiki evaluation heading soft recall paraphrase-MiniLM-L6-v2 + Prometheus 13B + citation recall precision + expert organized +25% broad +10% |
+| Ship end-to-end | C5.6 + C6.10 + C6.13-6.16 |
+
+---
+
+# GOVERNANCE NOTES — EXTENDED FOR PART 6 EXPANDED (STORM + SciMON/SciPIP)
+
+1. **Universal ≠ vague.** Keep placeholders concrete when you instantiate.
+2. **Prefer small loops with gates** over one giant prompt.
+3. **Honesty rule:** if evidence is weak, force rebuttals/limits (C3.1 aspects + C2.5 + C6.2 Warrant coherence + C6.14 every sentence supported by gathered information).
+4. **Budget rule:** route (C1.6, C2.1, C6.9) before expensive search/optimize. For STORM, N=5 perspectives M=5 rounds search_top_k 10 cost balance, cheaper/faster model conv_simulator_lm split queries synthesize answers, more powerful model article_gen_lm verifiable text citations.
+5. **Memory rule:** verbal lessons (C3.3) and procedural skills (C3.6) and entity store (C6.8) and semantic KB (C6.10 M3) and quintuple keywords backgrounds ideas methods refs (C6.16) are different—use all when appropriate.
+6. **Knowledge tracking rule:** explicit gaps C6.1 require exact sentence grounding + cue list; implicit gaps C6.2 require Grounds quoted + Warrant single sentence + Bucket calibration; full-paper gaps C6.3 require evidence spans with section refs + feasibility notes + author survey if possible; SciMON background context M problems motivations experimental settings constraints + seed term v focus point novel w.r.t B broader corpus not merely paraphrase; SciPIP quintuple individually encoded vectors precise efficient retrieval.
+7. **Cross-domain rule:** entity retrieval C6.8 may retrieve opposite concepts (limitations mentioned with proposals) — LLM must filter noise, gain incidental value from random inputs per ResearchAgent ablation — random entities still better than none. Inspiration retrieval semantic KG citation may retrieve similar ground truth underlined Table8 example ELM Data Augmentation with Masked Entity Language Modeling for Low-Resource NER.
+8. **Human-in-loop rule:** high-stakes experiments must have V3 approval gates (C6.11) — pause before hazardous robotic synthesis, telescope control, expensive simulations; require explicit human approval; human expertise indispensable for subset segmentation precision tailoring (BIA) and fixing invalid actions before robotic execution (ChemCrow). For STORM, expert Wikipedia editors evaluation organized +25% broad +10% vs RAG baseline, but challenges source bias transfer bias Internet affects articles + over-association unrelated facts fabricate connections new frontiers.
+9. **Multi-agent rule:** diverse critics (Diversity Feasibility Scientific Rigor) avoid echo chambers — include 4 debate agents 2 for 2 against + judge + meta-review (AI co-scientist tournament) for comprehensive error coverage. For perspective discovery, include p0 basic fact writer focusing broadly covering basic facts about topic + N perspectives diverse stakeholders prioritize varying facets.
+10. **Construction rule:** any scientific agent = mix-and-match planner (P1-P6 L1-L2) + memory (M1-M5) + action (A1-A5) + verifier (V1-V4) — use cathode-design example as recipe book: Battery Schema → Augmented with historical failures + KB thresholds → Reflective revision cycles → Search-based max reward path → Role-interactive debate consensus → Programmatic DSL pipeline executable artifact. For long-form grounded writing STORM = Perspective Discovery Related Topics TOCs → Perspectives P=[P0]+P[:N] → Simulated Conversations M rounds question queries search sift answer → Draft OD internal knowledge + Refine O with convos → Section generation Sentence-BERT retrieval from R + citations + polish + lead.
+11. **Retrieval rule:** multi-granularity retrieval leveraging keywords semantic embeddings citation relations thorough exhaustive SE CC CL — encode quintuple components individually preprocessed into vectors vs entire sections multifaceted difficult capture key points effective encoding quality retrieval performance impact. Recall10-50 metrics: AI Scientist Not Applicable SCIMON-like 0.381 ResearchAgent-like 0.377 SciPIP Ours 0.419 more thorough. Non-matching ideas more valuable novel ideas not appear human.
+12. **Novelty rule:** iterative novelty boosting compare Idea_t with prior literature {(Background_i, idea_i)} if strongly overlapping update more novel relative prior work like good researcher until sufficient novelty achieved. In-context contrastive CL SN KG CT T5+CL etc helps better baseline reducing reliance copying Table9 R-L BERT. Avoid generic suggestions woven specifics copied directly context Data preprocessing Clean text remove unnecessary characters tokenization etc simple logical modifications high latency→low latency.
+13. **Grounded writing rule:** STORM perspective-guided question asking: direct prompting Ask 30 questions yields When was opening held Where how many countries basic What When Where limited planning capacity, perspective-guided You are event planner focusing preparation opening ceremony leads varied questions transportation arrangements budget cultural broadcasting security, conversational Can you provide list participating countries ... over 90 countries entering stadium specific order How is order determined transportation arrangements budget elicits follow-up in-depth iterative research grounded Internet.
+14. **This constitution is a control layer**, not substitute domain expertise, licenses, ethics review. For scientific agents ethics and reproducibility are design imperatives embedded architecture verification modules per Survey Sec5 not peripheral concerns. Ethics checklist + reproducibility protocol mandatory. FreshWiki dataset creation avoiding leakage top 100 most-edited per month Feb2022-Sep2023 filter B-class ORES exclude list no subsections plain text only process repeated future dates new LLMs emerge. Heading soft recall paraphrase-MiniLM-L6-v2 cosine + entity recall FLAIR NER + Prometheus 13B Interest Coherence Organization Relevance Focus Coverage trimmed 2000 words iterative removing shortest section.
+
+---
+
+*Maintained with the ARSENAL unified master pipeline.*  
+*Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
+*Updated 2026-07-11 with GAPMAP + ResearchAgent + Scientific Intelligence Survey + STORM + SciMON/SciPIP extractions — Part 6 HOW TO TRACK KNOWLEDGE expanded to 15 systems*

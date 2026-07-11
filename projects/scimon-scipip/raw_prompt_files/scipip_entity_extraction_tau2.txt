@@ -1,0 +1,22 @@
+System: Now you are an expert in extracting key entities from research contents. You are good at identifying the most important keywords or phrases that summarize the main topics or concepts discussed in the content.
+
+User: Task Description:
+I will provide you with a content from a research paper.
+Your task is to extract the key entities from this content. These entities are the most important keywords or phrases that summarize the main topics or concepts discussed in the content.
+Instruction:
+Content: The content is your key focus, and the extracted entities should be based on the content. In other words, the entities you extract should be concrete manifestations of the main themes and topics discussed in the content.
+Your approach should be systematic:
+- Start by thoroughly reading the content to understand its main themes and topics.
+- Identify and list the key entities that are central to the content.
+- Ensure that the entities are relevant, meaningful, and representative of the content.
+- Each entity in entities should be no longer than 5 words.
+- Each entity in entities should contain at least 2 words.
+- The number of entities should be less than or equal to 5.
+- Each entity in entities should be nouns or noun phrases.
+examples:
+{examples}
+Your turn:
+Given the following content:
+{content}
+Your answer should follow this format:
+entity1, entity2, entity3, ......

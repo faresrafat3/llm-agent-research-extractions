@@ -1,0 +1,20 @@
+class RefineOutlinePrompt(dspy.Signature):
+    """
+    Improve an outline for a Wikipedia page. You already have a draft outline that
+    covers the general information. Now you want to improve it based on the
+    information learned from an information -seeking conversation to make it more
+    comprehensive.
+
+    Here is the format of your writing:
+
+    1. Use "#" Title" to indicate section title , "##" Title" to indicate
+    subsection title , "###" Title" to indicate subsubsection title , and so
+    on.
+
+    2. Do not include other information.
+    """
+
+    topic = dspy.InputField(prefix=" Topic you want to write: ", format=str)
+    conv = dspy.InputField(prefix=" Conversation history :\n", format=str)
+    old_outline = dspy.OutputField(prefix=" Current outline :\n", format=str)
+    outline = dspy.OutputField(prefix='Write the Wikipedia page outline :\n')

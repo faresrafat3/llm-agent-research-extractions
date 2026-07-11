@@ -1,0 +1,17 @@
+{
+  "title": "Example paper title",
+  "quintuple": {
+    "keywords": ["data augmentation", "low-resource NER", "masked entity language modeling"],
+    "backgrounds": "data augmentation is an effective solution to data scarcity in low-resource scenarios. however token-level tasks such as ner suffer token-label misalignment",
+    "ideas": "We propose ELM: Data Augmentation with Masked Entity Language Modeling for Low-Resource NER",
+    "concise_methods": "Mask entities and use language model to predict augmented entities while preserving token-label alignment",
+    "references": ["Contextual Augmentation: Data Augmentation by Words with Paradigmatic Relations", "EDA: Easy Data Augmentation Techniques..."]
+  },
+  "encoding": "individually preprocessed encoded into vectors stored database precise efficient retrieval",
+  "retrieval_results": {
+    "SCIMON-like": {"Recall10": 0.381, "Recall20": 0.481, "Recall30": 0.548, "Recall40": 0.587, "Recall50": 0.616},
+    "ResearchAgent-like": {"Recall10": 0.377, "Recall20": 0.484, "Recall30": 0.55, "Recall40": 0.598, "Recall50": 0.622},
+    "SciPIP_Ours": {"Recall10": 0.419, "Recall20": 0.544, "Recall30": 0.615, "Recall40": 0.657, "Recall50": 0.684}
+  },
+  "note": "More thorough exhaustive retrieval Non-matching ideas may be more valuable because SciPIP generate novel ideas not appear human"
+}

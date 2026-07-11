@@ -1,0 +1,11 @@
+{
+  "dataset": "FreshWiki",
+  "purpose": "curate recent high-quality Wikipedia articles to avoid data leakage during pre-training, evaluate capacity LLM systems generating long-form grounded articles from scratch and pre-writing challenge",
+  "creation": "top 100 most-edited pages based on edit counts for each month from Feb 2022 to Sep 2023 via https://wikimedia.org/api/rest_v1/metrics/edited-pages/top-by-edits/en.wikipedia/all-editor-types/content/{year}/{month}/all-days, filter keep only B-class quality or above assessed by ORES https://www.mediawiki.org/wiki/ORES, exclude list articles https://en.wikipedia.org/wiki/Wikipedia:Stand-alone_lists and articles that have no subsections, only plain text component",
+  "example": {
+    "topic": "2022 Winter Olympics opening ceremony",
+    "ground_truth_outline_human": "# Background\n## Bidding process\n## Venue\n# Opening ceremony\n## Parade of Nations\n## Artistic program\n## Oath\n# Reception\n# Broadcasting",
+    "ground_truth_filtered": "B-class quality, has subsections, not list article"
+  },
+  "repeatability": "process can be repeated at future dates when new LLMs emerge"
+}
