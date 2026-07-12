@@ -2396,3 +2396,618 @@ Experiments conducted various domains NLP CV demonstrate capability generate mul
 *Maintained with the ARSENAL unified master pipeline.*  
 *Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
 *Updated 2026-07-11 with GAPMAP + ResearchAgent + Scientific Intelligence Survey + STORM + SciMON/SciPIP extractions — Part 6 HOW TO TRACK KNOWLEDGE expanded to 15 systems*
+
+---
+
+# PART 7 — HOW TO COLLABORATE
+*(multi-agent patterns · role-playing · conversable agents · conversation programming)*
+
+---
+
+## C7.1 CAMEL Inception Prompting — Task Specifier Making Specific
+
+| Field | Content |
+|---|---|
+| **Source** | CAMEL Figure1 Task Specifier + Sec 3.1 Role-playing Framework + Inception Prompting definition |
+| **Purpose** | Transform preliminary human idea into well-defined specific task using LLM instead of relying on human inputs, enabling autonomous cooperation minimal human supervision. |
+| **When to use** | Only preliminary idea given (e.g., Develop a trading bot for the stock market), need specific task before role-playing session; also for Math/Science datasets automatically generating problem topics subtopics problems. |
+| **Loop condition** | 1 per human idea, prompting LLM to make specific. |
+| **Transition condition** | Specified Task example: Develop a trading bot with a sentiment analysis tool that can monitor social media platforms for positive or negative comments about particular stock, and execute trades based on sentiment analysis results. |
+
+**Prompt**
+
+```text
+You are a task specifier. Given a preliminary idea from human user, make it more specific and well-defined.
+
+Preliminary Idea: {{human_idea}}
+Roles: AI Assistant: {{assistant_role}}, AI User: {{user_role}}
+
+Task: Transform preliminary idea into specified task that includes concrete requirements, tools, and goals.
+
+Example: Idea "Develop a trading bot for the stock market" with roles Python Programmer and Stock Trader becomes:
+
+Specified Task: Develop a trading bot with a sentiment analysis tool that can monitor social media platforms for positive or negative comments about a particular stock, and execute trades based on sentiment analysis results
+
+Output specified task only, concise but specific.
+
+This is prompting LLMs instead of relying on human inputs. For Math and Science datasets, generate problem topics, subtopics, and problems automatically by prompting LLMs.
+```
+
+**Related quote**
+
+> "What's the most resilient parasite? An Idea. A single idea from the human mind can build cities. An idea can transform the world and rewrite all the rules. Which is why I have to steal it." - Dom Cobb, Inception
+
+---
+
+## C7.2 CAMEL Role Assignment PA PU — Assistant Planner vs Executor
+
+| Field | Content |
+|---|---|
+| **Source** | CAMEL Sec Methodology AI Assistant-User Role Assignment + Equation 1 M_t |
+| **Purpose** | Assign distinct roles via system messages PA PU before conversation, defining planner vs executor to maintain consistency and avoid role flipping. |
+| **When to use** | After task specification, before conversation starts, need A ← F_{PA} and U ← F_{PU} where F1,F2 large-scale auto-regressive LMs. |
+| **Loop condition** | Once per task, system messages passed before conversations start. |
+| **Transition condition** | Assistant role = Python Programmer task executor offering solutions executing planned steps, User role = Stock Trader task planner interactive planning feasible steps. Then collaboration instruction-following manner. |
+
+**Prompt — PA (Assistant System Message) — Executor**
+
+```text
+You are a {{assistant_role}} (e.g., Python Programmer). You are an AI assistant that is a task executor.
+
+You will be given a specified task: {{specified_task}}
+Your role is to offer solutions, execute planned steps, and provide responses to the AI user who is a {{user_role}}.
+
+You should:
+- Provide solutions that fulfill the AI user's instructions.
+- Execute planned steps via code or reasoning.
+- Respond with solution that includes code if needed, explanation, and next steps.
+- Avoid role flipping: you are the assistant, not the user. Do not provide instructions, only solutions.
+- Avoid repeating instructions: do not repeat the user's instruction verbatim as your solution.
+- Avoid flake replies: provide substantive content.
+- Avoid infinite loop: if task completed, say Task completed or provide final summary.
+
+Conversation history: {{Mt}}
+Current instruction from AI user: {{It}}
+
+Provide your solution as assistant:
+Solution:
+```
+
+**Prompt — PU (User System Message) — Planner**
+
+```text
+You are a {{user_role}} (e.g., Stock Trader). You are an AI user that is a task planner.
+
+You have a specified task: {{specified_task}}
+
+Your role is to engage in interactive planning to determine feasible steps for the AI assistant who is a {{assistant_role}} to execute.
+
+You should:
+- Provide instructions that guide the assistant toward task completion.
+- Each instruction should be one clear step, with Input if needed.
+- Format: Instruction: {{instruction}} Input: {{input}} or None
+- After assistant provides solution, evaluate if task completed or next step needed.
+- If task completed, say "Task completed" or similar termination.
+- Maintain consistency with human intentions: ensure tasks align with original human idea {{human_idea}}.
+- Avoid role flipping: you are the user (planner), not the assistant (executor).
+- Provide feasible steps, not impossible.
+
+Conversation history: {{Mt}}
+Current assistant solution: {{St}}
+
+Provide your next instruction as user:
+Instruction:
+```
+
+**Formal conversation definition**
+
+```
+M_t = {(I0,S0),...,(It,St)} = {(Ii,Si)}|t i=0
+At next time step t+1, AI user U takes history M_t and generates I_{t+1}, assistant A generates S_{t+1} etc until termination
+
+Example loop:
+Instruction: Install necessary Python libraries for sentiment analysis and stock trading.
+Input: None
+Solution: To install necessary Python libraries for sentiment analysis and stock trading, we can use pip... pip install tweepy textblob yfinance Next request.
+
+Role Playing Session
+Instruction: Import necessary libraries in Python.
+Input: None
+Solution: Here's code to import these libraries: import tweepy from textblob import TextBlob import pandas as pd import numpy as np import yfinance as yf Next request.
+```
+
+**Challenges mitigation**
+
+- role flipping, assistant repeating instructions, flake replies, infinite loop of messages — mitigated via inception prompting maintaining consistency with human intentions + PA PU system messages passed before conversations start + termination conditions task completed or max messages limit cost grows quadratically vs max tokens vs loop detection.
+
+---
+
+## C7.3 CAMEL Data Generation — AI Society Roles and Tasks + Evaluation
+
+| Field | Content |
+|---|---|
+| **Source** | CAMEL Figure3 Data Generation Prompts AI Society + Sec 4.1 Role-Playing for AI Society + Sec 5 Evaluation Agent Evaluation Human Evaluation GPT4 Evaluation |
+| **Purpose** | Scalable approach generating possible roles and tasks via LLM to reduce human involvement, creating conversational task-oriented instruction-following datasets for behavior analysis and capability understanding + evaluation via summarization fair comparison. |
+| **When to use** | Building AI Society and Code datasets cooperative scenarios, Math and Science single-turn QA emergent abilities, Misalignment malicious risks, and evaluating via 100 tasks + GPT4 summarization + human votes. |
+| **Loop condition** | Generate NUM_ROLES assistant roles + NUM_ROLES user roles + NUM_TASKS tasks per pair, then role-playing conversations until termination, cost grows quadratically with length conversation making essential set limit. |
+| **Transition condition** | AI Society dataset large conversational task-oriented instruction-following + Code + Math + Science + Misalignment; evaluation random select 100 tasks AI Society + 100 tasks Code + GPT4 summarization consolidated final solution larger token limit suitable undetectable format fair comparison vs single-shot gpt-3.5-turbo + human 453 responses AI Society only + GPT4 scoring decision which better Model1 vs Model2 + knowledge emergence fine-tuning LLaMA + HumanEval HumanEval+. |
+
+**Prompts — Data Generation Figure3**
+
+**Assistant Role Generation Prompt**
+
+```text
+You are a helpful assistant that can play many different roles. Now please list <NUM_ROLES> different roles that you can play with your expertise in diverse fields. Sort them by alphabetical order. No explanation required.
+```
+
+**User Role Generation Prompt**
+
+```text
+Please list <NUM_ROLES> most common and diverse groups of internet users or occupations. Use singular form. No explanation. Sort them by alphabetical order. No explanation required.
+```
+
+**Task Generation Prompt**
+
+```text
+List <NUM_TASKS> diverse tasks that <ASSISTANT_ROLE> can assist <USER_ROLE> cooperatively to achieve together. Be concise. Be creative.
+```
+
+**Scalable approach note**
+
+```text
+Firstly prompt LLM agent generate possible roles assistant and user We achieve this by providing LLM agent specific prompts designed elicit these roles Next ask LLM agent generate range possible tasks that can be solved through collaboration between assistant and user roles Cost grows quadratically with length conversation making essential set limit Methodology focuses studying communicative agents under cooperative settings where they share common interests In particular study assistant-user scenario where preliminary idea given at start Agents will conceptualize idea into specific task and complete it autonomously through conversations
+```
+
+**Math and Science datasets**
+
+```text
+For generated Math and Science datasets generated problem topics subtopics problems automatically by prompting LLMs prompting LLMs instead of relying human inputs
+```
+
+**Misalignment dataset**
+
+```text
+Simulation possible malicious applications demonstrate potential risks unaligned autonomous agent system
+```
+
+**Evaluation — Agent Evaluation**
+
+```text
+Randomly select 100 tasks from AI Society dataset evaluation and 100 tasks from Code dataset Then employ GPT4 model summarize content CAMEL conversation-based solution presenting consolidated final solution Particularly GPT4 is used since possesses larger token limit suitable summarization Summarization also makes CAMEL agents solution undetectable by its format allowing more fair comparison Subsequently solution compared with single-shot solution generated by gpt-3.5-turbo model same task
+```
+
+**Human Evaluation prompt**
+
+```text
+Present both CAMEL summarized agent solution and gpt-3.5-turbo single-shot solution side-by-side human participants Identity behind each solution not revealed Participants then asked vote whether one solution superior other or if equally good Total 453 responses collected during evaluation Note human evaluation only done for AI Society as assessing code generally harder humans without running code
+```
+
+**GPT4 Evaluation prompt**
+
+```text
+Engage GPT4 agent evaluate effectiveness Model1 CAMEL Agent solution versus Model2 gpt-3.5-turbo single-shot solution each task More specifically prompt GPT4 score decide which solution two solutions is better Results summarized Table1 showcases CAMEL solution outperforms gpt-3.5-turbo single-shot
+```
+
+**Summarization**
+
+```text
+Employ GPT4 model summarize content CAMEL conversation-based solution presenting consolidated final solution Particularly GPT4 is used since possesses larger token limit suitable summarization Summarization also makes CAMEL agents solution undetectable by its format allowing more fair comparison
+```
+
+---
+
+## C7.4 AutoGen Conversable Agents — Assistant, UserProxy, GroupChatManager
+
+| Field | Content |
+|---|---|
+| **Source** | AutoGen Sec 2.1 Conversable Agents + Figure2 yellow-shaded built-in agents + Sec 2.2 Conversation Programming unified interfaces |
+| **Purpose** | Provide customizable conversable agents with unified send/receive/generate_reply interfaces and auto-reply mechanism for automated agent chat decentralized modular unified workflow. |
+| **When to use** | Building any LLM application via multiple agents that can converse to accomplish tasks operating in various modes combinations LLMs human inputs tools. |
+| **Loop condition** | Agent maintains internal context based on sent and received messages; once receives message automatically invokes generate_reply sends reply back unless termination condition satisfied. |
+| **Transition condition** | Built-in reply functions LLM inference code/function execution human input + custom reply functions e.g. chatting with another agent before replying to sender → conversation flow naturally induced without extra control plane special module controls conversation flow. |
+
+**Spec — ConversableAgent base**
+
+```text
+ConversableAgent class highest-level agent abstraction and by default can use LLMs, humans, and tools
+Maintains internal context based on sent and received messages
+Can be configured to possess set of capabilities enabled by LLMs, tools, or human input
+Supports many common composable capabilities:
+  1) LLMs: LLM-backed agents exploit many capabilities advanced LLMs such as role playing, implicit state inference and progress making conditioned on conversation history, providing feedback, adapting from feedback, coding. Combined different ways via novel prompting techniques to increase skill and autonomy. Enhanced LLM inference features such as result caching, error handling, message templating via enhanced LLM inference layer
+  2) Humans: Human involvement desired or essential many LLM applications. Allows human participate agent conversation via human-backed agents which could solicit human inputs at certain rounds conversation depending agent configuration. Default user proxy agent allows configurable human_input_mode frequency and conditions for requesting human input including option humans skip providing input
+  3) Tools: Tool-backed agents capability execute tools via code execution or function execution. For example default user proxy agent able execute code suggested by LLMs or make LLM-suggested function calls
+
+Unified interfaces:
+send: sending messages
+receive: receiving messages
+generate_reply: taking actions and generating response based on received message
+
+Auto-reply mechanism:
+Once agent receives message from another agent it automatically invokes generate_reply and sends reply back to sender unless termination condition satisfied
+Provides built-in reply functions based on LLM inference code or function execution or human input
+One can also register custom reply functions customize behavior pattern of agent e.g. chatting with another agent before replying to sender agent
+```
+
+**AssistantAgent pre-configured**
+
+```text
+AssistantAgent and UserProxyAgent two pre-configured ConversableAgent subclasses each representing common usage mode i.e. acting as AI assistant backed by LLMs and acting as human proxy to solicit human input or execute code/function calls backed by humans and/or tools
+
+AssistantAgent:
+human_input_mode = "NEVER"
+code_execution_config = False
+DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant... In the following cases, suggest python code..."
+
+Natural-language control via LLMs: Default system message of built-in AssistantAgent uses natural language to instruct agent to fix errors and generate code again if previous result indicates errors It also guides agent confine LLM output certain structures making it easier for other tool-backed agents consume For example instructing agent to reply with TERMINATE when all tasks completed terminate program
+```
+
+**UserProxyAgent pre-configured**
+
+```text
+UserProxyAgent acting as human proxy to solicit human input or execute code/function calls backed by humans and/or tools
+human_input_mode = "ALWAYS" (or NEVER depending example)
+group_chat = []
+Note when no reply func registered list default reply functions will be used
+
+Capabilities:
+- Solicit human inputs at certain rounds depending configuration frequency and conditions for requesting human input including option humans skip providing input
+- Execute code suggested by LLMs or make LLM-suggested function calls via code execution or function execution
+```
+
+**GroupChatManager**
+
+```text
+GroupChatManager human_input_mode = "NEVER"
+group_chat = []
+Note when no reply func registered list default reply functions will be used
+
+Supports more complex dynamic group chat via built-in GroupChatManager which can dynamically select next speaker and then broadcast its response to other agents
+Elaborates feature and its application in Section 3
+```
+
+---
+
+## C7.5 AutoGen Conversation Programming — Initiation + Unified + Auto-reply + Computation + Control Flow
+
+| Field | Content |
+|---|---|
+| **Source** | AutoGen Sec 2.2 Conversation Programming Figure2 initiation + program execution dialog box + unified interfaces and auto-reply mechanisms |
+| **Purpose** | Program multi-agent conversation via conversation-centric computation and conversation-driven control flow maximizing reusability implemented agents. |
+| **When to use** | Developing two-agent system with custom reply function, static conversation predefined flow and dynamic flows, applications ranging mathematics coding Q&A operations research online decision-making entertainment etc. |
+| **Loop condition** | Once reply functions registered and conversation initialized conversation flow naturally induced and thus agent conversation proceeds naturally without any extra control plane special module controls conversation flow. Task progresses through conversations displayed dialog box. |
+| **Transition condition** | Bottom sub-figure shows how individual agents perform role-specific conversation-centric computations generate responses e.g. via LLM inference calls and code execution; middle sub-figure demonstrates conversation-based control flow when assistant receives message user proxy agent typically sends human input as reply if no input executes any code in assistant's message instead. |
+
+**Conversation Initiation Example Figure2**
+
+```python
+# 1. Define Agents
+# 2. Initiate Conversations:
+A.initiate_chat("Plot a chart of META and TESLA stock price change YTD.", B)
+Assistant B
+User Proxy A
+AutoGen Agents
+Developer Code
+# This func will be invoked in generate_reply
+A.register_reply(B, reply_func_A2B)
+def reply_func_A2B(msg):
+    output = input_from_human()
+    ...
+    if not output:
+        if msg includes code:
+            output = execute(msg)
+    return output
+ConversableAgent
+AssistantAgent
+UserProxyAgent
+human_input_mode = "NEVER"
+code_execution_config = False
+DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant... In the following cases, suggest python code..."
+human_input_mode = "ALWAYS"
+GroupChatManager
+human_input_mode = "NEVER"
+group_chat = []
+# Note when no reply func registered list default reply functions will be used
+Agent Customization
+Program Execution
+Plot a chart of META and TESLA stock price change YTD.
+Execute following code...
+send receive receive
+Conversation-Centric Computation generate_reply Error: package yfinance is not installed
+send generate_reply Sorry! Please first pip install yfinance and then execute
+Conversation-Driven Control Flow generate_reply The Resulting Automated Agent Chat
+...
+```
+
+**Unified Interfaces Prompt**
+
+```text
+Agents in AutoGen have unified conversation interfaces for performing corresponding conversation-centric computation including a send/receive function for sending/receiving messages and a generate_reply function for taking actions and generating a response based on the received message
+
+AutoGen also introduces and by default adopts an agent auto-reply mechanism to realize conversation-driven control: Once an agent receives message from another agent it automatically invokes generate_reply and sends reply back to sender unless termination condition satisfied
+
+Provides built-in reply functions based on LLM inference code or function execution or human input
+
+One can also register custom reply functions customize behavior pattern of agent e.g. chatting with another agent before replying to sender agent
+
+Under this mechanism once reply functions registered and conversation initialized conversation flow naturally induced and thus agent conversation proceeds naturally without any extra control plane i.e. special module that controls conversation flow
+
+For example with developer code blue-shaded area marked Developer Code of Figure2 one can readily trigger conversation among agents and conversation would proceed automatically as shown dialog box grey shaded area marked Program Execution of Figure2 Auto-reply mechanism provides decentralized modular unified way define workflow
+```
+
+**Conversation Programming Paradigm**
+
+```text
+Conversation programming paradigm considers two concepts: computation – actions agents take to compute response in multi-agent conversation And control flow – sequence or conditions under which these computations happen Ability program these helps implement many flexible multi-agent conversation patterns In AutoGen computations are conversation-centric Agent takes actions relevant to conversations involved and actions result in message passing for consequent conversations unless termination condition satisfied Similarly control flow is conversation-driven participating agents decisions which agents to send messages to and procedure of computation are functions of inter-agent conversation This paradigm helps reason intuitively about complex workflow as agent action taking and conversation message-passing between agents
+
+Figure2 bottom sub-figure shows how individual agents perform role-specific conversation-centric computations generate responses e.g. via LLM inference calls and code execution Task progresses through conversations displayed dialog box Middle sub-figure demonstrates conversation-based control flow When assistant receives message user proxy agent typically sends human input as reply If no input executes any code in assistant's message instead
+```
+
+---
+
+## C7.6 AutoGen Control Fusion — Natural Language TERMINATE + Programming max replies + Custom Reply
+
+| Field | Content |
+|---|---|
+| **Source** | AutoGen Sec 2.2 Control by fusion of programming and natural language Figure2 Conversation-Driven Control Flow + Appendix C examples natural language controls |
+| **Purpose** | Flexibly define agent interaction behaviors using both natural language and computer code to program conversation patterns for different applications. |
+| **When to use** | Need natural-language control via LLMs e.g. fix errors generate code again confine output structures TERMINATE, programming-language control specify termination condition human input mode tool execution logic max number auto replies, and control transition between natural and programming language. |
+| **Loop condition** | Programming-language control uses Python code specify termination condition, human input mode, tool execution logic e.g. max number auto replies; register programmed auto-reply functions control conversation flow with Python code as shown code block identified as Conversation-Driven Control Flow in Figure2. |
+| **Transition condition** | Transition from code to natural-language control by invoking LLM inference containing certain control logic in customized reply function; transition from natural language to code control via LLM-proposed function calls (Eleti et al 2023). |
+
+**Natural-language control via LLMs Prompt**
+
+```text
+You are a helpful AI assistant. If previous result indicates errors, fix errors and generate code again.
+Confine your output to certain structures making it easier for other tool-backed agents to consume.
+When all tasks are completed, reply with "TERMINATE" to terminate program.
+
+Default system message of built-in AssistantAgent uses natural language to instruct agent to fix errors and generate code again if previous result indicates errors
+Guides agent confine LLM output certain structures making it easier for other tool-backed agents consume
+For example instructing agent to reply with TERMINATE when all tasks completed to terminate program
+More concrete examples natural language controls can be found Appendix C
+```
+
+**Programming-language control via Python code**
+
+```python
+# Specify termination condition, human input mode, tool execution logic, e.g. max number auto replies
+assistant = AssistantAgent(human_input_mode="NEVER", max_consecutive_auto_reply=5)
+user_proxy = UserProxyAgent(human_input_mode="ALWAYS", code_execution_config={"work_dir": "coding"})
+
+# Register programmed auto-reply functions to control conversation flow with Python code as shown code block identified as Conversation-Driven Control Flow in Figure2
+
+def reply_func_A2B(msg):
+    output = input_from_human()
+    if not output:
+        if msg includes code:
+            output = execute(msg)
+    return output
+
+A.register_reply(B, reply_func_A2B)
+```
+
+**Control transition**
+
+```text
+AutoGen also supports flexible control transition between natural and programming language One can achieve transition from code to natural-language control by invoking LLM inference containing certain control logic in customized reply function or transition from natural language to code control via LLM-proposed function calls (Eleti et al 2023)
+```
+
+---
+
+## C7.7 AutoGen Dynamic Conversation Flows — Custom generate_reply + Function Calls + GroupChatManager
+
+| Field | Content |
+|---|---|
+| **Source** | AutoGen Sec 2.2 dynamic conversation flows + Sec 3 GroupChatManager dynamically select next speaker broadcast response |
+| **Purpose** | Realize multi-agent conversations diverse patterns beyond static conversation predefined flow, including dynamic flows where LLM decides to call particular function or hold current conversation while invoking conversations with other agents depending content. |
+| **When to use** | Applications where agents make meaningful progress on tasks need to specify and mold multi-agent conversations, need flexible control transition. |
+| **Loop condition** | Customized generate_reply function: one agent can hold current conversation while invoking conversations with other agents depending content current message and context. Function calls: LLM decides whether or not to call particular function depending conversation status. By messaging additional agents in called functions LLM can drive dynamic multi-agent conversation. GroupChatManager dynamically select next speaker broadcast response. |
+| **Transition condition** | Working systems showcase all these different patterns implemented. |
+
+**Prompt — Custom generate_reply dynamic**
+
+```text
+Within customized generate_reply function, one agent can hold the current conversation while invoking conversations with other agents depending on content of current message and context
+
+Example:
+
+def custom_generate_reply(self, messages, sender, config):
+    # Hold current conversation
+    if "need expert opinion" in messages[-1]["content"]:
+        # Invoke conversation with other agents
+        expert_agent = self.expert_agent
+        result = expert_agent.generate_reply(messages, sender)
+        # Incorporate expert result into current conversation
+        return f"Expert opinion: {result}"
+    else:
+        # Default LLM inference
+        return self.llm.generate_response(messages)
+
+Register as:
+agent.register_reply([other_agent], custom_generate_reply)
+```
+
+**Prompt — Function calls dynamic**
+
+```text
+In this approach LLM decides whether or not to call particular function depending on conversation status By messaging additional agents in called functions LLM can drive dynamic multi-agent conversation
+
+Function definition:
+
+def call_expert_for_opinion(topic: str):
+    # Message additional agents in called function
+    expert_response = expert_agent.generate_reply([{"role": "user", "content": topic}])
+    return expert_response
+
+LLM prompt includes function description, LLM decides whether to call particular function depending conversation status
+Messaging additional agents in called functions drives dynamic multi-agent conversation
+```
+
+**Prompt — GroupChatManager dynamic speaker selection**
+
+```python
+group_chat = [agent1, agent2, agent3]
+manager = GroupChatManager(group_chat, llm_config=...)
+# Manager dynamically selects next speaker and then broadcasts its response to other agents
+# Elaborates feature and its application in Section 3
+# Example:
+# User asks "What if we prohibit shipping from supplier 1 to roastery 2?" to Commander
+# Commander coordinates with Writer and Safeguard etc.
+```
+
+---
+
+## C7.8 AutoGen Applications — Math + RAG Interactive Retrieval + ALFWorld Grounding + OptiGuide Commander Writer Safeguard
+
+| Field | Content |
+|---|---|
+| **Source** | AutoGen Sec 3 Applications A1-A4 Figure4 Performance + Appendix D workflows + Figure3 OptiGuide implementation |
+| **Purpose** | Showcase AutoGen serves as generic infrastructure build diverse applications various complexities LLM capacities domains mathematics coding question answering operations research online decision-making entertainment etc empirical studies demonstrate effectiveness. |
+| **When to use** | Math problem solving, retrieval-augmented generation Q&A, decision making text world environments ALFWorld, multi-agent coding with safeguards OptiGuide. |
+| **Loop condition** | A1 120 Level-5 problems Whole Dataset, A2 Natural Questions dataset vs DPR, A3 134 unseen tasks ALFWorld, A4 OptiGuide Commander coordinates Writer Safeguard repeated multiple times until user's question answered or timed-out, core workflow reduced 430 lines to 100 lines save 3x time reduce interactions 3-5 times. |
+| **Transition condition** | Performance: A1 Math Success Ratio 69.48% Whole Dataset out-of-box competitive, A2 RAG F1 Recall 25.88% 66.65% etc AutoGen W/O interactive retrieval DPR, A3 ALFWorld 15% performance gain average with grounding agent 69% 54% etc, A4 OptiGuide F1 Recall 96% 98% etc Multi vs Single. |
+
+**A1 Math — Two-agent out-of-box competitive**
+
+```text
+AutoGen agents can be used out of the box to achieve the most competitive performance on math problem solving tasks
+
+Figure4a Performance on MATH w GPT-4 120 Level-5 problems Whole Dataset Success Ratio 69.48% Whole Dataset 55.18% Average vs ChatGPT+Code ChatGPT+Plugin GPT-4 Multi-Agent Debate LangChain ReAct
+```
+
+**A2 Retrieval-Augmented Chat RAG — Interactive Retrieval UPDATE CONTEXT**
+
+```text
+System consists two agents: Retrieval-augmented User Proxy agent and Retrieval-augmented Assistant agent both extended from built-in agents from AutoGen Retrieval-augmented User Proxy includes vector database Chroma with SentenceTransformers Reimers & Gurevych context retriever detailed workflow Appendix D
+
+Evaluation natural question answering Natural Questions dataset Kwiatkowski et al 2019 report results Figure4b compare system with DPR Dense Passage Retrieval following existing evaluation practice Adlakha et al 2023
+
+Leveraging conversational design natural-language control AutoGen introduces novel interactive retrieval feature in this application: whenever retrieved context does not contain information instead of terminating LLM-based assistant would reply "Sorry, I cannot find any information about... UPDATE CONTEXT." which will invoke more retrieval attempts Conduct ablation study prompt assistant agent to say "I don't know" instead of "UPDATE CONTEXT." in cases relevant information not found report results Figure4b results show interactive retrieval mechanism indeed plays non-trivial role process
+
+Scenario2 further demonstrate how Retrieval-augmented Chat aids generating code based given codebase that contains code not included GPT-4 training data Evaluation demonstration details both scenarios Appendix D
+
+Metrics Figure4b F1 Recall 25.88% 66.65% 15.12% 58.56% 22.79% 62.59% AutoGen vs AutoGen W/O interactive retrieval vs DPR
+```
+
+**A3 ALFWorld Decision Making — Two-agent + Grounding Agent 15% gain**
+
+```text
+Diverse collection synthetic language-based interactive decision-making tasks household environments
+
+Two-agent system LLM-backed assistant agent responsible suggesting plans conduct task and executor agent responsible executing actions ALFWorld environments integrates ReAct prompting Yao et al 2022 able achieve similar performance
+
+Common challenge encountered both ReAct and AutoGen-based two-agent system occasional inability leverage basic commonsense knowledge about physical world Deficiency can lead system getting stuck loop due repetitive errors
+
+Fortunately modular design AutoGen allows address issue effectively: With AutoGen able introduce grounding agent which supplies crucial commonsense knowledge such as "You must find and take the object before you can examine it. You must go to where target object is before you can use it." whenever system exhibits early signs recurring errors Significantly enhances ability avoid getting entangled error loops Compare task-solving performance two variants our system with GPT-3.5-turbo and ReAct on 134 unseen tasks ALFWorld report results Figure4c results show introducing grounding agent could bring 15% performance gain average Upon examining systems outputs observe grounding agent by delivering background commonsense knowledge at right junctures significantly mitigated tendency system persist flawed plan thereby avoiding creation error loops Example trajectory comparing systems Appendix D Figure10
+
+Metrics 69% 54% 54% 77% 63% 66% Average Best of 3 AutoGen 3 agent AutoGen 2 agent ReAct
+
+Three-agent system with grounding agent:
+
+Assistant (suggest plans)
+Executor (execute actions in ALFWorld)
+Grounding Agent (supplies crucial commonsense knowledge e.g., "You must find and take object before you can examine it. You must go to where target object is before you can use it." whenever early signs recurring errors - whenever system exhibits early signs recurring errors)
+
+Performance 15% gain average
+```
+
+**A4 Multi-Agent Coding OptiGuide — Commander Writer Safeguard 430→100 lines save 3x time**
+
+```text
+System excels writing code interpret optimization solutions answer user questions such exploring implications changing supply-chain decision or understanding why optimizer made particular choice Second sub-figure Figure3 shows AutoGen-based implementation
+
+Workflow: end user sends questions such "What if we prohibit shipping from supplier 1 to roastery 2?" to Commander agent Commander coordinates with two assistant agents including Writer and Safeguard to answer question Writer will craft code and send code to Commander After receiving code Commander checks code safety with Safeguard if cleared Commander will use external tools e.g. Python to execute code and request Writer to interpret execution results For instance writer may say if we prohibit shipping from supplier 1 to roastery 2 total cost would increase by 10.5% Commander then provides this concluding answer to end user If at particular step there is exception e.g. security red flag raised by Safeguard Commander redirects issue back to Writer with debugging information Process might be repeated multiple times until user's question answered or timed-out
+
+With AutoGen core workflow code for OptiGuide reduced from over 430 lines to 100 lines leading significant productivity improvement Provide detailed comparison user experience ChatGPT+Code Interpreter and AutoGen-based OptiGuide Appendix D where show AutoGen-based OptiGuide could save around 3x of user's time and reduce user interactions by 3-5 times
+
+Metrics Figure4d F1 Recall 96% 98% 88% 78% 83% 72% 48% 32% Multi-GPT4 Single-GPT4 Multi-GPT3.5 Single-GPT3.5 Performance OptiGuide Figure4d shows multi-agent design helpful boosting performance coding tasks need safeguards
+
+Workflow example:
+
+End user: What if we prohibit shipping from supplier 1 to roastery 2? → Commander
+Commander → Writer: craft code
+Writer → Commander: code
+Commander → Safeguard: check safety
+Safeguard → Commander: cleared / security red flag
+If cleared: Commander uses external tools e.g. Python to execute code and request Writer interpret execution results → Writer: total cost increase 10.5% → Commander → End user: answer
+If exception red flag: Commander redirects issue back to Writer with debugging info → repeat until answered or timed-out
+```
+
+---
+
+## C7.9 Collaboration Quick Map
+
+| Need | Start with |
+|---|---|
+| Minimal human supervision autonomous cooperation | C7.1 Task Specifier → C7.2 Role Assignment PA PU M_t |
+| Instruction-following cooperation multi-agent | C7.2 PA PU M_t = {(I0,S0)...} instruction Input Solution Next request |
+| Scalable data generation diverse roles tasks | C7.3 Assistant Role Generation list NUM_ROLES diverse roles alphabetical + User Role Generation list NUM_ROLES common diverse groups internet users occupations singular alphabetical + Task Generation list NUM_TASKS diverse tasks ASSISTANT_ROLE can assist USER_ROLE cooperatively Be concise Be creative |
+| Conversable agents customizable | C7.4 ConversableAgent send/receive/generate_reply auto-reply mechanism unified interfaces + AssistantAgent human_input_mode NEVER DEFAULT_SYSTEM_MESSAGE helpful AI assistant suggest python code TERMINATE + UserProxyAgent human_input_mode ALWAYS + GroupChatManager dynamically select next speaker broadcast |
+| Program conversation patterns | C7.5 Conversation Programming computation + control flow conversation-centric computation message passing unless termination conversation-driven control flow decisions which agents send messages procedure functions inter-agent conversation + Initiate chat A.initiate_chat Plot chart META TESLA YTD B + Custom reply A.register_reply B reply_func_A2B input_from_human if msg includes code execute |
+| Flexible control | C7.6 Control Fusion natural-language control fix errors generate code again confine output structures TERMINATE Appendix C + programming-language control specify termination condition human input mode tool execution logic max number auto replies register programmed auto-reply functions Conversation-Driven Control Flow + transition code to natural invoking LLM inference containing control logic customized reply function natural to code via LLM-proposed function calls |
+| Dynamic multi-agent flows | C7.7 Custom generate_reply hold current conversation while invoking conversations with other agents depending content + Function calls LLM decides whether to call particular function depending conversation status messaging additional agents in called functions drives dynamic conversation + GroupChatManager dynamically select next speaker broadcast |
+| Math problem solving out-of-box | C7.8 A1 Math 120 Level-5 Success Ratio 69.48% vs ChatGPT+Code etc |
+| Retrieval-augmented Q&A interactive retrieval | C7.8 A2 RAG Retrieval-augmented User Proxy Chroma SentenceTransformers Natural Questions vs DPR interactive retrieval Sorry I cannot find any information about... UPDATE CONTEXT vs I don't know ablation F1 Recall 25.88% 66.65% etc |
+| Decision making text world avoid error loops | C7.8 A3 ALFWorld Two-agent assistant suggesting plans executor executing actions ReAct + grounding agent supplies commonsense You must find and take object before you can examine it You must go to where target object is before you can use it whenever early signs recurring errors 15% gain 134 unseen tasks |
+| Multi-agent coding with safeguards productivity | C7.8 A4 OptiGuide Commander coordinates Writer Safeguard What if we prohibit shipping from supplier 1 to roastery 2 Writer crafts code Commander checks safety with Safeguard if cleared executes Python request Writer interpret results total cost increase 10.5% If exception security red flag redirect back to Writer debugging repeated until answered or timed-out reduced 430 lines to 100 lines save 3x time reduce interactions 3-5 times |
+
+---
+
+# CONSTITUTION QUICK MAP — UPDATED FOR PART 7 (17 SYSTEMS)
+
+| Need | Start with |
+|---|---|
+| Hard reasoning | C1.1 → C1.2 → (optional) C1.3–C1.5 |
+| Choose methods | C2.1 + C6.9 Planner Taxonomy Router |
+| Research idea | C2.2 → C2.3 → C2.4 → C6.4 → C6.5 → C6.6 (gap→problem→method→experiment) + C6.15 SciMON + C6.16 SciPIP dual-path 10 ideas + C7.2 Role Assignment PA PU conceptualize into specific task |
+| Track knowledge gaps explicit | C6.1 |
+| Infer implicit gaps | C6.2 → C6.3 (paragraph + full-paper) + C6.15 SciMON background context problems motivations |
+| Cross-domain knowledge pollination | C6.8 Entity Store Retrieval + C6.15 Inspiration Retrieval semantic KG citation + C6.16 Quintuple keywords backgrounds ideas methods refs + multi-granularity SE CC CL |
+| Improve a draft | C3.1 ⇄ C3.2 + C6.7 ReviewingAgents + C7.3 GPT4 Evaluation score decide which better |
+| Learn from failure | C3.3 → C3.4 + C6.10 M2 Episodic + C7.8 A3 grounding agent supplies commonsense You must find and take object before examine |
+| Improve the instruction | C3.5 |
+| Save a reusable skill | C3.6 + C6.10 M4 Procedural |
+| Make the repo pro | C4.1 → C4.2 → C4.3 |
+| Multi-expert project | C5.1 + C6.12 Multi-Agent Debate Tournament + C6.15 Iterative Novelty Boosting + C6.16 Dual-Path + C7.2 PA PU + C7.4 ConversableAgent + C7.7 Dynamic Flows GroupChatManager |
+| Human oversight high-stakes | C6.11 HITL Expert Gate + C7.4 UserProxy human_input_mode ALWAYS solicits human inputs + C7.8 A4 Commander checks safety with Safeguard security red flag |
+| Open-ended progress | C5.4 / C5.5 + C6.10 Memory/Action/Verifier blueprint + C6.13 Perspective Discovery + C6.14 Simulated Conversations + C7.3 scalable data generation diverse roles tasks |
+| Build any scientific agent | C6.9 → C6.10 (Planner Router → Memory/Action/Verifier blueprint) + C7.4 C7.5 C7.6 C7.7 |
+| Search when uncertain knowledge gaps | C1.6 + C6.9 + C2.1 + C6.4 Search-Based Gap Exploration (P4) + C6.15 Inspiration Retrieval + C6.16 Multi-Granularity + C7.7 Dynamic Flows |
+| Long-form grounded writing | C6.13 → C6.14 (Related Topics → TOCs → Perspectives P=[P0]+P[:N] → Simulated Conversations M rounds question queries search sift answer → Draft OD + Refine O → Section generation Sentence-BERT retrieval + citations + polish + lead) + STORM FreshWiki evaluation heading soft recall paraphrase-MiniLM-L6-v2 + Prometheus 13B + citation recall precision + expert organized +25% broad +10% |
+| Autonomous cooperation minimal human | C7.1 Task Specifier → C7.2 PA PU M_t = {(I0,S0)...} instruction Input Solution Next request → C7.3 Data Generation AI Society role task generation + evaluation 100 tasks GPT4 summarization fair comparison human 453 responses |
+| Conversable agents | C7.4 ConversableAgent send/receive/generate_reply auto-reply mechanism + AssistantAgent NEVER DEFAULT_SYSTEM_MESSAGE + UserProxy ALWAYS + GroupChatManager dynamically select next speaker |
+| Program conversation patterns | C7.5 Unified interfaces auto-reply + Conversation Programming computation + control flow + Initiate chat A.initiate_chat + Custom reply A.register_reply + Program Execution dialog box Error package yfinance not installed Sorry please pip install + Conversation-Centric Computation generate_reply Conversation-Driven Control Flow |
+| Flexible control | C7.6 Natural-language control fix errors generate code again confine structures TERMINATE Appendix C + Programming-language control termination condition human input mode tool execution logic max number auto replies + Transition code ↔ natural invoking LLM inference or LLM-proposed function calls |
+| Dynamic multi-agent | C7.7 Custom generate_reply hold current conversation while invoking conversations with other agents depending content + Function calls LLM decides whether to call particular function + GroupChatManager dynamic speaker selection broadcast + OptiGuide Commander Writer Safeguard pattern |
+| Math out-of-box | C7.8 A1 Math 120 Level-5 Success Ratio 69.48% vs ChatGPT+Code |
+| RAG interactive retrieval | C7.8 A2 RAG Retrieval-augmented User Proxy Chroma SentenceTransformers Natural Questions vs DPR interactive retrieval Sorry cannot find any information UPDATE CONTEXT vs I don't know ablation |
+| Decision making avoid loops | C7.8 A3 ALFWorld Two-agent plus grounding agent 15% gain 134 unseen tasks |
+| Multi-agent coding productivity | C7.8 A4 OptiGuide Commander Writer Safeguard reduced 430→100 lines save 3x time reduce interactions 3-5 times |
+| Ship end-to-end | C5.6 + C6.10 + C6.13-6.16 + C7.1-7.8 |
+
+---
+
+# GOVERNANCE NOTES — EXTENDED FOR PART 7 EXPANDED (CAMEL + AutoGen — 17 SYSTEMS)
+
+1. **Universal ≠ vague.** Keep placeholders concrete when you instantiate.
+2. **Prefer small loops with gates** over one giant prompt.
+3. **Honesty rule:** if evidence is weak, force rebuttals/limits (C3.1 aspects + C2.5 + C6.2 Warrant coherence + C6.14 every sentence supported by gathered information + C7.8 citation recall precision).
+4. **Budget rule:** route (C1.6, C2.1, C6.9) before expensive search/optimize. For CAMEL, cost grows quadratically with length conversation making essential set limit; for STORM, N=5 perspectives M=5 rounds search_top_k 10 cost balance, cheaper/faster model conv_simulator_lm split queries synthesize answers, more powerful model article_gen_lm verifiable text citations; for AutoGen, specify max_consecutive_auto_reply termination condition.
+5. **Memory rule:** verbal lessons (C3.3) and procedural skills (C3.6) and entity store (C6.8) and semantic KB (C6.10 M3) and quintuple keywords backgrounds ideas methods refs (C6.16) and conversational history M_t = {(I0,S0)...} are different—use all when appropriate. For CAMEL, M_t grows pairs instruction-solution streaming, for AutoGen internal context based on sent and received messages.
+6. **Knowledge tracking rule:** explicit gaps C6.1 require exact sentence grounding + cue list; implicit gaps C6.2 require Grounds quoted + Warrant single sentence + Bucket calibration; full-paper gaps C6.3 require evidence spans with section refs + feasibility notes + author survey if possible; SciMON background context M problems motivations experimental settings constraints + seed term v focus point novel w.r.t B broader corpus not merely paraphrase; SciPIP quintuple individually encoded vectors precise efficient retrieval; CAMEL task specifier makes preliminary idea specific well-defined prompting LLM instead of relying human inputs; STORM perspective discovery via surveying related Wikipedia articles TOCs concatenated + simulated conversations N+1 perspectives M rounds.
+7. **Cross-domain rule:** entity retrieval C6.8 may retrieve opposite concepts (limitations mentioned with proposals) — LLM must filter noise, gain incidental value from random inputs per ResearchAgent ablation — random entities still better than none. Inspiration retrieval semantic KG citation may retrieve similar ground truth underlined Table8 example ELM Data Augmentation with Masked Entity Language Modeling for Low-Resource NER. For CAMEL, diverse roles alphabetical order diverse groups internet users occupations singular alphabetical diverse tasks concise creative.
+8. **Human-in-loop rule:** high-stakes experiments must have V3 approval gates (C6.11) — pause before hazardous robotic synthesis, telescope control, expensive simulations; require explicit human approval; human expertise indispensable for subset segmentation precision tailoring (BIA) and fixing invalid actions before robotic execution (ChemCrow). For STORM, expert Wikipedia editors evaluation organized +25% broad +10% vs RAG baseline, but challenges source bias transfer bias Internet affects articles + over-association unrelated facts fabricate connections new frontiers. For CAMEL, human evaluation side-by-side anonymous vote superior equally good 453 responses AI Society only as assessing code harder humans without running code. For AutoGen, human involvement desired or essential many LLM applications via human-backed agents soliciting human inputs at certain rounds depending configuration Default user proxy agent allows configurable human_input_mode frequency and conditions for requesting human input including option humans skip providing input.
+9. **Multi-agent rule:** diverse critics (Diversity Feasibility Scientific Rigor) avoid echo chambers — include 4 debate agents 2 for 2 against + judge + meta-review (AI co-scientist tournament) for comprehensive error coverage. For perspective discovery, include p0 basic fact writer focusing broadly covering basic facts about topic + N perspectives diverse stakeholders prioritize varying facets. For CAMEL, AI user serves as task planner interactive planning feasible steps AI assistant acts as task executor offering solutions executing planned steps providing responses. Challenges role flipping assistant repeating instructions flake replies infinite loop messages mitigated via inception prompting maintaining consistency human intentions PA PU system messages passed before conversations start. For AutoGen, unified interfaces send receive generate_reply auto-reply mechanism Once agent receives message automatically invokes generate_reply sends reply back unless termination condition satisfied built-in reply functions LLM inference code function execution human input custom reply functions chatting with another agent before replying to sender decentralized modular unified way define workflow For dynamic flows: Customized generate_reply function within customized generate_reply one agent can hold current conversation while invoking conversations with other agents depending content current message and context; Function calls LLM decides whether or not to call particular function depending conversation status By messaging additional agents in called functions LLM can drive dynamic multi-agent conversation; GroupChatManager dynamically selects next speaker broadcasts response to other agents. For safety, Commander checks code safety with Safeguard if cleared executes Python request Writer interpret execution results total cost increase 10.5% If exception security red flag Safeguard Commander redirects issue back to Writer debugging repeated until answered or timed-out.
+10. **Construction rule:** any scientific agent = mix-and-match planner (P1-P6 L1-L2) + memory (M1-M5) + action (A1-A5) + verifier (V1-V4) — use cathode-design example as recipe book: Battery Schema → Augmented with historical failures + KB thresholds → Reflective revision cycles → Search-based max reward path → Role-interactive debate consensus → Programmatic DSL pipeline executable artifact. For long-form grounded writing STORM = Perspective Discovery Related Topics TOCs → Perspectives P=[P0]+P[:N] → Simulated Conversations M rounds question queries search sift answer → Draft OD internal knowledge + Refine O with convos → Section generation Sentence-BERT retrieval from R + citations + polish + lead. For autonomous cooperation CAMEL = Idea Develop trading bot → Role Assignment AI Assistant Python Programmer AI User Stock Trader → Human Input → Task Specifier → Specified Task with sentiment analysis tool → PA PU system messages A<-F_PA U<-F_PU → M_t={(I0,S0)...} Instruction Input Solution Next request loop It St until termination task completed or max messages limit cost quadratic → Role flipping repeating instructions flake replies infinite loop mitigation inception prompting → Data Generation AI Society Assistant Role Generation list NUM_ROLES diverse roles alphabetical no explanation User Role Generation list NUM_ROLES most common diverse groups internet users occupations singular alphabetical Task Generation List NUM_TASKS diverse tasks ASSISTANT_ROLE can assist USER_ROLE cooperatively Be concise Be creative → AI Society dataset large conversational task-oriented instruction-following + Code + Math Science topics subtopics problems automatically prompting LLMs + Misalignment malicious applications risks → Agent Evaluation 100 tasks AI Society +100 Code random select GPT4 summarization consolidated final solution larger token limit undetectable format fair comparison vs single-shot gpt-3.5-turbo Human Evaluation side-by-side anonymous vote superior equally good 453 responses AI Society only GPT4 Evaluation score decide which better Model1 vs Model2 Results CAMEL outperforms single-shot → Knowledge emergence fine-tuning LLaMA progressively growing datasets HumanEval HumanEval+ benchmarking.
+ For AutoGen = ConversableAgent highest-level abstraction by default can use LLMs humans tools maintains internal context based on sent and received messages capabilities LLM human tool + AssistantAgent pre-configured ConversableAgent LLM-backed assistant human_input_mode NEVER code_execution_config False DEFAULT_SYSTEM_MESSAGE helpful AI assistant suggest python code natural-language control fix errors generate code again confine output structures TERMINATE + UserProxyAgent human proxy solicit human input or execute code/function calls backed humans tools human_input_mode ALWAYS group_chat + GroupChatManager human_input_mode NEVER group_chat dynamically select next speaker broadcast response + Conversation Initiation A.initiate_chat Plot chart META TESLA stock price change YTD B + Custom Reply A.register_reply B reply_func_A2B def reply_func_A2B msg output input_from_human if not output if msg includes code output execute msg return output + Unified Interfaces send receive generate_reply + Auto-reply mechanism Once agent receives message automatically invokes generate_reply sends reply back unless termination condition satisfied built-in reply functions LLM inference code function execution human input custom reply functions chatting with another agent before replying to sender decentralized modular unified way define workflow + Program Execution Plot chart META TESLA stock price change YTD Execute following code send receive receive Conversation-Centric Computation generate_reply Error package yfinance not installed send generate_reply Sorry! Please first pip install yfinance and then execute Conversation-Driven Control Flow generate_reply Resulting Automated Agent Chat + Conversation Programming paradigm computation actions agents take compute response multi-agent conversation + control flow sequence conditions under which computations happen conversation-centric computation actions result in message passing unless termination satisfied conversation-driven control flow decisions which agents send messages to and procedure functions of inter-agent conversation + Control by fusion programming and natural language Natural-language control via LLMs fix errors generate code again confine output structures TERMINATE Appendix C Programming-language control Python code specify termination condition human input mode tool execution logic e.g. max number auto replies register programmed auto-reply functions Conversation-Driven Control Flow Control transition code to natural-language invoking LLM inference containing certain control logic customized reply function natural language to code via LLM-proposed function calls + Dynamic conversation flows Customized generate_reply function within customized generate_reply one agent can hold current conversation while invoking conversations with other agents depending content current message and context + Function calls LLM decides whether or not to call particular function depending conversation status By messaging additional agents in called functions LLM can drive dynamic multi-agent conversation + GroupChatManager dynamically select next speaker broadcast response + Applications A1 Math 120 Level-5 problems Whole Dataset Success Ratio 69.48% vs ChatGPT+Code etc out-of-box competitive math problem solving + A2 Retrieval-Augmented Chat RAG Retrieval-augmented User Proxy includes vector database Chroma SentenceTransformers context retriever Retrieval-augmented Assistant extended built-in agents Natural Questions dataset Kwiatkowski vs DPR Adlakha novel interactive retrieval feature Sorry I cannot find any information about... UPDATE CONTEXT vs I don't know ablation + A3 ALFWorld 134 unseen tasks Two-agent assistant suggesting plans executor executing actions ReAct prompting occasional inability leverage commonsense knowledge physical world stuck loop repetitive errors Grounding agent supplies crucial commonsense knowledge You must find and take object before you can examine it You must go to where target object is before you can use it whenever early signs recurring errors 15% performance gain average + A4 OptiGuide Multi-Agent Coding Commander coordinates Writer and Safeguard What if we prohibit shipping from supplier 1 to roastery 2 Writer crafts code Commander checks safety with Safeguard if cleared executes Python request Writer interpret execution results total cost increase 10.5% Commander provides concluding answer If exception security red flag Safeguard Commander redirects issue back to Writer debugging repeated until answered or timed-out core workflow reduced 430 lines to 100 lines save 3x time reduce interactions 3-5 times
+11. **Retrieval rule:** multi-granularity retrieval leveraging keywords semantic embeddings citation relations thorough exhaustive SE CC CL — encode quintuple components individually preprocessed into vectors vs entire sections multifaceted difficult capture key points effective encoding quality retrieval performance impact. Recall10-50 metrics: AI Scientist Not Applicable SCIMON-like 0.381 ResearchAgent-like 0.377 SciPIP Ours 0.419 more thorough. Non-matching ideas more valuable novel ideas not appear human. For STORM, retrieve relevant docs from R based semantic similarity Sentence-BERT embeddings for section generation. For AutoGen RAG, Retrieval-augmented User Proxy includes vector database Chroma SentenceTransformers context retriever interactive retrieval Sorry I cannot find any information about... UPDATE CONTEXT vs I don't know ablation.
+12. **Novelty rule:** iterative novelty boosting compare Idea_t with prior literature {(Background_i, idea_i)} if strongly overlapping update more novel relative prior work like good researcher until sufficient novelty achieved. In-context contrastive CL SN KG CT T5+CL etc helps better baseline reducing reliance copying Table9 R-L BERT. Avoid generic suggestions woven specifics copied directly context Data preprocessing Clean text remove unnecessary characters tokenization etc simple logical modifications high latency→low latency. For CAMEL, avoid generic suggestions woven specifics copied directly context etc reduce copying rephrasing directly from context simple logical modifications high latency→low latency efficiency limitations→highly efficient.
+13. **Grounded writing rule:** STORM perspective-guided question asking: direct prompting Ask 30 questions yields When was opening held Where how many countries basic What When Where limited planning capacity, perspective-guided You are event planner focusing preparation opening ceremony leads varied questions transportation arrangements budget cultural broadcasting security, conversational Can you provide list participating countries ... over 90 countries entering stadium specific order How is order determined transportation arrangements budget elicits follow-up in-depth iterative research grounded Internet. For CAMEL, perspective-guided via different roles diverse fields alphabetical order diverse groups internet users occupations singular alphabetical diverse tasks concise creative.
+14. **Collaboration rule:** For autonomous cooperation minimal human supervision only preliminary idea needed from human to guide conversations toward complex task-solving, use CAMEL Task Specifier making specific well-defined prompting LLM instead of relying human inputs + Role Assignment PA PU A<-F_PA U<-F_PU M_t={(I0,S0)...} Instruction Input Solution Next request loop It St until termination task completed or max messages limit cost quadratic. For conversable agents, use AutoGen ConversableAgent send/receive/generate_reply unified interfaces auto-reply mechanism decentralized modular unified workflow + AssistantAgent NEVER DEFAULT_SYSTEM_MESSAGE helpful AI assistant suggest python code TERMINATE + UserProxy ALWAYS + GroupChatManager dynamically select next speaker broadcast + Initiate chat A.initiate_chat + Custom reply A.register_reply + Program Execution dialog box Error package yfinance not installed Sorry please pip install + Conversation Programming computation + control flow conversation-centric computation message passing unless termination conversation-driven control flow decisions which agents send messages procedure functions inter-agent + Control fusion natural-language control fix errors generate code again confine structures TERMINATE Appendix C programming-language control max number auto replies register programmed auto-reply functions Conversation-Driven Control Flow transition code ↔ natural invoking LLM inference or LLM-proposed function calls + Dynamic flows customized generate_reply hold current conversation while invoking conversations with other agents depending content + Function calls LLM decides whether to call particular function + GroupChatManager dynamic speaker selection broadcast + Applications Math RAG ALFWorld OptiGuide.
+15. **This constitution is a control layer**, not substitute domain expertise, licenses, ethics review. For scientific agents ethics and reproducibility are design imperatives embedded architecture verification modules per Survey Sec5 not peripheral concerns. Ethics checklist + reproducibility protocol mandatory. For communicative agents AI Society, consider alignment risks Misalignment dataset simulation malicious applications demonstrate potential risks unaligned autonomous agent system. For STORM, FreshWiki dataset creation avoiding leakage top 100 most-edited per month Feb2022-Sep2023 filter B-class ORES exclude list no subsections plain text only process repeated future dates new LLMs emerge. Heading soft recall paraphrase-MiniLM-L6-v2 cosine + entity recall FLAIR NER + Prometheus 13B Interest Coherence Organization Relevance Focus Coverage trimmed 2000 words iterative removing shortest section. For AutoGen, safety via Safeguard checks code safety with Safeguard if cleared executes Python, if exception security red flag redirect back to Writer debugging, core workflow reduced 430→100 lines save 3x time.
+
+---
+
+*Maintained with the ARSENAL unified master pipeline.*  
+*Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
+*Updated 2026-07-12 with GAPMAP + ResearchAgent + Scientific Intelligence Survey + STORM + SciMON/SciPIP + CAMEL + AutoGen extractions — Part 6 HOW TO TRACK KNOWLEDGE expanded to 15 systems + Part 7 HOW TO COLLABORATE (multi-agent patterns) 2 systems = 17 total*

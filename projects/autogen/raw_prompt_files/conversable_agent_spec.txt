@@ -1,0 +1,9 @@
+ConversableAgent class highest-level agent abstraction by default can use LLMs, humans, tools
+Maintains internal context based on sent and received messages
+Can be configured to possess set of capabilities enabled by LLMs, tools, or human input
+Supports many common composable capabilities:
+1) LLMs: role playing, implicit state inference and progress making conditioned on conversation history, providing feedback, adapting from feedback, coding. Combined different ways via novel prompting techniques to increase skill and autonomy. Enhanced LLM inference features such as result caching, error handling, message templating via enhanced LLM inference layer
+2) Humans: Human involvement desired or essential many LLM applications. Allows human participate agent conversation via human-backed agents which could solicit human inputs at certain rounds conversation depending agent configuration. Default user proxy agent allows configurable human_input_mode frequency and conditions for requesting human input including option humans skip providing input
+3) Tools: Tool-backed agents capability execute tools via code execution or function execution. For example default user proxy agent able execute code suggested by LLMs or make LLM-suggested function calls
+Unified interfaces: send, receive, generate_reply
+Auto-reply mechanism: Once agent receives message automatically invokes generate_reply sends reply back to sender unless termination condition satisfied

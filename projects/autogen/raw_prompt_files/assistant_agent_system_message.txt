@@ -1,0 +1,14 @@
+AssistantAgent pre-configured ConversableAgent LLM-backed assistant
+human_input_mode = "NEVER"
+code_execution_config = False
+DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant... In the following cases, suggest python code..."
+
+Natural-language control via LLMs:
+- Default system message of built-in AssistantAgent uses natural language to instruct agent to fix errors and generate code again if previous result indicates errors
+- Guides agent confine LLM output certain structures making it easier for other tool-backed agents consume
+- Example instructing agent to reply with "TERMINATE" when all tasks completed to terminate program
+
+Prompt:
+You are a helpful AI assistant. If previous result indicates errors, fix errors and generate code again.
+Confine your output to certain structures...
+When all tasks are completed, reply with "TERMINATE" to terminate program.

@@ -1,0 +1,37 @@
+{
+  "project": "AutoGen",
+  "arxiv": "2308.08155 v2 Oct 3 2023 43 pages",
+  "repo": "https://github.com/microsoft/autogen 59.7k stars 9k forks 3782 commits",
+  "agents": {
+    "ConversableAgent": "highest-level abstraction by default can use LLMs humans tools maintains internal context based on sent and received messages capabilities LLM human tool",
+    "AssistantAgent": "pre-configured ConversableAgent LLM-backed assistant human_input_mode NEVER code_execution_config False DEFAULT_SYSTEM_MESSAGE You are helpful AI assistant... In following cases suggest python code... natural-language control fix errors generate code again confine output structures TERMINATE when completed",
+    "UserProxyAgent": "human proxy solicit human input or execute code/function calls backed humans tools human_input_mode ALWAYS group_chat [] Note when no reply func registered list default reply functions",
+    "GroupChatManager": "human_input_mode NEVER group_chat dynamically select next speaker broadcast response supports more complex dynamic group chat"
+  },
+  "conversation": {
+    "initiation": "A.initiate_chat('Plot a chart of META and TESLA stock price change YTD.', B)",
+    "custom_reply": "A.register_reply(B, reply_func_A2B) def reply_func_A2B(msg): output = input_from_human() if not output: if msg includes code: output = execute(msg) return output",
+    "unified_interfaces": [
+      "send",
+      "receive",
+      "generate_reply"
+    ],
+    "auto_reply_mechanism": "Once agent receives message automatically invokes generate_reply sends reply back to sender unless termination condition satisfied built-in reply functions LLM inference code function execution human input custom reply functions chatting with another agent before replying to sender decentralized modular unified way define workflow",
+    "program_execution": "Plot chart META TESLA stock price change YTD Execute following code send receive receive Conversation-Centric Computation generate_reply Error package yfinance not installed send generate_reply Sorry! Please first pip install yfinance and then execute Conversation-Driven Control Flow generate_reply Resulting Automated Agent Chat"
+  },
+  "conversation_programming": {
+    "paradigm": "computation actions agents take compute response in multi-agent conversation + control flow sequence conditions under which computations happen conversation-centric computation actions result in message passing unless termination condition satisfied conversation-driven control flow decisions which agents send messages to and procedure functions of inter-agent conversation",
+    "patterns": "Unified interfaces and auto-reply mechanisms for automated agent chat + Control by fusion programming and natural language: Natural-language control via LLMs fix errors generate code again confine output structures TERMINATE, Programming-language control Python code specify termination condition human input mode tool execution logic max number auto replies register programmed auto-reply functions, Control transition between natural and programming language invoking LLM inference containing certain control logic in customized reply function or transition natural language to code via LLM-proposed function calls",
+    "dynamic_flows": [
+      "Customized generate_reply function within customized generate_reply one agent can hold current conversation while invoking conversations with other agents depending content current message context",
+      "Function calls LLM decides whether or not to call particular function depending conversation status By messaging additional agents in called functions LLM can drive dynamic multi-agent conversation",
+      "GroupChatManager dynamically select next speaker broadcast response"
+    ]
+  },
+  "applications": {
+    "A1_Math": "120 Level-5 problems Whole Dataset AutoGen vs ChatGPT+Code ChatGPT+Plugin GPT-4 Multi-Agent Debate LangChain ReAct out-of-box competitive performance Success Ratio 69.48%",
+    "A2_RAG": "Retrieval-augmented User Proxy + Retrieval-augmented Assistant built-in agents extended vector database Chroma SentenceTransformers context retriever Natural Questions dataset vs DPR Dense Passage Retrieval interactive retrieval feature Sorry I cannot find any information about... UPDATE CONTEXT vs I don't know ablation F1 Recall 25.88% 66.65% etc AutoGen W/O interactive retrieval DPR Scenario2 code based codebase not included GPT-4 training data",
+    "A3_ALFWorld": "Diverse collection synthetic language-based interactive decision-making tasks household environments Two-agent assistant suggesting plans executor executing actions ReAct prompting occasional inability leverage basic commonsense knowledge physical world stuck loop repetitive errors Grounding agent supplies crucial commonsense knowledge You must find and take the object before you can examine it. You must go to where target object is before you can use it. early signs recurring errors 15% performance gain average 134 unseen tasks 69% 54% 54% 77% 63% 66% Average Best of 3 AutoGen 3 agent vs 2 agent vs ReAct",
+    "A4_OptiGuide": "Multi-Agent Coding Commander coordinates Writer and Safeguard What if we prohibit shipping from supplier 1 to roastery 2? Writer crafts code Commander checks safety with Safeguard if cleared executes Python request Writer interpret execution results total cost increase 10.5% Commander provides concluding answer If exception security red flag Safeguard Commander redirects issue back to Writer debugging Process repeated until answered or timed-out core workflow reduced 430 lines to 100 lines save 3x time reduce interactions 3-5 times F1 Recall 96% 98% etc Multi-GPT4 Single-GPT4 etc"
+  }
+}

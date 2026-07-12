@@ -1,0 +1,11 @@
+Two-agent system: LLM-backed assistant agent responsible suggesting plans conduct task and executor agent responsible executing actions ALFWorld environments integrates ReAct prompting Yao et al 2022
+
+Common challenge encountered both ReAct and AutoGen-based two-agent system occasional inability leverage basic commonsense knowledge about physical world Deficiency can lead system getting stuck loop due repetitive errors
+
+Grounding agent supplies crucial commonsense knowledge such as "You must find and take the object before you can examine it. You must go to where target object is before you can use it." whenever system exhibits early signs recurring errors
+
+Significantly enhances ability avoid getting entangled error loops
+
+Compare task-solving performance two variants our system with GPT-3.5-turbo and ReAct on 134 unseen tasks ALFWorld report results Figure4c results show introducing grounding agent could bring 15% performance gain average
+
+Example trajectory comparing systems Appendix D Figure10

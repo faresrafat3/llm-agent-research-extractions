@@ -1,0 +1,11 @@
+GroupChatManager human_input_mode = "NEVER"
+group_chat = []
+Note when no reply func registered list default reply functions will be used
+
+Supports more complex dynamic group chat via built-in GroupChatManager which can dynamically select next speaker and then broadcast its response to other agents
+Elaborates feature and its application in Section 3
+
+Example:
+group_chat = [agent1, agent2, agent3]
+manager = GroupChatManager(group_chat)
+# manager dynamically selects next speaker

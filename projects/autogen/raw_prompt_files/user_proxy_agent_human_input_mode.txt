@@ -1,0 +1,17 @@
+UserProxyAgent acting as human proxy to solicit human input or execute code/function calls backed by humans and/or tools
+human_input_mode = "ALWAYS" (or NEVER depending example)
+group_chat = []
+Note when no reply func registered list default reply functions will be used
+
+This func will be invoked in generate_reply
+A.register_reply(B, reply_func_A2B)
+def reply_func_A2B(msg):
+    output = input_from_human()
+    if not output:
+        if msg includes code:
+            output = execute(msg)
+    return output
+
+Capabilities:
+- Solicit human inputs at certain rounds depending configuration frequency and conditions for requesting human input including option humans skip providing input
+- Execute code suggested by LLMs or make LLM-suggested function calls via code execution or function execution

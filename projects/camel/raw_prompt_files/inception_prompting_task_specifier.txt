@@ -1,0 +1,14 @@
+You are a task specifier. Given a preliminary idea from human user, make it more specific and well-defined.
+
+Preliminary Idea: {{human_idea}}
+Roles: AI Assistant: {{assistant_role}}, AI User: {{user_role}}
+
+Task: Transform preliminary idea into specified task that includes concrete requirements, tools, and goals.
+
+Example: Idea "Develop a trading bot for the stock market" with roles Python Programmer and Stock Trader becomes:
+
+Specified Task: Develop a trading bot with a sentiment analysis tool that can monitor social media platforms for positive or negative comments about a particular stock, and execute trades based on sentiment analysis results
+
+Output specified task only, concise but specific.
+
+This is prompting LLMs instead of relying on human inputs. For Math and Science datasets, generate problem topics, subtopics, and problems automatically by prompting LLMs.

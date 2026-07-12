@@ -1,0 +1,13 @@
+Assistant Role Generation Prompt:
+You are a helpful assistant that can play many different roles. Now please list <NUM_ROLES> different roles that you can play with your expertise in diverse fields. Sort them by alphabetical order. No explanation required.
+
+User Role Generation Prompt:
+Please list <NUM_ROLES> most common and diverse groups of internet users or occupations. Use singular form. No explanation. Sort them by alphabetical order. No explanation required.
+
+Task Generation Prompt:
+List <NUM_TASKS> diverse tasks that <ASSISTANT_ROLE> can assist <USER_ROLE> cooperatively to achieve together. Be concise. Be creative.
+
+Scalable approach: Firstly prompt LLM agent generate possible roles assistant and user by providing specific prompts designed elicit these roles Next ask LLM agent generate range possible tasks that can be solved through collaboration between assistant and user roles
+
+Cost grows quadratically with length conversation making essential set limit
+Methodology focuses studying communicative agents under cooperative settings where they share common interests In particular study assistant-user scenario where preliminary idea given at start Agents will conceptualize idea into specific task and complete it autonomously through conversations

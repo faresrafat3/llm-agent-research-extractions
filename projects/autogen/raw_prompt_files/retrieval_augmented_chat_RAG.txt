@@ -1,0 +1,10 @@
+System consists two agents: Retrieval-augmented User Proxy agent and Retrieval-augmented Assistant agent both extended from built-in agents Retrieval-augmented User Proxy includes vector database Chroma with SentenceTransformers Reimers & Gurevych context retriever detailed workflow Appendix D
+
+Novel interactive retrieval feature:
+Whenever retrieved context does not contain information, instead of terminating, LLM-based assistant would reply "Sorry, I cannot find any information about... UPDATE CONTEXT." which will invoke more retrieval attempts
+
+Ablation: prompt assistant agent to say "I don't know" instead of "UPDATE CONTEXT." in cases relevant information not found
+
+Results show interactive retrieval mechanism indeed plays non-trivial role process
+
+Scenario2 further demonstrate how Retrieval-augmented Chat aids generating code based given codebase that contains code not included GPT-4 training data

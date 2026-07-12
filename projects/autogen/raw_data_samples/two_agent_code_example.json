@@ -1,0 +1,15 @@
+{
+  "initiate_chat": "A.initiate_chat(\"Plot a chart of META and TESLA stock price change YTD.\", B)",
+  "agents": {
+    "AssistantAgent": {"human_input_mode": "NEVER", "code_execution_config": false, "system_message": "You are a helpful AI assistant... In the following cases, suggest python code..."},
+    "UserProxyAgent": {"human_input_mode": "ALWAYS", "code_execution": true}
+  },
+  "custom_reply": "A.register_reply(B, reply_func_A2B) def reply_func_A2B(msg): output = input_from_human() if not output: if msg includes code: output = execute(msg) return output",
+  "conversation": {
+    "UserProxy": "Plot a chart of META and TESLA stock price change YTD. Execute following code...",
+    "Assistant": "Error: package yfinance is not installed",
+    "UserProxy_retry": "Sorry! Please first pip install yfinance and then execute",
+    "final": "Automated agent chat resulting"
+  },
+  "pattern": "Conversation-Centric Computation generate_reply + Conversation-Driven Control Flow generate_reply"
+}

@@ -1,0 +1,24 @@
+2 Initiate Conversations:
+A.initiate_chat("Plot a chart of META and TESLA stock price change YTD.", B)
+Assistant B
+User Proxy A
+
+AutoGen Agents Developer Code
+# This func will be invoked in generate_reply
+A.register_reply(B, reply_func_A2B)
+def reply_func_A2B(msg):
+    output = input_from_human()
+    if not output:
+        if msg includes code:
+            output = execute(msg)
+    return output
+
+Unified Conversation Interfaces send receive generate_reply
+
+Program Execution
+Plot a chart of META and TESLA stock price change YTD.
+Execute following code...
+send receive receive
+Conversation-Centric Computation generate_reply Error: package yfinance is not installed
+send generate_reply Sorry! Please first pip install yfinance and then execute
+Conversation-Driven Control Flow generate_reply The Resulting Automated Agent Chat

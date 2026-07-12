@@ -1,0 +1,44 @@
+{
+  "project": "CAMEL",
+  "arxiv": "2303.17760 NeurIPS 2023",
+  "repo": "https://github.com/camel-ai/camel",
+  "stars": "17.4k",
+  "website": "https://www.camel-ai.org",
+  "framework": "role-playing with inception prompting",
+  "preliminary_idea": "Develop a trading bot for the stock market",
+  "roles": {
+    "AI_Assistant": "Python Programmer",
+    "AI_User": "Stock Trader"
+  },
+  "specified_task": "Develop a trading bot with a sentiment analysis tool that can monitor social media platforms for positive or negative comments about a particular stock, and execute trades based on sentiment analysis results",
+  "conversation": {
+    "equation": "M_t = {(I0,S0),...,(It,St)} = {(Ii,Si)}|t i=0",
+    "next": "At next time step t+1, AI user U takes history M_t and generates I_{t+1}, assistant A generates S_{t+1}",
+    "example": [
+      {"Instruction": "Install necessary Python libraries for sentiment analysis and stock trading", "Input": "None", "Solution": "pip install tweepy textblob yfinance Next request"},
+      {"Instruction": "Import necessary libraries in Python", "Input": "None", "Solution": "import tweepy from textblob import TextBlob ... Next request"}
+    ],
+    "termination": "task completed or max messages limit cost grows quadratically",
+    "challenges": ["role flipping", "assistant repeating instructions", "flake replies", "infinite loop of messages"],
+    "mitigation": "inception prompting + PA PU system messages"
+  },
+  "system_messages": {
+    "PA": "You are {{assistant_role}} task executor offer solutions execute planned steps provide responses to AI user {{user_role}} Avoid role flipping Avoid repeating instructions Avoid flake replies Avoid infinite loop Conversation history {{Mt}} Current instruction {{It}} Solution:",
+    "PU": "You are {{user_role}} task planner interactive planning feasible steps for AI assistant {{assistant_role}} Provide instructions guide assistant toward task completion Format Instruction Input Evaluate if task completed Maintain consistency human intentions {{human_idea}} Avoid role flipping Provide feasible steps Conversation history {{Mt}} Current assistant solution {{St}} Instruction:",
+    "formal": "A <- F_{PA}, U <- F_{PU}, F1 F2 large-scale auto-regressive LMs"
+  },
+  "inception_prompting": "conversational LLM auto-prompting method enables agents to prompt each other to solve tasks through Role-Playing AI user continuously provides instructions AI assistant for task-solving Save streaming instruction-solution pairs create diverse instructional conversational task-oriented datasets",
+  "data_generation": {
+    "assistant_role_generation": "You are helpful assistant that can play many different roles Now please list <NUM_ROLES> different roles that you can play with your expertise in diverse fields Sort them by alphabetical order No explanation required",
+    "user_role_generation": "Please list <NUM_ROLES> most common and diverse groups of internet users or occupations Use singular form No explanation Sort alphabetical No explanation required",
+    "task_generation": "List <NUM_TASKS> diverse tasks that <ASSISTANT_ROLE> can assist <USER_ROLE> cooperatively to achieve together Be concise Be creative"
+  },
+  "datasets": ["AI Society conversational task-oriented instruction-following cooperative large", "Code cooperative coding tasks HumanEval HumanEval+", "Math single-turn QA topics subtopics problems automatically prompting LLMs", "Science single-turn QA", "Misalignment simulation malicious applications risks unaligned autonomous agent system"],
+  "evaluation": {
+    "agent": "100 tasks AI Society + 100 tasks Code random select GPT4 summarization consolidated final solution larger token limit suitable undetectable format fair comparison vs single-shot gpt-3.5-turbo",
+    "human": "side-by-side anonymous vote superior equally good 453 responses AI Society only code harder without running",
+    "gpt4": "Model1 CAMEL Agent solution versus Model2 gpt-3.5-turbo single-shot score decide which better Model1 vs Model2",
+    "results": "CAMEL outperforms gpt-3.5-turbo single-shot in both GPT4 and human evaluations",
+    "knowledge_emergence": "fine-tuning LLaMA progressively growing datasets HumanEval HumanEval+"
+  }
+}
