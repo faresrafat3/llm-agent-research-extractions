@@ -3011,3 +3011,240 @@ If exception red flag: Commander redirects issue back to Writer with debugging i
 *Maintained with the ARSENAL unified master pipeline.*  
 *Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
 *Updated 2026-07-12 with GAPMAP + ResearchAgent + Scientific Intelligence Survey + STORM + SciMON/SciPIP + CAMEL + AutoGen extractions — Part 6 HOW TO TRACK KNOWLEDGE expanded to 15 systems + Part 7 HOW TO COLLABORATE (multi-agent patterns) 2 systems = 17 total*
+
+---
+
+# PART 8 — HOW TO THINK WITH TOOLS
+*(Chain-of-Thought · ReAct · Toolformer · reasoning + acting)*
+
+---
+
+## C8.1 Chain-of-Thought Prompting — Standard vs CoT vs Zero-Shot CoT
+
+| Field | Content |
+|---|---|
+| **Source** | Chain-of-Thought arxiv 2201.11903 NeurIPS 2022 + Figure 1 standard vs CoT |
+| **Purpose** | Elicit reasoning via intermediate steps significantly improves ability to perform complex reasoning, emerges naturally in sufficiently large LMs via few chain-of-thought demonstrations as exemplars. |
+| **When to use** | Arithmetic, commonsense, symbolic reasoning tasks requiring multi-step decomposition. |
+| **Loop condition** | Few-shot prompting with triples <input, chain of thought, output>. |
+| **Transition condition** | CoT reasoning provides interpretable window behavior suggesting how it might have arrived at answer providing opportunities debug where reasoning path went wrong. |
+
+**Prompts**
+
+**Standard Prompting:**
+
+```text
+Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many tennis balls does he have now?
+A: The answer is 11.
+
+Q: The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have?
+A: The answer is 27.
+```
+
+**Chain-of-Thought Prompting:**
+
+```text
+Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many tennis balls does he have now?
+A: Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11. The answer is 11.
+
+Q: The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have?
+A: The cafeteria had 23 apples originally. They used 20 to make lunch. So they had 23 - 20 = 3. They bought 6 more apples, so they have 3 + 6 = 9. The answer is 9.
+```
+
+**General template:**
+
+```text
+Q: {{input}}
+A: {{chain_of_thought}} The answer is {{output}}.
+```
+
+**Zero-Shot CoT:**
+
+```text
+Q: {{input}}
+A: Let's think step by step.
+```
+
+**Properties (paper):**
+
+1. Allows models to decompose multi-step problems into intermediate steps, additional computation can be allocated to problems requiring more reasoning steps
+2. Provides interpretable window into behavior suggesting how it might have arrived at particular answer providing opportunities to debug where reasoning path went wrong
+3. Can be used for math word problems, commonsense reasoning, symbolic manipulation, potentially applicable any task humans can solve via language
+4. Readily elicited in sufficiently large off-the-shelf language models simply by including examples chain of thought sequences into exemplars few-shot prompting
+
+**Benchmarks:** GSM8K SVAMP ASDiv AQuA MAWPS math word problems etc. PaLM 540B with just 8 CoT exemplars achieves SOTA accuracy on GSM8K, surpassing finetuned GPT-3 with verifier.
+
+---
+
+## C8.2 ReAct — Synergizing Reasoning and Acting Thought Action Observation
+
+| Field | Content |
+|---|---|
+| **Source** | ReAct arxiv 2210.03629 + AutoGen conversable agents etc |
+| **Purpose** | Combine reasoning (Chain-of-Thought) and acting (tool use) interleaved manner Thought, Action, Observation loop allows LLMs to reason about what to do and act via tools, receive observation, continue reasoning. |
+| **When to use** | Tasks requiring tool use + reasoning: HotPotQA, Fever, knowledge-intensive QA, decision making. |
+| **Loop condition** | Thought -> Action (Search, Lookup, Finish etc) -> Observation -> Thought repeat until Finish action. |
+| **Transition condition** | Finish action with final answer. |
+
+**Prompt template:**
+
+```text
+You are an assistant that can use tools.
+
+Use Thought, Action, Observation format.
+
+Thought: I need to find...
+Action: Search[query]
+Observation: result
+Thought: Based on observation...
+Action: Lookup[term]
+Observation: ...
+Thought: I now know final answer
+Action: Finish[answer]
+
+For HotPotQA:
+Question: ...
+Thought: I need to search for first entity...
+Action: Search[entity]
+Observation: ...
+Thought: I need to search for second...
+Action: Search[second]
+Observation: ...
+Thought: I have enough info to answer
+Action: Finish[answer]
+
+General:
+Thought: your reasoning
+Action: Tool[arg]
+Observation: tool output
+... repeat
+Thought: I now know final answer
+Action: Finish[final answer]
+```
+
+**Tools examples:** Search, Lookup, Finish; for AutoGen: code execution, function execution, etc.
+
+---
+
+## C8.3 Toolformer — Language Models Can Teach Themselves to Use Tools via Self-Supervised Loss Filtering
+
+| Field | Content |
+|---|---|
+| **Source** | Toolformer arxiv 2302.04761 Meta, Figure1-3 prompts sampling filtering finetuning inference |
+| **Purpose** | Enable LMs to learn to control variety tools and choose for themselves which tool to use when and how via simple approach: given handful human-written examples how API can be used, let LM annotate huge LM dataset with potential API calls, then use self-supervised loss to determine which API calls actually help model predicting future tokens, then finetune LM itself on API calls it considers useful. |
+| **When to use** | Need LM to decide when and how to use which tool based purely on own feedback, without modifying existing vocab, same content same texts enables decide. |
+| **Loop condition** | Sampling API Calls pi = pM(<API> | P(x), x1:i-1) threshold taus top k m calls -> Executing API Calls obtain ri -> Filtering Li(z) L+_i = Li(e(ci,ri)) L-_i = min(Li(ε), Li(e(ci, ε))) keep if L-_i - L+_i >= tauf -> Model Finetuning merge remaining API calls interleave x* = x1:i-1, e(ci,ri), xi:n finetune standard LM objective same content -> Inference regular decoding until -> token interrupt call API get response continue after inserting response and </API> |
+| **Transition condition** | Finetuned model Toolformer based on pretrained GPT-J 6.7B achieves much stronger zero-shot results clearly outperforming much larger GPT-3 and baselines on various tasks. |
+
+**API call representation:**
+
+```text
+e(c) = <API> ac(ic) </API>
+e(c,r) = <API> ac(ic) ->r </API>
+where <API>, </API>, -> special tokens In practice token sequences " [", "]" and "->" represent <API>, </API> and -> respectively
+
+Examples linearized API calls inserted into text sequences Figure1
+```
+
+**Sampling prompt P(x) Figure3 QA tool:**
+
+```text
+Your task is to add calls to a Question Answering API to a piece of text. The questions should help you get information required to complete the text. You can call the API by writing "[QA(question)]" where "question" is question you want to ask. Here are some examples:
+
+Input: Joe Biden was born in Scranton, Pennsylvania.
+Output: Joe Biden was born in [QA("Where was Joe Biden born?")] Scranton, [QA("In which state is Scranton?")] Pennsylvania.
+Input: Coca-Cola, or Coke, is a carbonated soft drink manufactured by the Coca-Cola Company.
+Output: Coca-Cola, or [QA("What other name is Coca-Cola known by?")] Coke, is a carbonated soft drink manufactured by [QA("Who manufactures Coca-Cola?")] the Coca-Cola Company.
+Input: x
+Output:
+```
+
+**Probability sampling:**
+
+```text
+pi = pM(<API> | P(x), x1:i-1) that M assigns to starting API call at position i Given sampling threshold taus keep all positions I = {i | pi > taus} if more than k such positions only keep top k
+
+For each position i∈I obtain up to m API calls ci by sampling from M given sequence [P(x), x1...xi-1, <API>] as prefix and </API> as end-of-sequence token Discard examples where M does not generate </API> token
+```
+
+**Filtering loss:**
+
+```text
+Let i position API call ci in sequence x=x1...xn and ri response from API Further given sequence (wi) of weights let Li(z) = - sum_{j=i} wj-i * log pM(xj | z, x1:j-1) weighted cross entropy loss for M over tokens xi...xn if model prefixed with z Compare two instantiations L+_i = Li(e(ci,ri)) L-_i = min(Li(ε), Li(e(ci, ε))) where ε denotes empty sequence Former is weighted loss over all tokens xi...xn if API call and its result are given to M as prefix Latter is minimum losses obtained from doing no API call at all and doing API call but not providing response Intuitively API call helpful to M if providing it with both input and output makes it easier for model to predict future tokens compared to not receiving API call at all or receiving only its input Given filtering threshold tauf only keep API calls for which L-_i - L+_i >= tauf holds i.e. adding API call and its result reduces loss by at least tauf compared to not doing any API call or obtaining no result
+
+Model Finetuning After sampling and filtering calls for all APIs finally merge remaining API calls and interleave them with original inputs That is for input text x=x1...xn with corresponding API call and result (ci,ri) at position i construct new sequence x*= x1:i-1, e(ci,ri), xi:n proceed analogously for texts with multiple API calls Doing this for all x∈C results in new dataset C* augmented with API calls Use new dataset to finetune M using standard LM objective Crucially apart from inserted API calls augmented dataset C* contains exact same texts as C original dataset As consequence finetuning M on C* exposes it to same content as finetuning on C Moreover as API calls are inserted exactly those positions and with exactly those inputs that help M predict future tokens finetuning on C* enables language model to decide when and how to use which tool based purely on its own feedback
+
+Inference When generating text with M after finetuning with approach perform regular decoding until M produces -> token indicating that it next expects response for API call At this point interrupt decoding process call appropriate API to get response and continue decoding process after inserting both response and </API> token
+```
+
+**Tools explored:**
+
+- Question Answering system based on Atlas retrieval-augmented LM finetuned Natural Questions
+- Wikipedia search engine BM25 retriever Wikipedia dump
+- Calculator four basic arithmetic operations rounded two decimal places
+- Calendar
+- Machine translation system
+
+Examples: [QA("Where was Joe Biden born?")] Scranton [Calculator(2+2)] -> 4 [WikiSearch(term)] -> snippets [MT(text)] -> translation [Calendar(date)] -> date
+
+**Experiments:** Toolformer based on pretrained GPT-J 6.7B parameters achieves much stronger zero-shot results clearly outperforming much larger GPT-3 model and several other baselines on various tasks, agnostic of dataset being used can apply to exact same dataset used to pretrain model in first place ensures model does not lose any generality and language modeling abilities
+
+---
+
+# CONSTITUTION QUICK MAP — UPDATED FOR PART 8 (20 SYSTEMS)
+
+| Need | Start with |
+|---|---|
+| Hard reasoning | C1.1 → C1.2 → C8.1 CoT standard vs CoT exemplars vs Zero-Shot Let's think step by step → (optional) C1.3–C1.5 + C8.2 ReAct Thought Action Observation |
+| Choose methods | C2.1 + C6.9 Planner Taxonomy Router |
+| Research idea | C2.2 → C2.3 → C2.4 → C6.4 → C6.5 → C6.6 + C6.15 SciMON + C6.16 SciPIP dual-path 10 ideas |
+| Track knowledge gaps explicit | C6.1 |
+| Infer implicit gaps | C6.2 → C6.3 + C6.15 |
+| Cross-domain knowledge pollination | C6.8 Entity Store + C6.15 Inspiration Retrieval + C6.16 Quintuple + C6.8 multi-granularity SE CC CL |
+| Improve a draft | C3.1 ⇄ C3.2 + C6.7 ReviewingAgents + C7.3 GPT4 Evaluation |
+| Learn from failure | C3.3 → C3.4 + C6.10 M2 Episodic + C7.8 A3 grounding |
+| Improve the instruction | C3.5 + C8.1 + C8.3 APE/OPRO propose/evolve instructions + Toolformer sampling filtering finetuning |
+| Save a reusable skill | C3.6 + C6.10 M4 Procedural |
+| Make the repo pro | C4.1 → C4.2 → C4.3 |
+| Multi-expert project | C5.1 + C6.12 + C6.15 + C6.16 + C7.2 PA PU + C7.4 + C7.7 |
+| Human oversight high-stakes | C6.11 HITL + C7.4 UserProxy human_input_mode ALWAYS + C7.8 Safeguard |
+| Open-ended progress | C5.4 / C5.5 + C6.10 + C6.13 + C6.14 + C7.3 scalable data generation |
+| Build any scientific agent | C6.9 → C6.10 + C7.4 C7.5 C7.6 C7.7 + C8.2 ReAct Thought Action Observation + C8.3 Toolformer API calls |
+| Search when uncertain knowledge gaps | C1.6 + C6.9 + C2.1 + C6.4 + C6.15 + C6.16 + C7.7 |
+| Long-form grounded writing | C6.13 → C6.14 + STORM FreshWiki evaluation + Prometheus |
+| Autonomous cooperation minimal human | C7.1 Task Specifier → C7.2 PA PU M_t + C7.3 Data Generation + evaluation |
+| Conversable agents | C7.4 send/receive/generate_reply auto-reply + AssistantAgent NEVER DEFAULT_SYSTEM_MESSAGE + UserProxy ALWAYS + GroupChatManager |
+| Program conversation patterns | C7.5 A.initiate_chat + Custom reply A.register_reply + Unified Interfaces + Program Execution |
+| Flexible control | C7.6 Natural TERMINATE + Programming max replies + Transition |
+| Dynamic multi-agent | C7.7 Custom generate_reply + Function calls + GroupChatManager |
+| Math + RAG + ALFWorld + OptiGuide | C7.8 |
+| Think step by step reasoning | C8.1 CoT standard vs CoT exemplars + Zero-Shot Let's think step by step |
+| Reasoning + Acting with tools | C8.2 ReAct Thought Action Observation Search Lookup Finish + C8.3 Toolformer e(c)=<API> ac(ic) </API> e(c,r)=<API> ac(ic) ->r </API> Sampling pi = pM(<API> | P(x), x1:i-1) Filtering L- - L+ >= tauf Finetuning merge interleave x* Inference interrupt on -> token call API |
+| Ship end-to-end | C5.6 + C6.10 + C6.13-6.16 + C7.1-7.8 + C8.1-8.3 |
+
+---
+
+# GOVERNANCE NOTES — EXTENDED FOR PART 8 (CoT + ReAct + Toolformer — 20 SYSTEMS)
+
+1. **Universal ≠ vague.** Keep placeholders concrete
+2. **Prefer small loops with gates** over giant prompt
+3. **Honesty rule:** if evidence weak force rebuttals/limits (C3.1 + C2.5 + C6.2 Warrant + C6.14 every sentence supported)
+4. **Budget rule:** route (C1.6, C2.1, C6.9) before expensive search/optimize. CoT adds computation via intermediate steps allocated to problems requiring more reasoning steps. Toolformer sampling threshold taus top k m calls filtering tauf threshold adds overhead but enables decide when and how to use which tool based purely own feedback.
+5. **Memory rule:** verbal lessons (C3.3) procedural skills (C3.6) entity store (C6.8) semantic KB (C6.10 M3) quintuple (C6.16) conversational history M_t = {(I0,S0)...} different—use all when appropriate
+6. **Knowledge tracking rule:** explicit gaps C6.1 require exact sentence grounding + cue list; implicit gaps C6.2 require Grounds quoted + Warrant single sentence + Bucket calibration
+7. **Cross-domain rule:** entity retrieval may retrieve opposite concepts — LLM must filter noise, random entities still better than none
+8. **Human-in-loop rule:** high-stakes must have V3 approval gates pause before hazardous synthesis telescope control expensive simulations require explicit human approval
+9. **Multi-agent rule:** diverse critics avoid echo chambers — 4 debate agents 2 for 2 against + judge + meta-review + CAMEL AI user serves as task planner interactive planning feasible steps AI assistant acts as task executor + AutoGen unified interfaces send receive generate_reply auto-reply mechanism Once receives message automatically invokes generate_reply sends reply back unless termination satisfied + GroupChatManager dynamically select next speaker + Commander checks safety with Safeguard security red flag
+10. **Construction rule:** any scientific agent = mix-and-match planner (P1-P6 L1-L2) + memory (M1-M5) + action (A1-A5) + verifier (V1-V4) — cathode example Battery Schema → Augmented with historical failures + KB thresholds → Reflective revision cycles → Search-based max reward path → Role-interactive debate consensus → Programmatic DSL pipeline + For long-form grounded writing STORM = Perspective Discovery Related Topics TOCs → Perspectives P=[P0]+P[:N] → Simulated Conversations M rounds question queries search sift answer → Draft OD internal knowledge + Refine O with convos → Section generation Sentence-BERT retrieval from R + citations + polish + lead + For autonomous cooperation CAMEL = Idea Develop trading bot → Role Assignment AI Assistant Python Programmer AI User Stock Trader → Human Input → Task Specifier → Specified Task with sentiment analysis tool → PA PU system messages A<-F_PA U<-F_PU → M_t Instruction Input Solution Next request loop It St until termination + Data Generation AI Society + Evaluation 100 tasks GPT4 summarization human 453 + For conversable agents AutoGen = ConversableAgent + AssistantAgent NEVER DEFAULT_SYSTEM_MESSAGE helpful AI assistant suggest python code TERMINATE + UserProxy ALWAYS + GroupChatManager + Initiation A.initiate_chat + Custom Reply A.register_reply + Program Execution + Conversation Programming computation + control flow + Control Fusion Natural TERMINATE Programming max replies Transition + Dynamic flows Custom generate_reply Function calls GroupChatManager + Applications Math RAG ALFWorld OptiGuide + For reasoning with tools CoT standard vs CoT exemplars triples <input, chain of thought, output> Zero-Shot Let's think step by step + ReAct Thought Action Observation Search Lookup Finish + Toolformer e(c)=<API> ac(ic) </API> e(c,r)=<API> ac(ic) ->r </API> Sampling pi = pM(<API> | P(x), x1:i-1) Filtering L- - L+ >= tauf Finetuning merge interleave x* Inference interrupt on -> token
+11. **Retrieval rule:** multi-granularity retrieval SE CC CL encode quintuple individually preprocessed vectors vs entire sections multifaceted difficult capture key points + STORM retrieve relevant docs from R based semantic similarity Sentence-BERT + AutoGen RAG Chroma SentenceTransformers Natural Questions vs DPR interactive retrieval UPDATE CONTEXT vs I don't know + Toolformer QA Atlas WikiSearch BM25 Calculator Calendar MT
+12. **Novelty rule:** iterative novelty boosting compare Idea_t with prior literature if strongly overlapping update more novel like good researcher until sufficient novelty + in-context contrastive CL
+13. **Grounded writing rule:** STORM perspective-guided question asking direct prompting Ask 30 questions yields When was opening held Where how many countries limited planning capacity perspective-guided You are event planner focusing preparation opening ceremony leads varied questions transportation arrangements budget cultural broadcasting security conversational Can you provide list participating countries over 90 countries entering stadium specific order How is order determined transportation arrangements budget elicits follow-up in-depth iterative research grounded Internet
+14. **Collaboration rule:** For autonomous cooperation minimal human supervision only preliminary idea needed from human to guide conversations toward complex task-solving use CAMEL Task Specifier making specific well-defined prompting LLM instead of relying human inputs + Role Assignment PA PU M_t Instruction Input Solution Next request loop It St until termination task completed or max messages limit cost quadratic + For conversable agents use AutoGen ConversableAgent send/receive/generate_reply unified interfaces auto-reply mechanism decentralized modular unified workflow + AssistantAgent NEVER DEFAULT_SYSTEM_MESSAGE helpful AI assistant suggest python code TERMINATE + UserProxy ALWAYS + GroupChatManager dynamically select next speaker broadcast + Initiate chat A.initiate_chat + Custom reply A.register_reply + Program Execution dialog box Error package yfinance not installed Sorry please pip install + Conversation Programming computation + control flow + Control Fusion Natural TERMINATE Programming max replies + Dynamic flows Custom generate_reply hold current conversation while invoking conversations with other agents + Function calls LLM decides whether to call particular function + GroupChatManager dynamic speaker selection + Applications Math RAG ALFWorld OptiGuide
+15. **Reasoning with tools rule:** CoT allows models decompose multi-step problems into intermediate steps additional computation allocated + provides interpretable window into behavior suggesting how it might have arrived particular answer opportunities debug where reasoning path went wrong + can be used for math word problems commonsense reasoning symbolic manipulation potentially applicable any task humans can solve via language + readily elicited in sufficiently large off-the-shelf LMs simply including examples chain of thought sequences into exemplars few-shot prompting + ReAct Thought Action Observation Search Lookup Finish interleaved reasoning acting + Toolformer sampling potential API calls executing filtering by self-supervised loss reduction L- - L+ >= tauf finetuning merge interleave x* = x1:i-1 e(ci,ri) xi:n Inference interrupt decoding when -> token expects response call appropriate API get response continue after inserting response and </API> token Tools QA Atlas WikiSearch BM25 Calculator Calendar MT
+16. **This constitution is a control layer**, not substitute domain expertise, licenses, ethics review. For scientific agents ethics and reproducibility are design imperatives embedded architecture verification modules per Survey Sec5 not peripheral concerns. Ethics checklist + reproducibility protocol mandatory. FreshWiki dataset creation avoiding leakage top 100 most-edited per month Feb2022-Sep2023 filter B-class ORES exclude list no subsections plain text only process repeated future dates new LLMs emerge. Heading soft recall paraphrase-MiniLM-L6-v2 cosine + entity recall FLAIR NER + Prometheus 13B Interest Coherence Organization Relevance Focus Coverage trimmed 2000 words iterative removing shortest section. Tools same content same texts enables decide when and how to use which tool based purely own feedback.
+
+---
+
+*Maintained with the ARSENAL unified master pipeline.*  
+*Repo: https://github.com/faresrafat3/arsenal-unified-master-pipeline*  
+*Updated 2026-07-12 with GAPMAP + ResearchAgent + Scientific Intelligence Survey + STORM + SciMON/SciPIP + CAMEL + AutoGen + CoT + ReAct + Toolformer extractions — Part 6 HOW TO TRACK KNOWLEDGE expanded to 15 systems + Part 7 HOW TO COLLABORATE 2 systems + Part 8 HOW TO THINK WITH TOOLS 3 systems = 20 total*

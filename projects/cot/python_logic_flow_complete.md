@@ -1,0 +1,1 @@
+CoT Logic Flow: Input -> Prompt with exemplars triples <input, chain of thought, output> -> LLM generates chain of thought coherent series intermediate reasoning steps lead to final answer -> Output final answer.

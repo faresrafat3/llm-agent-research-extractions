@@ -1,6 +1,6 @@
 # LLM Agent Research Systems — High-Quality Prompt, Logic, Flow, and Graph Extractions
 
-This repository is a consolidated research/audit archive for seventeen important LLM agent and self-improvement systems:
+This repository is a consolidated research/audit archive for twenty important LLM agent and self-improvement systems:
 
 1. AI Scientist v2
 2. Self-Refine
@@ -19,18 +19,11 @@ This repository is a consolidated research/audit archive for seventeen important
 15. SciMON / SciPIP — Scientific Inspiration Machines & Paper Idea Proposer
 16. CAMEL — Multi-Agent Role-Playing
 17. AutoGen — Conversational AI Framework
+18. Chain-of-Thought — Reasoning Elicitation
+19. ReAct — Synergizing Reasoning and Acting
+20. Toolformer — Language Models Can Teach Themselves to Use Tools
 
-Every project is structured to the same quality standard as much as the original repository structure allows:
-
-- research/system summary,
-- complete prompt extraction,
-- Python logic/flow extraction,
-- deep-dive task or phase matrix,
-- Mermaid graph in English,
-- Mermaid graph in Arabic,
-- final Arabic audit/completeness checklist,
-- quality review notes,
-- raw prompt/config files where applicable.
+Every project is structured to the same quality standard as much as the original repository structure allows.
 
 ## Projects
 
@@ -53,7 +46,10 @@ Every project is structured to the same quality standard as much as the original
 | SciMON / SciPIP | `projects/scimon-scipip/` | https://github.com/faresrafat3/scimon-scipip-full-extraction |
 | CAMEL | `projects/camel/` | https://github.com/faresrafat3/camel-full-extraction |
 | AutoGen | `projects/autogen/` | https://github.com/faresrafat3/autogen-full-extraction |
+| Chain-of-Thought | `projects/cot/` | https://github.com/faresrafat3/chain-of-thought-full-extraction |
+| ReAct | `projects/react/` | https://github.com/faresrafat3/react-full-extraction |
+| Toolformer | `projects/toolformer/` | https://github.com/faresrafat3/toolformer-full-extraction |
 
 ## Constitution
 
-Universal reusable prompts distilled from all systems: [`CONSTITUTION.md`](./CONSTITUTION.md) — includes Part 6: HOW TO TRACK KNOWLEDGE (GAPMAP, ResearchAgent, Scientific Intelligence Survey, STORM, SciMON/SciPIP) and Part 7: HOW TO COLLABORATE (CAMEL role-playing inception prompting + AutoGen conversable agents conversation programming)
+Universal reusable prompts: [`CONSTITUTION.md`](./CONSTITUTION.md) — includes Part 6: HOW TO TRACK KNOWLEDGE, Part 7: HOW TO COLLABORATE, Part 8: HOW TO THINK WITH TOOLS (CoT, ReAct, Toolformer)

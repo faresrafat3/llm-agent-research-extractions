@@ -1,0 +1,1 @@
+Toolformer Logic Flow Dataset C plain texts -> Sampling API Calls P(x) pi = pM(<API>|P(x)) -> Executing API Calls obtain ri -> Filtering Li(z) L+ L- keep if L- - L+ >= tauf -> Model Finetuning merge remaining API calls interleave x* -> Inference regular decoding until -> token interrupt call API
