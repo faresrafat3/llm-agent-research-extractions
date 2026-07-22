@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-agent-prompts"
+version = "1.0.0"
+description = "The definitive SOTA SDK for LLM Agent Research Extractions (20+ Papers including STORM, Reflexion, LATS)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Fares Rafat" }]
+keywords = ["llm", "agents", "prompts", "research", "storm", "reflexion", "lats", "tot"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+]
+dependencies = ["pydantic>=2.0.0", "loguru"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llm_agent_prompts*"]
