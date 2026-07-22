@@ -1,71 +1,68 @@
 <div align="center">
 
-# 🧠 LLM Agent Research Extractions (The Definitive SOTA SDK)
+# 🧠 LLM Agent Research Extractions (Interactive App)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Research_Grade_SDK-brightgreen.svg?style=for-the-badge)](#)
+[![Status](https://img.shields.io/badge/Status-Research_Grade_Explorer-brightgreen.svg?style=for-the-badge)](#)
 
 **The world's largest consolidated archive of LLM Agent Architectures.** 
-We have surgically extracted the exact prompts, state-machine logic, execution flows, and evaluation metrics from **20 State-of-the-Art (SOTA)** AI research papers and unified them into a single, executable Python SDK.
+We have surgically extracted the exact prompts, state-machine logic, execution flows, and evaluation metrics from **20 State-of-the-Art (SOTA)** AI research papers.
+
+This repository features an **Interactive Web Dashboard** to visualize architectures (Mermaid Graphs), copy exact academic prompts, and browse JSON state-machines in seconds.
 
 </div>
 
 ---
 
-## 🚀 The SDK (New for 2026)
+## 🚀 Run the Interactive Explorer (New for 2026)
 
-This repository is no longer just a reading library. It is now a **Python SDK**. Instead of copy-pasting prompts from whitepapers, you can import the exact academic prompts directly into your pipeline.
+Don't browse folders manually. Launch the visual explorer to see the architectures come to life.
 
 ```bash
-# Install the SOTA Extractor SDK
-pip install -e .
+# 1. Clone the repository
+git clone https://github.com/faresrafat3/llm-agent-research-extractions.git
+cd llm-agent-research-extractions
+
+# 2. Install dependencies
+make install
+
+# 3. Launch the Dashboard
+make run
 ```
-
-```python
-from llm_agent_prompts import STORM, Reflexion, TreeOfThoughts
-
-# 1. Use the Stanford STORM perspective-guided generation prompt
-storm_prompt = STORM.get_genperspectivesprompt_prompt()
-
-# 2. Use the exact Reflexion episodic memory prompt
-reflexion_prompt = Reflexion.get_reflect_prompt()
-```
+*The app will open automatically at `http://localhost:8501`*
 
 ## 📚 The 20-System Arsenal (Analyzed & Deconstructed)
 
-We have dissected the following SOTA systems. Click on any folder to view the absolute raw material (System Prompts, Hyperparameters, Mermaid Graphs) extracted directly from the papers' source code.
+We have dissected the following SOTA systems:
 
 ### 🌳 Search & Reasoning (MCTS / Beam)
-- **[LATS (Language Agent Tree Search)](./projects/lats/)**: MCTS + PRM integration.
-- **[Tree of Thoughts (ToT)](./projects/tot/)**: Deliberate tree search.
-- **[Chain-of-Thought](./projects/cot/)**: Reasoning elicitation baseline.
+- **LATS** (Language Agent Tree Search)
+- **Tree of Thoughts** (ToT)
+- **Chain-of-Thought**
 
 ### 🔄 Reflection & Memory
-- **[Reflexion](./projects/reflexion/)**: Verbal episodic memory and failure reflection.
-- **[Self-Refine](./projects/self-refine/)**: Iterative critique and self-correction loops.
-- **[Voyager](./projects/voyager/)**: Lifelong learning via procedural vector memory.
+- **Reflexion** (Verbal episodic memory)
+- **Self-Refine** (Iterative critique loops)
+- **Voyager** (Lifelong procedural memory)
 
 ### 🗣️ Multi-Agent & Orchestration
-- **[STORM](./projects/storm/)**: Perspective-guided question asking (Stanford).
-- **[Meta-Prompting](./projects/meta-prompting/)**: Expert persona dispatching.
-- **[CAMEL](./projects/camel/)**: Multi-Agent Role-Playing.
-- **[AutoGen](./projects/autogen/)**: Conversational framework orchestration.
+- **STORM** (Perspective-guided questioning)
+- **Meta-Prompting** (Expert persona dispatching)
+- **CAMEL** (Role-Playing)
+- **AutoGen** (Conversational orchestration)
 
 ### 🛠️ Tooling & Scientific Discovery
-- **[Toolformer](./projects/toolformer/)**: Language Models teaching themselves tools.
-- **[ReAct](./projects/react/)**: Synergizing reasoning and acting.
-- **[AI Scientist v2](./projects/ai-scientist-v2/)**: Automated peer review and crystallization.
-- **[SciMON / SciPIP](./projects/scimon-scipip/)**: Scientific Idea Proposers.
-- **[ResearchAgent](./projects/researchagent/)**: Iterative idea generation.
+- **Toolformer** (Teaching LLMs to use APIs)
+- **ReAct** (Reasoning and acting)
+- **AI Scientist v2** (Automated peer review)
+- **SciMON / SciPIP** (Scientific Idea Proposers)
+- **ResearchAgent** (Iterative idea generation)
 
 ### 🎯 Prompt Optimization (Meta-Learning)
-- **[OPRO](./projects/opro/)**: Optimization by Prompting.
-- **[APE](./projects/ape/)**: Automatic Prompt Engineering.
-- **[The Prompt Report](./projects/prompt-report/)**: Systematic survey of 58 techniques.
-
-## 🧠 Why This Matters (The Engineering Edge)
-Most AI platforms rely on black-box wrappers like LangChain. By extracting the **raw logic and prompts** from these papers, we allow AI Architects to build highly deterministic, cost-aware *Neuro-Symbolic State Machines* (like [ARSENAL](https://github.com/faresrafat3/arsenal-unified-master-pipeline)) without the overhead of generic frameworks.
+- **OPRO** (Optimization by Prompting)
+- **APE** (Automatic Prompt Engineering)
+- **The Prompt Report** (58-technique survey)
 
 ---
 <div align="center">
