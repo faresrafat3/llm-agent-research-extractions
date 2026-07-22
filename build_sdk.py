@@ -27,66 +27,62 @@ def generate_sdk():
                 logger.warning(f"Failed to parse {json_path}")
                 continue
                 
+        # If the root is a list, we skip for now to maintain stability, or parse if it has a specific structure
         if isinstance(data, list):
-            logger.warning(f"Skipping {json_path} as it contains a list instead of a dict mapping.")
-            continue
+            # In some of your repos, the list contains the dicts directly
+            if len(data) > 0 and isinstance(data[0], dict):
+                data = data[0]
+            else:
+                logger.warning(f"Skipping {json_path} as it contains an unparseable list.")
+                continue
                 
-        # Clean project name to make it a valid Python Class name
         project_name = data.get("project", project_folder.replace("-", "_").title())
+        # Safety fallback if project_name isn't string
+        if not isinstance(project_name, str): project_name = str(project_name)
+        
         class_name = re.sub(r'[^a-zA-Z0-9]', '', project_name)
+        if not class_name: class_name = "AgentSystem"
         file_name = f"{class_name.lower()}.py"
         
-        # We look for prompts in the JSON
         prompts = data.get("prompts", {})
         if not prompts:
             continue
             
-        py_code = f"\"\"\"Auto-generated SDK for {project_name} ({data.get('arxiv', 'No ArXiv')}).\"\"\"
-
-"
-        py_code += "from typing import Dict, Any
-
-"
-        py_code += f"class {class_name}:
-"
-        py_code += f"    \"\"\"Prompts extracted from: {data.get('repo', 'N/A')}\"\"\"
-
-"
+        py_code = f'"""Auto-generated SDK for {project_name}."""\n\n'
+        py_code += "from typing import Dict, Any\n\n"
+        py_code += f"class {class_name}:\n"
+        py_code += f"    \"\"\"Prompts extracted from: {data.get('repo', 'N/A')}\"\"\"\n\n"
         
-        # Handle if prompts is a list or dict
         prompt_items = prompts.items() if isinstance(prompts, dict) else enumerate(prompts)
         
         for prompt_key, prompt_data in prompt_items:
             if isinstance(prompt_data, str):
-                continue # Skip malformed strings
+                continue
                 
             prompt_name = prompt_key if isinstance(prompt_key, str) else prompt_data.get("name", f"prompt_{prompt_key}")
-            desc = prompt_data.get("description", prompt_data.get("prompt", "")).replace('"', "'").replace('
-', ' ')
+            
+            # Clean up names for python methods
+            safe_method_name = re.sub(r'[^a-zA-Z0-9]', '_', prompt_name).lower()
+            
+            desc = prompt_data.get("description", prompt_data.get("prompt", ""))
+            if not isinstance(desc, str): desc = str(desc)
+            desc = desc.replace('"', "'").replace('\n', ' ')
             
             inputs = prompt_data.get("input", prompt_data.get("inputs", ""))
             outputs = prompt_data.get("output", prompt_data.get("outputs", "prompt string"))
             
-            py_code += f"    @staticmethod
-"
-            py_code += f"    def get_{prompt_name.lower()}_prompt() -> str:
-"
-            py_code += f"        \"\"\"{inputs}
-Returns:
-    {outputs}\"\"\"
-"
-            py_code += f"        return \"\"\"{desc}\"\"\"
-
-" "
+            py_code += f"    @staticmethod\n"
+            py_code += f"    def get_{safe_method_name}_prompt() -> str:\n"
+            py_code += f"        \"\"\"Inputs: {inputs}\n        Returns: {outputs}\"\"\"\n"
+            py_code += f"        return \"\"\"{desc}\"\"\"\n\n"
             
         out_path = os.path.join(OUTPUT_DIR, file_name)
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(py_code)
             
         logger.success(f"Generated SDK module for: {class_name}")
-        init_imports.append(f"from .{class_name.lower()} import {class_name}")
+        init_imports.append(f"from .{file_name.replace('.py', '')} import {class_name}")
         
-    # Write init file
     with open(os.path.join(OUTPUT_DIR, "__init__.py"), "w", encoding="utf-8") as f:
         f.write("\n".join(init_imports))
         
