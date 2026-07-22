@@ -39,24 +39,45 @@ def generate_sdk():
         # We look for prompts in the JSON
         prompts = data.get("prompts", {})
         if not prompts:
-            # Some older extractions might not have standard format, we skip or handle later
             continue
             
-        py_code = f"\"\"\"Auto-generated SDK for {project_name} ({data.get('arxiv', 'No ArXiv')}).\"\"\"\n\n"
-        py_code += "from typing import Dict, Any\n\n"
-        py_code += f"class {class_name}:\n"
-        py_code += f"    \"\"\"Prompts extracted from: {data.get('repo', 'N/A')}\"\"\"\n\n"
+        py_code = f"\"\"\"Auto-generated SDK for {project_name} ({data.get('arxiv', 'No ArXiv')}).\"\"\"
+
+"
+        py_code += "from typing import Dict, Any
+
+"
+        py_code += f"class {class_name}:
+"
+        py_code += f"    \"\"\"Prompts extracted from: {data.get('repo', 'N/A')}\"\"\"
+
+"
         
-        for prompt_name, prompt_data in prompts.items():
-            desc = prompt_data.get("description", "").replace('"', "'").replace('\n', ' ')
+        # Handle if prompts is a list or dict
+        prompt_items = prompts.items() if isinstance(prompts, dict) else enumerate(prompts)
+        
+        for prompt_key, prompt_data in prompt_items:
+            if isinstance(prompt_data, str):
+                continue # Skip malformed strings
+                
+            prompt_name = prompt_key if isinstance(prompt_key, str) else prompt_data.get("name", f"prompt_{prompt_key}")
+            desc = prompt_data.get("description", prompt_data.get("prompt", "")).replace('"', "'").replace('
+', ' ')
             
-            # Identify required variables (naive but effective for extraction)
-            inputs = prompt_data.get("input", "")
+            inputs = prompt_data.get("input", prompt_data.get("inputs", ""))
+            outputs = prompt_data.get("output", prompt_data.get("outputs", "prompt string"))
             
-            py_code += f"    @staticmethod\n"
-            py_code += f"    def get_{prompt_name.lower()}_prompt() -> str:\n"
-            py_code += f"        \"\"\"{inputs}\\nReturns:\\n    {prompt_data.get('output', 'prompt string')}\"\"\"\n"
-            py_code += f"        return \"\"\"{desc}\"\"\"\n\n"
+            py_code += f"    @staticmethod
+"
+            py_code += f"    def get_{prompt_name.lower()}_prompt() -> str:
+"
+            py_code += f"        \"\"\"{inputs}
+Returns:
+    {outputs}\"\"\"
+"
+            py_code += f"        return \"\"\"{desc}\"\"\"
+
+" "
             
         out_path = os.path.join(OUTPUT_DIR, file_name)
         with open(out_path, "w", encoding="utf-8") as f:
