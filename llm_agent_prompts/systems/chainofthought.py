@@ -1,7 +1,7 @@
-"""Auto-generated SDK for Chain-of-Thought."""
+"""Auto-generated SOTA SDK for Chain-of-Thought. Enforces strict typing."""
 
 from typing import Dict, Any
 
 class ChainofThought:
-    """Prompts extracted from: N/A"""
+    """Strictly Typed Prompts extracted from: N/A"""
 
