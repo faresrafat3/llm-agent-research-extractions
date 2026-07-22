@@ -27,6 +27,10 @@ def generate_sdk():
                 logger.warning(f"Failed to parse {json_path}")
                 continue
                 
+        if isinstance(data, list):
+            logger.warning(f"Skipping {json_path} as it contains a list instead of a dict mapping.")
+            continue
+                
         # Clean project name to make it a valid Python Class name
         project_name = data.get("project", project_folder.replace("-", "_").title())
         class_name = re.sub(r'[^a-zA-Z0-9]', '', project_name)
