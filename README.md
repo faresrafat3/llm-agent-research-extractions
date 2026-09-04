@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Research_Grade_Explorer-brightgreen.svg?style=for-the-badge)](#)
 
-**The world's largest consolidated archive of LLM Agent Architectures.**
+**A consolidated archive of 20 LLM Agent Architectures, each with verbatim prompt extraction.**
 We have surgically extracted the exact prompts, state-machine logic, execution flows, and evaluation metrics from **20 State-of-the-Art (SOTA)** AI research papers (LATS, ToT, Chain-of-Thought, Reflexion, Self-Refine, Voyager, STORM, Meta-Prompting, CAMEL, AutoGen, Toolformer, ReAct, AI Scientist v2, SciMON/SciPIP, ResearchAgent, OPRO, APE, Prompt Report, GAPMAP, Scientific Intelligence Survey).
 
 This repository features an **Interactive Web Dashboard** to visualize architectures (Mermaid Graphs), copy exact academic prompts, and browse JSON state-machines in seconds.
