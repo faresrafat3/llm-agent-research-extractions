@@ -3,7 +3,7 @@
 Paper: [Large Language Models as Optimizers](https://arxiv.org/abs/2309.03409)  
 Code: https://github.com/google-deepmind/opro  
 Audited commit: `a76bdce2cbf6d4a0d1e570a6fcfe17be9c2abdd7`  
-GitHub stars: ~762 (verified 2026-07-10) · License: Apache-2.0
+GitHub stars: ~773 (last verified 2026-09-04) [previously: ~762 on 2026-07-10] · License: Apache-2.0
 
 ## Why this package
 

@@ -2,7 +2,7 @@
 
 Paper: **AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation**  
 ArXiv: https://arxiv.org/abs/2308.08155 (v2 Oct 3 2023, 43 pages, 10 main + 3 refs + 30 appendices)  
-Code: https://github.com/microsoft/autogen (59.7k stars, 9k forks, 3782 commits, 209 branches, 128 tags)  
+Code: https://github.com/microsoft/autogen (60.8k stars, 9.2k forks — last verified 2026-09-04; [previously: 59.7k stars, 9k forks, 3782 commits, 209 branches, 128 tags on 2026-07-10])
 Authors: Qingyun Wu et al Microsoft
 
 ## Why this package

@@ -2,7 +2,7 @@
 
 Paper: **CAMEL: Communicative Agents for "Mind" Exploration of Large Language Model Society**  
 ArXiv: https://arxiv.org/abs/2303.17760 (NeurIPS 2023, 77 pages)  
-Code: https://github.com/camel-ai/camel (17.4k stars, 2k forks)  
+Code: https://github.com/camel-ai/camel (17.7k stars, 2.1k forks — last verified 2026-09-04; [previously: 17.4k stars, 2k forks on 2026-07-10])
 Website: https://www.camel-ai.org  
 Audited commit: master Jul 10 2026 (147d926)
 

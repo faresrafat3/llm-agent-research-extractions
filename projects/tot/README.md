@@ -3,7 +3,7 @@
 Paper: [Tree of Thoughts: Deliberate Problem Solving with Large Language Models](https://arxiv.org/abs/2305.10601) (NeurIPS 2023)  
 Code: https://github.com/princeton-nlp/tree-of-thought-llm  
 Audited commit: `8050e67d0e3a0fddc424d7fa5801538722a4c4cc`  
-GitHub: ~6,024 stars (verified 2026-07-10)
+GitHub: ~6,061 stars (last verified 2026-09-04) [previously: ~6,024 on 2026-07-10]
 
 ## Why this package
 
